@@ -12,9 +12,9 @@
     },
     "remoteFile": {
       "type": "string",
-      "default": "s3://ngi-igenomes/igenomes/Escherichia_coli_K_12_DH10B/Ensembl/EB1/Annotation/README.txt",
       "description": "Path to remote file to download and use.",
-      "help_text": "Path to a remote file to use within the pipeline. This mimics a remote set of files such as reference data that may need to be retrieved prior to analysis. The default is a small file on igenomes, which is stored on S3 and is publicly accessible. This can be replaced by a different file more appropriate for your set up if you do not wish to access resources like this."
+      "help_text": "Path to a remote file to use within the pipeline. This mimics a remote set of files such as reference data that may need to be retrieved prior to analysis. By default this is not specified and the test is not ran, add a remote file using standard Nextflow filenaming to pull a file from your storage (e.g. an S3 bucket or shared storage).",
+      "format": "path"
     }
   }
 }
