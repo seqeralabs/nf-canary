@@ -1,3 +1,5 @@
+[![nf-test](https://github.com/adamrtalbot/nf-canary/actions/workflows/nf-test.yml/badge.svg)](https://github.com/adamrtalbot/nf-canary/actions/workflows/nf-test.yml)
+
 # nf-canary
 
 A minimal Nextflow workflow for testing infrastructure.
