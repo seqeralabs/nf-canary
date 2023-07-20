@@ -9,7 +9,7 @@ nextflow_process {
         when {
 
             params {
-              remoteFile = "https://raw.githubusercontent.com/adamrtalbot/nf-canary/main/README.md"
+              remoteFile = "tests/testfile.txt"
             }
 
             process {
