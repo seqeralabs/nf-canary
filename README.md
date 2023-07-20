@@ -40,3 +40,37 @@ TEST_CREATE_FILE:
 ### Interpreting the results
 
 The code for each test includes a short comment explaining what it is aiming to test. If it fails, check the comment for what it was trying to achieve and compare that to the error message reported by Nextflow.
+
+## Test Overview
+
+### `TEST_SUCCESS`
+
+This process should automatically succeed with exit status 0.
+
+### `TEST_CREATE_FILE`
+
+This process should create a file on the worker machine then move it to the working directory.
+
+### `TEST_INPUT`
+
+This process should retrieve a file from the working directory and read the contents on the worker machine.
+
+### `TEST_STAGE_REMOTE`
+
+_Note: This will only be enabled if the parameter `--remoteFile` is specified._
+
+This process retrieves a file from a remote resource to the worker machine and reads the contents. This uses the URL defined in the parameter `--remoteFile`, e.g. to download this README:
+
+```
+nextflow run adamrtalbot/nf-canary --remoteFile 'https://raw.githubusercontent.com/adamrtalbot/nf-canary/main/README.md'
+```
+
+Use this parameter to point to a file that you wish to access when running
+
+### `TEST_PASS_FILE`
+
+This process stages a file from the working directory to the worker node, copies it and stages it back to the working directory.
+
+### `TEST_PUBLISH_FILE`
+
+This process creates a file on the worker machine, then writes that file to the publishDir directory. This is the by default written to an subfolder called `output` in the working directory.
