@@ -9,3 +9,4 @@ testing*
 *.pyc
 test-datasets/
 .nf-test/
+test.tap

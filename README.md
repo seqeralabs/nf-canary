@@ -37,4 +37,4 @@ TEST_CREATE_FILE:
 
 ### Interpreting the results
 
-The code for each test includes a short comment explaining what it is aiming to test. If it fails, check the comment for what it was trying to achieve and confirm
+The code for each test includes a short comment explaining what it is aiming to test. If it fails, check the comment for what it was trying to achieve and compare that to the error message reported by Nextflow.
