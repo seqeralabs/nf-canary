@@ -1,0 +1,33 @@
+nextflow_pipeline {
+
+    name "Test Workflow main.nf"
+    tag "full"
+    script "main.nf"
+
+    test("Should run without failures") {
+
+        then {
+            assert workflow.success
+            assert workflow.trace.tasks().size() == 5
+            assert workflow.trace.succeeded().size() == 5
+        }
+
+    }
+
+    test("Should skip TEST_SUCCESS") {
+
+        when {
+            params {
+              skip = "test_success"
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert workflow.trace.tasks().size() == 4
+            assert workflow.trace.succeeded().size() == 4
+        }
+
+    }
+
+}

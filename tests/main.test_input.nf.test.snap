@@ -1,0 +1,12 @@
+{
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    "alpha\n"
+                ]
+            }
+        ],
+        "timestamp": "2023-07-20T10:49:51+0000"
+    }
+}
