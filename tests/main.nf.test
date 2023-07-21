@@ -6,10 +6,16 @@ nextflow_pipeline {
 
     test("Should run without failures") {
 
+        when {
+            params {
+              remoteFile = "tests/testfile.txt"
+            }
+        }
+
         then {
             assert workflow.success
-            assert workflow.trace.tasks().size() == 5
-            assert workflow.trace.succeeded().size() == 5
+            assert workflow.trace.tasks().size() == 6
+            assert workflow.trace.succeeded().size() == 6
         }
 
     }
@@ -19,13 +25,14 @@ nextflow_pipeline {
         when {
             params {
               skip = "test_success"
+              remoteFile = "tests/testfile.txt"
             }
         }
 
         then {
             assert workflow.success
-            assert workflow.trace.tasks().size() == 4
-            assert workflow.trace.succeeded().size() == 4
+            assert workflow.trace.tasks().size() == 5
+            assert workflow.trace.succeeded().size() == 5
         }
 
     }
