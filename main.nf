@@ -38,6 +38,19 @@ process TEST_INPUT {
     """
 }
 
+process TEST_BIN_SCRIPT {
+    /*
+    Runs a script from the bin/ directory
+    */
+
+    output:
+        path("*.txt")
+
+    """
+    bash run.sh
+    """
+}
+
 process TEST_STAGE_REMOTE {
     /*
     Stages a file from a remote file to the worker node.
@@ -111,6 +124,7 @@ workflow {
     TEST_SUCCESS()
     TEST_CREATE_FILE()
     TEST_INPUT(test_file)
+    TEST_BIN_SCRIPT()
     TEST_STAGE_REMOTE(remote_file)
     TEST_PASS_FILE(TEST_CREATE_FILE.out.outfile)
     TEST_PUBLISH_FILE()

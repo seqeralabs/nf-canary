@@ -55,6 +55,10 @@ This process should create a file on the worker machine then move it to the work
 
 This process should retrieve a file from the working directory and read the contents on the worker machine.
 
+### `TEST_BIN_SCRIPT`
+
+Tests a shell script in the `bin/` directory which creates a single file.
+
 ### `TEST_STAGE_REMOTE`
 
 _Note: This will only be enabled if the parameter `--remoteFile` is specified._
