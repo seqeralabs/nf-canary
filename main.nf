@@ -120,13 +120,31 @@ process TEST_PUBLISH_FILE {
     Creates a file on the worker node and uploads to the publish directory.
     */
 
-    publishDir { "${workflow.workDir.toUriString()}/outputs" }
+
+    publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs").toUriString()  }, mode: 'copy'
      
     output:
         path("*.txt")
 
     """
     touch test.txt
+    """
+}
+
+process TEST_PUBLISH_FOLDER {
+    /*
+    Creates a file on the worker node and uploads to the publish directory.
+    */
+
+    publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs").toUriString()  }, mode: 'copy'
+     
+    output:
+        path("test", type: 'dir')
+
+    """
+    mkdir -p test
+    touch test/test1.txt
+    touch test/test2.txt
     """
 }
 
@@ -143,6 +161,8 @@ process TEST_IGNORED_FAIL {
 }
 
 workflow {
+    
+    //outdir = params.outdir ?: workflow.workDir.toUriString()
 
     // Create test file on head node
     Channel
@@ -162,5 +182,6 @@ workflow {
     TEST_PASS_FILE(TEST_CREATE_FILE.out.outfile)
     TEST_PASS_FOLDER(TEST_CREATE_FOLDER.out.outfolder)
     TEST_PUBLISH_FILE()
+    TEST_PUBLISH_FOLDER()
     TEST_IGNORED_FAIL()
 }
