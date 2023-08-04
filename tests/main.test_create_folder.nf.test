@@ -1,0 +1,16 @@
+nextflow_process {
+
+    name "Test Process TEST_CREATE_FOLDER"
+    script "main.nf"
+    process "TEST_CREATE_FOLDER"
+
+    test("Should run without failures") {
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+
+    }
+
+}

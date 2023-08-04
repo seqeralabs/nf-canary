@@ -51,6 +51,10 @@ This process should automatically succeed with exit status 0.
 
 This process should create a file on the worker machine then move it to the working directory.
 
+### `TEST_CREATE_FOLDER`
+
+This process should create a folder in the working directory.
+
 ### `TEST_INPUT`
 
 This process should retrieve a file from the working directory and read the contents on the worker machine.
@@ -74,6 +78,10 @@ Use this parameter to point to a file that you wish to access when running
 ### `TEST_PASS_FILE`
 
 This process stages a file from the working directory to the worker node, copies it and stages it back to the working directory.
+
+### `TEST_PASS_FOLDER`
+
+This process stages a folder from the working directory to the worker node, copies it and stages it back to the working directory.
 
 ### `TEST_PUBLISH_FILE`
 
