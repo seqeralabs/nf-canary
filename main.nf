@@ -22,6 +22,21 @@ process TEST_CREATE_FILE {
     """
 }
 
+process TEST_CREATE_FOLDER {
+    /*
+    Creates a file on the worker node which is uploaded to the working directory. 
+    */
+     
+    output:
+        path("test"), type: 'dir', emit: outfolder
+
+    """
+    mkdir -p test
+    touch test/test1.txt
+    touch test/test2.txt
+    """
+}
+
 process TEST_INPUT {
     /*
     Stages a file from the working directory to the worker node.
@@ -83,6 +98,23 @@ process TEST_PASS_FILE {
     """
 }
 
+process TEST_PASS_FOLDER {
+    /*
+    Stages a folder from the working directory to the worker node, copies it and stages it back to the working directory.
+    */
+
+    input:
+        path input
+    
+    output:
+        path "out", type: 'dir'   , emit: outfolder
+        path "out/*", type: 'file', emit: outfile
+
+    """
+    cp -rL $input out
+    """
+}
+
 process TEST_PUBLISH_FILE {
     /*
     Creates a file on the worker node and uploads to the publish directory.
@@ -111,9 +143,11 @@ workflow {
     // Run tests
     TEST_SUCCESS()
     TEST_CREATE_FILE()
+    TEST_CREATE_FOLDER()
     TEST_INPUT(test_file)
     TEST_BIN_SCRIPT()
     TEST_STAGE_REMOTE(remote_file)
     TEST_PASS_FILE(TEST_CREATE_FILE.out.outfile)
+    TEST_PASS_FOLDER(TEST_CREATE_FOLDER.out.outfolder)
     TEST_PUBLISH_FILE()
 }

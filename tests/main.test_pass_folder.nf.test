@@ -1,0 +1,28 @@
+nextflow_process {
+
+    name "Test Process TEST_PASS_FOLDER"
+    script "main.nf"
+    process "TEST_PASS_FOLDER"
+
+    test("Should run without failures") {
+
+        when {
+            process {
+                """
+                Channel
+                    .of("alpha")
+                    .collectFile(name: 'sample.txt', storeDir: ".nf-test/testdir", newLine: true)
+                    .set { test_dir_ch }
+                input[0] = Channel.fromPath(".nf-test/testdir", type: "dir")
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+
+    }
+
+}
