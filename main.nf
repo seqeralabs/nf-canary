@@ -130,6 +130,18 @@ process TEST_PUBLISH_FILE {
     """
 }
 
+
+process TEST_IGNORED_FAIL {
+    /*
+    This process should automatically fail but be ignored.
+    */
+    errorStrategy 'ignore'
+    
+    """
+    exit 1
+    """
+}
+
 workflow {
 
     // Create test file on head node
@@ -150,4 +162,5 @@ workflow {
     TEST_PASS_FILE(TEST_CREATE_FILE.out.outfile)
     TEST_PASS_FOLDER(TEST_CREATE_FOLDER.out.outfolder)
     TEST_PUBLISH_FILE()
+    TEST_IGNORED_FAIL()
 }
