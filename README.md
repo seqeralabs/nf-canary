@@ -74,3 +74,7 @@ This process stages a file from the working directory to the worker node, copies
 ### `TEST_PUBLISH_FILE`
 
 This process creates a file on the worker machine, then writes that file to the publishDir directory. This is the by default written to an subfolder called `output` in the working directory.
+
+### `TEST_IGNORED_FAIL`
+
+This process should fail immediately but be ignored using the default configuration.
