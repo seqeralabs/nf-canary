@@ -28,6 +28,10 @@ This will execute on your local machine with default settings. All tests should 
 
 Add the configuration for your infrastructure using the relevant configuration files as listed in [the Nextflow documentation](https://www.nextflow.io/docs/latest/config.html). You can then run the same pipeline but with the additional configuration to run on your set up.
 
+### Output directory
+
+nf-canary uses the `--outdir` convention established by [nf-core](https://nf-co.re/) to select where to publish the output files. If not specified, the output files are written to the work directory under a subfolder `outputs`.
+
 ### Skipping Tests
 
 Each test can be skipped by name with the parameter `--skip`, e.g. `--skip TEST_INPUT`. Multiple can be specified with comma delimited values, e.g. `--skip TEST_CREATE_FILE,TEST_PASS_FILE`. Note, some tests depend on previous tests running so will be skipped if an upstream test does not run (or fails). All tests which are dependent on previous tests are listed here:

@@ -1,0 +1,15 @@
+{
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    [
+                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2023-08-04T17:04:25+0000"
+    }
+}
