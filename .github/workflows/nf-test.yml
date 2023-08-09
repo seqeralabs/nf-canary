@@ -2,12 +2,12 @@ name: nf-test
 on:
   push:
     branches: [main]
-    paths:
-      - "!**.md"
+    paths-ignore:
+      - "!**/*.md"
   pull_request:
     branches: [main]
-    paths:
-      - "!**.md"
+    paths-ignore:
+      - "!**/*.md"
   merge_group:
     types: [checks_requested]
     branches: [main]
