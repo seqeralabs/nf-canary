@@ -18,6 +18,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  prettier:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Install NodeJS
+        uses: actions/setup-node@v3
+
+      - name: Install Prettier
+        run: npm install -g prettier
+
+      - name: Run Prettier --check
+        run: prettier --check .
+
   nf-test:
     runs-on: ubuntu-20.04
     env:
