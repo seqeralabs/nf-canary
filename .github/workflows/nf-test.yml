@@ -2,8 +2,12 @@ name: nf-test
 on:
   push:
     branches: [main]
+    paths:
+      - "!**.md"
   pull_request:
     branches: [main]
+    paths:
+      - "!**.md"
   merge_group:
     types: [checks_requested]
     branches: [main]
