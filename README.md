@@ -39,6 +39,8 @@ Each test can be skipped by name with the parameter `--skip`, e.g. `--skip TEST_
 ```yaml
 TEST_CREATE_FILE:
   - TEST_PASS_FILE
+TEST_CREATE_FOLDER:
+  - TEST_PASS_FOLDER
 ```
 
 ### Interpreting the results
