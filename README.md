@@ -91,7 +91,11 @@ This process stages a folder from the working directory to the worker node, copi
 
 ### `TEST_PUBLISH_FILE`
 
-This process creates a file on the worker machine, then writes that file to the publishDir directory. This is the by default written to an subfolder called `output` in the working directory.
+This process creates a file on the worker machine, then writes that file to the publishDir directory. This is the by default written to an subfolder called `output` in the working directory, but this can be overridden using the parameter `outdir`. Use this to demonstrate you are able to publish to the relevant output directory.
+
+### `TEST_PUBLISH_FOLDER`
+
+This process creates a folder on the worker machine, then writes that folder to the publishDir directory. This is the by default written to an subfolder called `output` in the working directory, but this can be overridden using the parameter `outdir`. Use this to demonstrate you are able to publish to the relevant output directory.
 
 ### `TEST_IGNORED_FAIL`
 
