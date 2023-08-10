@@ -1,4 +1,4 @@
-name: nf-test
+name: test
 on:
   push:
     branches: [main]
