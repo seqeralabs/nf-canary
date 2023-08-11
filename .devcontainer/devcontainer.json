@@ -1,5 +1,5 @@
 {
-  "image": "quay.io/biocontainers/nextflow:23.04.1--h2a3209d_3",
+  "image": "docker.io/nfcore/gitpod:2.9",
   "features": {},
   "customizations": {
     "vscode": {
