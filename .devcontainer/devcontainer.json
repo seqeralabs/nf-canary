@@ -4,11 +4,12 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "nextflow.nextflow",
-        "esbenp.prettier-vscode",
-        "redhat.vscode-yaml",
-        "GitHub.vscode-pull-request-github"
-      ]
+		"nextflow.nextflow",
+		"esbenp.prettier-vscode",
+		"redhat.vscode-yaml",
+		"GitHub.vscode-pull-request-github",
+		"github.vscode-github-actions"
+	]
     }
   }
 }
