@@ -1,5 +1,5 @@
 {
-  "image": "quay.io/seqeralabs/nf-launcher:j17-23.04.2-up2",
+  "image": "quay.io/biocontainers/nextflow:23.04.1--h2a3209d_3",
   "features": {},
   "customizations": {
     "vscode": {
