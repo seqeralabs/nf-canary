@@ -1,5 +1,14 @@
 {
   "image": "quay.io/seqeralabs/nf-launcher:j17-23.04.2-up2",
-  "features": {
+  "features": {},
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "nextflow.nextflow",
+        "esbenp.prettier-vscode",
+        "redhat.vscode-yaml",
+        "GitHub.vscode-pull-request-github"
+      ]
+    }
   }
 }
