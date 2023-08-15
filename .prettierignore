@@ -6,6 +6,7 @@ LICENSE
 work/
 results/
 .DS_Store
+*.sh
 *.pyc
 *.nf
 *.config

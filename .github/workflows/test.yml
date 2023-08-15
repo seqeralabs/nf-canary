@@ -18,7 +18,6 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  actions: write
   contents: write
 
 jobs:
@@ -36,12 +35,6 @@ jobs:
 
       - name: Install Prettier
         run: npm install -g prettier
-
-      - name: Prettier Action
-        uses: creyD/prettier_action@v4.3
-        with:
-          prettier_options: '--write **/*.{json,yaml,yml,md}'
-          only_changed: True
 
       - name: Run Prettier --check
         run: prettier --check .

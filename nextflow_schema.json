@@ -11,7 +11,8 @@
             "description": "",
             "default": "",
             "properties": {
-                "skip": { "type": "string",
+                "skip": {
+                    "type": "string",
                     "description": "Tests to skip as comma delimited values.",
                     "help_text": "Tests to skip as comma delimited values. E.g. --skip TEST_SUCCESS,TEST_INPUT. Case insensitive."
                 },
