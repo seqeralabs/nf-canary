@@ -33,7 +33,7 @@ jobs:
       - name: Prettier Action
         uses: creyD/prettier_action@v4.3
         with:
-          prettier_options: '--write **/*.{json,yaml,yml,sh,md}'
+          prettier_options: '--write **/*.{json,yaml,yml,md}'
 
       - name: Run Prettier --check
         run: prettier --check .
