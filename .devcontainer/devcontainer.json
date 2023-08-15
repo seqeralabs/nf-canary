@@ -1,14 +1,15 @@
 {
-  "image": "docker.io/nfcore/gitpod:2.9",
-  "features": {},
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "nextflow.nextflow",
-        "esbenp.prettier-vscode",
-        "redhat.vscode-yaml",
-        "GitHub.vscode-pull-request-github"
-      ]
+    "image": "docker.io/nfcore/gitpod:2.9",
+    "features": {},
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "nextflow.nextflow",
+                "esbenp.prettier-vscode",
+                "redhat.vscode-yaml",
+                "GitHub.vscode-pull-request-github",
+                "github.vscode-github-actions"
+            ]
+        }
     }
-  }
 }
