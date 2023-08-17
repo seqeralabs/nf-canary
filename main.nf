@@ -11,9 +11,9 @@ process TEST_SUCCESS {
 
 process TEST_CREATE_FILE {
     /*
-    Creates a file on the worker node which is uploaded to the working directory. 
+    Creates a file on the worker node which is uploaded to the working directory.
     */
-     
+
     output:
         path("*.txt"), emit: outfile
 
@@ -24,9 +24,9 @@ process TEST_CREATE_FILE {
 
 process TEST_CREATE_FOLDER {
     /*
-    Creates a file on the worker node which is uploaded to the working directory. 
+    Creates a file on the worker node which is uploaded to the working directory.
     */
-     
+
     output:
         path("test"), type: 'dir', emit: outfolder
 
@@ -44,7 +44,7 @@ process TEST_INPUT {
 
     input:
         path input
-    
+
     output:
         stdout
 
@@ -73,7 +73,7 @@ process TEST_STAGE_REMOTE {
 
     input:
         path input
-    
+
     output:
         stdout
 
@@ -89,7 +89,7 @@ process TEST_PASS_FILE {
 
     input:
         path input
-    
+
     output:
         path "out.txt", emit: outfile
 
@@ -105,7 +105,7 @@ process TEST_PASS_FOLDER {
 
     input:
         path input
-    
+
     output:
         path "out", type: 'dir'   , emit: outfolder
         path "out/*", type: 'file', emit: outfile
@@ -122,7 +122,7 @@ process TEST_PUBLISH_FILE {
 
 
     publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs").toUriString()  }, mode: 'copy'
-     
+
     output:
         path("*.txt")
 
@@ -137,7 +137,7 @@ process TEST_PUBLISH_FOLDER {
     */
 
     publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs").toUriString()  }, mode: 'copy'
-     
+
     output:
         path("test", type: 'dir')
 
@@ -154,15 +154,48 @@ process TEST_IGNORED_FAIL {
     This process should automatically fail but be ignored.
     */
     errorStrategy 'ignore'
-    
+
     """
     exit 1
     """
 }
 
+process TEST_MV_FILE {
+    /*
+    This process moves a file within a working directory.
+    */
+
+    input:
+        path input
+
+    output:
+        path "output.txt"
+
+    """
+    mv $input output.txt
+    """
+
+}
+
+process TEST_MV_FOLDER_CONTENTS {
+    /*
+    Moves the contents of a folder from within a folder
+    */
+
+    input:
+        path input
+
+    output:
+        path "out", type: 'dir'   , emit: outfolder
+        path "out/*", type: 'file', emit: outfile
+
+    """
+    mkdir -p out
+    mv $input/* out/
+    """
+}
+
 workflow {
-    
-    //outdir = params.outdir ?: workflow.workDir.toUriString()
 
     // Create test file on head node
     Channel
