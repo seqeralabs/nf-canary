@@ -1,0 +1,12 @@
+{
+    "Should run without failures": {
+        "content": [
+            {
+                "0": [
+                    "output.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            }
+        ],
+        "timestamp": "2023-08-18T10:33:06+0000"
+    }
+}

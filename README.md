@@ -100,3 +100,11 @@ This process creates a folder on the worker machine, then writes that folder to 
 ### `TEST_IGNORED_FAIL`
 
 This process should fail immediately but be ignored using the default configuration.
+
+### `TEST_MV_FILE`
+
+Tests moving a file within the working directory
+
+### `TEST_MV_FOLDER_CONTENTS`
+
+Tests moving the contents of a folder to a new folder within the working directory.

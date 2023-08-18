@@ -164,15 +164,12 @@ process TEST_MV_FILE {
     /*
     This process moves a file within a working directory.
     */
-
-    input:
-        path input
-
     output:
         path "output.txt"
 
     """
-    mv $input output.txt
+    touch test.txt
+    mv test.txt output.txt
     """
 
 }
@@ -182,16 +179,15 @@ process TEST_MV_FOLDER_CONTENTS {
     Moves the contents of a folder from within a folder
     */
 
-    input:
-        path input
-
     output:
         path "out", type: 'dir'   , emit: outfolder
         path "out/*", type: 'file', emit: outfile
 
     """
-    mkdir -p out
-    mv $input/* out/
+    mkdir -p test
+    touch test/test.txt
+    mkdir -p out/
+    mv test/* out/
     """
 }
 
@@ -217,4 +213,6 @@ workflow {
     TEST_PUBLISH_FILE()
     TEST_PUBLISH_FOLDER()
     TEST_IGNORED_FAIL()
+    TEST_MV_FILE()
+    TEST_MV_FOLDER_CONTENTS()
 }

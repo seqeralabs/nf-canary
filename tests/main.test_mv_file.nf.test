@@ -1,0 +1,16 @@
+nextflow_process {
+
+    name "Test Process TEST_MV_FILE"
+    script "main.nf"
+    process "TEST_MV_FILE"
+
+    test("Should run without failures") {
+
+        then {
+            assert process.success
+            assert snapshot(process.out).match()
+        }
+
+    }
+
+}
