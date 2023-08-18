@@ -67,6 +67,7 @@ jobs:
         # Test the module
       - name: Run nf-test
         run: |
+          java -version
           nf-test test \
               --debug \
               --tap=test.tap
