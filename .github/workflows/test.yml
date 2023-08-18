@@ -40,28 +40,23 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions/cache@v3
-        with:
-          path: /usr/local/bin/nextflow
-          key: ${{ runner.os }}
-          restore-keys: |
-            ${{ runner.os }}-nextflow-
-
-      - name: Install Nextflow
-        env:
-          CAPSULE_LOG: none
-        run: |
-          wget -qO- get.nextflow.io | bash
-          sudo mv nextflow /usr/local/bin/
-
-      - name: Cache nf-test installation
+      - name: Cache software installation
         id: cache-software
         uses: actions/cache@v3
         with:
           path: |
+            /usr/local/bin/nextflow
             /usr/local/bin/nf-test
             /home/runner/.nf-test/nf-test.jar
-          key: ${{ runner.os }}-nftest
+          key: ${{ runner.os }}-software-${{ github.workspace }}
+
+      - name: Install Nextflow
+        env:
+          CAPSULE_LOG: none
+        if: steps.cache-software.outputs.cache-hit != 'true'
+        run: |
+          wget -qO- get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
 
       - name: Install nf-test
         if: steps.cache-software.outputs.cache-hit != 'true'
