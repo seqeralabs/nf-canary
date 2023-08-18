@@ -17,7 +17,7 @@ nextflow_pipeline {
             assert workflow.trace.tasks().size()     == 13
             assert workflow.trace.succeeded().size() == 12
             assert workflow.trace.failed().size()    == 1
-            assert snapshot(workflow.out).match()
+            assert snapshot(workflow.out, path("work/outputs").list()).match()
         }
 
     }
@@ -36,13 +36,11 @@ nextflow_pipeline {
             assert workflow.trace.tasks().size()     == 12
             assert workflow.trace.succeeded().size() == 11
             assert workflow.trace.failed().size()    == 1
-            assert snapshot(workflow.out).match()
+            assert snapshot(workflow.out, path("work/outputs").list()).match()
         }
 
     }
 
-<<<<<<< HEAD
-=======
 
     test("Should only run one process") {
 
@@ -58,12 +56,11 @@ nextflow_pipeline {
             assert workflow.trace.tasks().size()     == 1
             assert workflow.trace.succeeded().size() == 1
             assert workflow.trace.failed().size()    == 0
-            assert snapshot(workflow.out).match()
+            assert snapshot(workflow.out, path("work/outputs").list()).match()
         }
 
     }
 
->>>>>>> a228794 (Add selective running of tests)
     test("Should publish to alternative directory") {
 
         when {
