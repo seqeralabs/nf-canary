@@ -2,23 +2,23 @@
     "Should skip TEST_SUCCESS": {
         "content": [
             {
-                
+
             }
         ],
-        "timestamp": "2023-08-18T10:28:15+0000"
+        "timestamp": "2023-08-18T10:59:43+0000"
     },
     "Should skip a process": {
         "content": [
             {
-                
+
             }
         ],
-        "timestamp": "2023-08-18T10:28:15+0000"
+        "timestamp": "2023-08-18T10:59:43+0000"
     },
     "Should publish to alternative directory": {
         "content": [
             {
-                
+
             },
             [
                 [
@@ -28,14 +28,22 @@
                 "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
-        "timestamp": "2023-08-18T10:28:15+0000"
+        "timestamp": "2023-08-18T10:59:43+0000"
+    },
+    "Should only run one process": {
+        "content": [
+            {
+
+            }
+        ],
+        "timestamp": "2023-08-18T10:59:43+0000"
     },
     "Should run without failures": {
         "content": [
             {
-                
+
             }
         ],
-        "timestamp": "2023-08-18T10:28:15+0000"
+        "timestamp": "2023-08-18T10:59:43+0000"
     }
 }

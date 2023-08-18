@@ -41,6 +41,29 @@ nextflow_pipeline {
 
     }
 
+<<<<<<< HEAD
+=======
+
+    test("Should only run one process") {
+
+        when {
+            params {
+              run = "test_success"
+              remoteFile = "tests/testfile.txt"
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert workflow.trace.tasks().size()     == 1
+            assert workflow.trace.succeeded().size() == 1
+            assert workflow.trace.failed().size()    == 0
+            assert snapshot(workflow.out).match()
+        }
+
+    }
+
+>>>>>>> a228794 (Add selective running of tests)
     test("Should publish to alternative directory") {
 
         when {

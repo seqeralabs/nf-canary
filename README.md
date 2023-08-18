@@ -34,7 +34,15 @@ nf-canary uses the `--outdir` convention established by [nf-core](https://nf-co.
 
 ### Skipping Tests
 
-Each test can be skipped by name with the parameter `--skip`, e.g. `--skip TEST_INPUT`. Multiple can be specified with comma delimited values, e.g. `--skip TEST_CREATE_FILE,TEST_PASS_FILE`. Note, some tests depend on previous tests running so will be skipped if an upstream test does not run (or fails). All tests which are dependent on previous tests are listed here:
+Each test can be skipped by name with the parameter `--skip`, e.g. `--skip TEST_INPUT`. Multiple test can be specified with comma delimited values, e.g. `--skip TEST_CREATE_FILE,TEST_PASS_FILE`. Case insensitive.
+
+### Selectively running tests
+
+By default, all tests are ran, however you can selectively run a test with `--run`, e.g. `--run TEST_INPUT`. When using this parameter, _only_ the tests selected will be run. Multiple test can be specified with comma delimited values, e.g. `--run TEST_CREATE_FILE,TEST_PASS_FILE`. Case insensitive.
+
+### Note on test dependency
+
+Note, some tests depend on previous tests running so will be skipped if an upstream test does not run (or fails). All tests which are dependent on previous tests are listed here:
 
 ```yaml
 TEST_CREATE_FILE:
