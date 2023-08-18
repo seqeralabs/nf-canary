@@ -68,6 +68,7 @@ jobs:
       - name: Run nf-test
         run: |
           nf-test test \
+              --debug \
               --tap=test.tap
 
       - uses: pcolby/tap-summary@v1
