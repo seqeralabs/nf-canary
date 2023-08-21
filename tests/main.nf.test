@@ -46,13 +46,14 @@ nextflow_pipeline {
         when {
             params {
               outdir = "results"
+              remoteFile = "tests/testfile.txt"
             }
         }
 
         then {
             assert workflow.success
-            assert workflow.trace.tasks().size()     == 12
-            assert workflow.trace.succeeded().size() == 11
+            assert workflow.trace.tasks().size()     == 13
+            assert workflow.trace.succeeded().size() == 12
             assert workflow.trace.failed().size()    == 1
             assert snapshot(workflow.out, path(params.outdir).list()).match()
         }
