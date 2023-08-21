@@ -1,8 +1,8 @@
-nextflow_pipeline {
+nextflow_workflow {
 
-    name "Test Workflow main.nf"
-    tag "full"
+    name "Test Workflow NF_CANARY"
     script "main.nf"
+    workflow "NF_CANARY"
 
     test("Should run without failures") {
 
@@ -26,8 +26,8 @@ nextflow_pipeline {
 
         when {
             params {
-              skip = "test_success"
-              remoteFile = "tests/testfile.txt"
+                skip       = "test_success"
+                remoteFile = "tests/testfile.txt"
             }
         }
 
@@ -45,7 +45,7 @@ nextflow_pipeline {
 
         when {
             params {
-              outdir = "results"
+              outdir     = "results"
               remoteFile = "tests/testfile.txt"
             }
         }

@@ -1,24 +1,112 @@
 {
-    "Should skip TEST_SUCCESS": {
-        "content": [
-            {
-                
-            }
-        ],
-        "timestamp": "2023-08-18T10:28:15+0000"
-    },
     "Should skip a process": {
         "content": [
             {
-                
+                "0": [
+                    "",
+                    [
+                        "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    [
+                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    "out.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "output.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    [
+                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    [
+                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "alpha\ngamma\nbeta\n"
+                ],
+                "out": [
+                    "",
+                    [
+                        "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    [
+                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    "out.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "output.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    [
+                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    [
+                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "alpha\ngamma\nbeta\n"
+                ]
             }
         ],
-        "timestamp": "2023-08-18T10:28:15+0000"
+        "timestamp": "2023-08-21T16:01:10+0000"
     },
     "Should publish to alternative directory": {
         "content": [
             {
-                
+                "0": [
+                    "",
+                    "",
+                    [
+                        "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    "output.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    [
+                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    "alpha\ngamma\nbeta\n",
+                    [
+                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    "out.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    [
+                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "out": [
+                    "",
+                    "",
+                    [
+                        "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    "output.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    [
+                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    "alpha\ngamma\nbeta\n",
+                    [
+                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    "out.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    [
+                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
             },
             [
                 [
@@ -28,14 +116,63 @@
                 "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
-        "timestamp": "2023-08-18T10:28:15+0000"
+        "timestamp": "2023-08-21T16:01:10+0000"
     },
     "Should run without failures": {
         "content": [
             {
-                
+                "0": [
+                    "",
+                    "",
+                    [
+                        "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    [
+                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    "out.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "output.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    [
+                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    [
+                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "alpha\ngamma\nbeta\n",
+                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "out": [
+                    "",
+                    "",
+                    [
+                        "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    [
+                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    "out.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "output.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    [
+                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    [
+                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ],
+                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "alpha\ngamma\nbeta\n",
+                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
             }
         ],
-        "timestamp": "2023-08-18T10:28:15+0000"
+        "timestamp": "2023-08-21T16:01:10+0000"
     }
 }
