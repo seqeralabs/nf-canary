@@ -246,5 +246,4 @@ workflow NF_CANARY {
 
 workflow {
     NF_CANARY()
-    NF_CANARY.out.out.view()
 }

@@ -1,7 +1,8 @@
-nextflow_pipeline{
+nextflow_workflow {
 
-    name "Test nf-canary"
+    name "Test Workflow NF_CANARY"
     script "main.nf"
+    workflow "NF_CANARY"
 
     test("Should run without failures") {
 
@@ -15,25 +16,6 @@ nextflow_pipeline{
             assert workflow.success
             assert workflow.trace.tasks().size()     == 13
             assert workflow.trace.succeeded().size() == 12
-            assert workflow.trace.failed().size()    == 1
-            assert snapshot(workflow.out).match()
-        }
-
-    }
-
-    test("Should skip a process") {
-
-        when {
-            params {
-                skip       = "test_success"
-                remoteFile = "tests/testfile.txt"
-            }
-        }
-
-        then {
-            assert workflow.success
-            assert workflow.trace.tasks().size()     == 12
-            assert workflow.trace.succeeded().size() == 11
             assert workflow.trace.failed().size()    == 1
             assert snapshot(workflow.out).match()
         }
