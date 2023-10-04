@@ -8,7 +8,9 @@ nextflow_process {
 
         then {
             assert process.success
-            assert snapshot(process.out).match()
+            assert process.exitStatus == 0
+            assert process.trace.tasks().size() == 1
+            assert snapshot(process).match()
         }
 
     }

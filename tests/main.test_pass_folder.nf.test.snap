@@ -7,12 +7,6 @@
                         "sample.txt:md5,9f9f90dbe3e5ee1218c86b8839db1995"
                     ]
                 ],
-                "1": [
-                    "sample.txt:md5,9f9f90dbe3e5ee1218c86b8839db1995"
-                ],
-                "outfile": [
-                    "sample.txt:md5,9f9f90dbe3e5ee1218c86b8839db1995"
-                ],
                 "outfolder": [
                     [
                         "sample.txt:md5,9f9f90dbe3e5ee1218c86b8839db1995"
@@ -20,6 +14,6 @@
                 ]
             }
         ],
-        "timestamp": "2023-08-04T15:47:13+0000"
+        "timestamp": "2023-10-04T12:19:55.945452"
     }
 }

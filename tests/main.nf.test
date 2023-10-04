@@ -1,14 +1,14 @@
-nextflow_pipeline {
+nextflow_pipeline{
 
-    name "Test Workflow main.nf"
-    tag "full"
+    name "Test nf-canary"
     script "main.nf"
 
     test("Should run without failures") {
 
         when {
             params {
-              remoteFile = "tests/testfile.txt"
+              remoteFile = "${baseDir}/tests/testfile.txt"
+              outdir     = "${launchDir}/output"
             }
         }
 
@@ -17,7 +17,7 @@ nextflow_pipeline {
             assert workflow.trace.tasks().size()     == 13
             assert workflow.trace.succeeded().size() == 12
             assert workflow.trace.failed().size()    == 1
-            assert snapshot(workflow.out).match()
+            assert snapshot(workflow, path(params.outdir).list()).match()
         }
 
     }
@@ -26,8 +26,9 @@ nextflow_pipeline {
 
         when {
             params {
-              skip = "test_success"
-              remoteFile = "tests/testfile.txt"
+              skip       = "test_success"
+              remoteFile = "${baseDir}/tests/testfile.txt"
+              outdir     = "${launchDir}/output"
             }
         }
 
@@ -36,7 +37,28 @@ nextflow_pipeline {
             assert workflow.trace.tasks().size()     == 12
             assert workflow.trace.succeeded().size() == 11
             assert workflow.trace.failed().size()    == 1
-            assert snapshot(workflow.out).match()
+            assert snapshot(workflow, path(params.outdir).list()).match()
+        }
+
+    }
+
+
+    test("Should only run one process") {
+
+        when {
+            params {
+              run        = "test_success"
+              remoteFile = "${baseDir}/tests/testfile.txt"
+              outdir     = "${launchDir}/output"
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert workflow.trace.tasks().size()     == 1
+            assert workflow.trace.succeeded().size() == 1
+            assert workflow.trace.failed().size()    == 0
+            assert snapshot(workflow, path(params.outdir).list()).match()
         }
 
     }
@@ -45,16 +67,17 @@ nextflow_pipeline {
 
         when {
             params {
-              outdir = "results"
+              outdir     = "${launchDir}/output"
+              remoteFile = "${baseDir}/tests/testfile.txt"
             }
         }
 
         then {
             assert workflow.success
-            assert workflow.trace.tasks().size()     == 12
-            assert workflow.trace.succeeded().size() == 11
+            assert workflow.trace.tasks().size()     == 13
+            assert workflow.trace.succeeded().size() == 12
             assert workflow.trace.failed().size()    == 1
-            assert snapshot(workflow.out, path(params.outdir).list()).match()
+            assert snapshot(workflow, path("${launchDir}/output").list()).match()
         }
 
     }

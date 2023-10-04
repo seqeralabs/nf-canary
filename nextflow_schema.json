@@ -16,6 +16,11 @@
                     "description": "Tests to skip as comma delimited values.",
                     "help_text": "Tests to skip as comma delimited values. E.g. --skip TEST_SUCCESS,TEST_INPUT. Case insensitive."
                 },
+                "run": {
+                    "type": "string",
+                    "description": "Selectively run tests  as comma delimited values",
+                    "help_text": "Tests to run as comma delimited values. E.g. --skip TEST_SUCCESS,TEST_INPUT. Case insensitive. Note this excludes all other tests."
+                },
                 "remoteFile": {
                     "type": "string",
                     "description": "Path to remote file to download and use.",

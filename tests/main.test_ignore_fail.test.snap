@@ -2,9 +2,25 @@
     "Should run without failures": {
         "content": [
             {
-                
+                "stderr": [
+                    
+                ],
+                "errorReport": null,
+                "exitStatus": 0,
+                "failed": false,
+                "stdout": [
+                    
+                ],
+                "errorMessage": null,
+                "trace": {
+                    "tasksFailed": 1,
+                    "tasksCount": 1,
+                    "tasksSucceeded": 0
+                },
+                "name": "TEST_IGNORED_FAIL",
+                "success": true
             }
         ],
-        "timestamp": "2023-08-04T15:05:45+0000"
+        "timestamp": "2023-10-04T12:11:38.820379"
     }
 }

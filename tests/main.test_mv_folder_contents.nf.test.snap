@@ -7,12 +7,6 @@
                         "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
-                "1": [
-                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ],
-                "outfile": [
-                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ],
                 "outfolder": [
                     [
                         "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
@@ -20,6 +14,6 @@
                 ]
             }
         ],
-        "timestamp": "2023-08-18T10:33:34+0000"
+        "timestamp": "2023-10-04T12:19:57.98459"
     }
 }

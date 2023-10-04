@@ -2,9 +2,30 @@
     "Should run without failures": {
         "content": [
             {
-                
+                "stderr": [
+                    
+                ],
+                "errorReport": null,
+                "exitStatus": 0,
+                "out": {
+                    "0": [
+                        ""
+                    ]
+                },
+                "failed": false,
+                "stdout": [
+                    
+                ],
+                "errorMessage": null,
+                "trace": {
+                    "tasksFailed": 0,
+                    "tasksCount": 1,
+                    "tasksSucceeded": 1
+                },
+                "name": "TEST_SUCCESS",
+                "success": true
             }
         ],
-        "timestamp": "2023-07-20T10:50:08+0000"
+        "timestamp": "2023-10-04T12:20:24.512086"
     }
 }
