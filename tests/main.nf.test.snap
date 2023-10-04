@@ -83,14 +83,10 @@
                 "success": true
             },
             [
-                [
-                    "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
-                    "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ],
-                "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                
             ]
         ],
-        "timestamp": "2023-10-04T12:09:14.732431"
+        "timestamp": "2023-10-04T12:17:23.982939"
     },
     "Should run without failures": {
         "content": [

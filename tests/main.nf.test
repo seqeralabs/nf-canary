@@ -9,7 +9,7 @@ nextflow_pipeline {
         when {
             params {
               remoteFile = "${baseDir}/tests/testfile.txt"
-              outdir     = "${baseDir}/output"
+              outdir     = "${launchDir}/output"
             }
         }
 
@@ -29,7 +29,7 @@ nextflow_pipeline {
             params {
               skip       = "test_success"
               remoteFile = "${baseDir}/tests/testfile.txt"
-              outdir     = "${baseDir}/output"
+              outdir     = "${launchDir}/output"
             }
         }
 
@@ -48,9 +48,9 @@ nextflow_pipeline {
 
         when {
             params {
-              run = "test_success"
-              remoteFile = "$baseDir/tests/testfile.txt"
-              outdir     = "${baseDir}/output"
+              run        = "test_success"
+              remoteFile = "${baseDir}/tests/testfile.txt"
+              outdir     = "${launchDir}/output"
             }
         }
 
@@ -68,7 +68,7 @@ nextflow_pipeline {
 
         when {
             params {
-              outdir = "${baseDir}/output2"
+              outdir = "${launchDir}/output"
             }
         }
 
@@ -77,7 +77,7 @@ nextflow_pipeline {
             assert workflow.trace.tasks().size()     == 12
             assert workflow.trace.succeeded().size() == 11
             assert workflow.trace.failed().size()    == 1
-            assert snapshot(workflow, path("${baseDir}/output2").list()).match()
+            assert snapshot(workflow, path("${launchDir}/output").list()).match()
         }
 
     }
