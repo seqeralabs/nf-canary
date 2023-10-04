@@ -68,6 +68,11 @@ jobs:
         run: |
           wget -qO- https://code.askimed.com/install/nf-test | bash
           sudo mv nf-test /usr/local/bin/
+          nf-test update-plugins
+
+      - name: Run pipeline and cache dependencies
+        run: |
+          nextflow run main.nf
 
         # Test the module
       - name: Run nf-test
