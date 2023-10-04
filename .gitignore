@@ -10,3 +10,4 @@ testing*
 test-datasets/
 .nf-test/
 test.tap
+.nf-test.log
