@@ -26,14 +26,9 @@ nextflow_pipeline{
 
         when {
             params {
-<<<<<<< HEAD
               skip       = "test_success"
               remoteFile = "${baseDir}/tests/testfile.txt"
               outdir     = "${launchDir}/output"
-=======
-                skip       = "test_success"
-                remoteFile = "tests/testfile.txt"
->>>>>>> nf-test-emit-checks
             }
         }
 
