@@ -2,11 +2,15 @@
     "Should skip a process": {
         "content": [
             {
-                "stderr": [],
+                "stderr": [
+                    
+                ],
                 "errorReport": "",
                 "exitStatus": 0,
                 "failed": false,
-                "stdout": [],
+                "stdout": [
+                    
+                ],
                 "errorMessage": "",
                 "trace": {
                     "tasksFailed": 1,
@@ -29,16 +33,20 @@
     "Should publish to alternative directory": {
         "content": [
             {
-                "stderr": [],
+                "stderr": [
+                    
+                ],
                 "errorReport": "",
                 "exitStatus": 0,
                 "failed": false,
-                "stdout": [],
+                "stdout": [
+                    
+                ],
                 "errorMessage": "",
                 "trace": {
                     "tasksFailed": 1,
-                    "tasksCount": 12,
-                    "tasksSucceeded": 11
+                    "tasksCount": 13,
+                    "tasksSucceeded": 12
                 },
                 "name": "workflow",
                 "success": true
@@ -51,16 +59,20 @@
                 "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
-        "timestamp": "2023-10-04T12:09:17.25461"
+        "timestamp": "2023-10-04T12:20:22.461185"
     },
     "Should only run one process": {
         "content": [
             {
-                "stderr": [],
+                "stderr": [
+                    
+                ],
                 "errorReport": "",
                 "exitStatus": 0,
                 "failed": false,
-                "stdout": [],
+                "stdout": [
+                    
+                ],
                 "errorMessage": "",
                 "trace": {
                     "tasksFailed": 0,
@@ -70,18 +82,24 @@
                 "name": "workflow",
                 "success": true
             },
-            []
+            [
+                
+            ]
         ],
         "timestamp": "2023-10-04T12:17:23.982939"
     },
     "Should run without failures": {
         "content": [
             {
-                "stderr": [],
+                "stderr": [
+                    
+                ],
                 "errorReport": "",
                 "exitStatus": 0,
                 "failed": false,
-                "stdout": [],
+                "stdout": [
+                    
+                ],
                 "errorMessage": "",
                 "trace": {
                     "tasksFailed": 1,
