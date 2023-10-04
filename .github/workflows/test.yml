@@ -73,9 +73,7 @@ jobs:
       - name: Run nf-test
         run: |
           java -version
-          nf-test test \
-              --debug \
-              --tap=test.tap
+          nf-test test --tap=test.tap
 
       - uses: pcolby/tap-summary@v1
         with:
