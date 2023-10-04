@@ -3,6 +3,9 @@ process TEST_SUCCESS {
     This process should automatically succeed
     */
 
+    output:
+        stdout
+
     script:
     """
     exit 0
@@ -107,8 +110,7 @@ process TEST_PASS_FOLDER {
         path input
 
     output:
-        path "out", type: 'dir'   , emit: outfolder
-        path "out/*", type: 'file', emit: outfile
+        path "out", type: 'dir', emit: outfolder
 
     """
     cp -rL $input out
@@ -155,6 +157,9 @@ process TEST_IGNORED_FAIL {
     */
     errorStrategy 'ignore'
 
+    output:
+        stdout
+
     """
     exit 1
     """
@@ -180,8 +185,7 @@ process TEST_MV_FOLDER_CONTENTS {
     */
 
     output:
-        path "out", type: 'dir'   , emit: outfolder
-        path "out/*", type: 'file', emit: outfile
+        path "out", type: 'dir', emit: outfolder
 
     """
     mkdir -p test
@@ -191,28 +195,55 @@ process TEST_MV_FOLDER_CONTENTS {
     """
 }
 
+workflow NF_CANARY {
+
+    main:
+        // Create test file on head node
+        Channel
+            .of("alpha", "beta", "gamma")
+            .collectFile(name: 'sample.txt', newLine: true)
+            .set { test_file }
+
+        remote_file = params.remoteFile ? Channel.fromPath(params.remoteFile) : Channel.empty()
+
+        // Run tests
+        TEST_SUCCESS()
+        TEST_CREATE_FILE()
+        TEST_CREATE_FOLDER()
+        TEST_INPUT(test_file)
+        TEST_BIN_SCRIPT()
+        TEST_STAGE_REMOTE(remote_file)
+        TEST_PASS_FILE(TEST_CREATE_FILE.out.outfile)
+        TEST_PASS_FOLDER(TEST_CREATE_FOLDER.out.outfolder)
+        TEST_PUBLISH_FILE()
+        TEST_PUBLISH_FOLDER()
+        TEST_IGNORED_FAIL()
+        TEST_MV_FILE()
+        TEST_MV_FOLDER_CONTENTS()
+
+        // POC of emitting the channel
+        Channel.empty()
+            .mix(
+                TEST_SUCCESS.out,
+                TEST_CREATE_FILE.out,
+                TEST_CREATE_FOLDER.out,
+                TEST_INPUT.out,
+                TEST_BIN_SCRIPT.out,
+                TEST_STAGE_REMOTE.out,
+                TEST_PASS_FILE.out,
+                TEST_PASS_FOLDER.out,
+                TEST_PUBLISH_FILE.out,
+                TEST_PUBLISH_FOLDER.out,
+                TEST_IGNORED_FAIL.out,
+                TEST_MV_FILE.out,
+                TEST_MV_FOLDER_CONTENTS.out
+            )
+            .set { ch_out }
+
+    emit:
+        out = ch_out
+}
+
 workflow {
-
-    // Create test file on head node
-    Channel
-        .of("alpha", "beta", "gamma")
-        .collectFile(name: 'sample.txt', newLine: true)
-        .set { test_file }
-
-    remote_file = params.remoteFile ? Channel.fromPath(params.remoteFile) : Channel.empty()
-
-    // Run tests
-    TEST_SUCCESS()
-    TEST_CREATE_FILE()
-    TEST_CREATE_FOLDER()
-    TEST_INPUT(test_file)
-    TEST_BIN_SCRIPT()
-    TEST_STAGE_REMOTE(remote_file)
-    TEST_PASS_FILE(TEST_CREATE_FILE.out.outfile)
-    TEST_PASS_FOLDER(TEST_CREATE_FOLDER.out.outfolder)
-    TEST_PUBLISH_FILE()
-    TEST_PUBLISH_FOLDER()
-    TEST_IGNORED_FAIL()
-    TEST_MV_FILE()
-    TEST_MV_FOLDER_CONTENTS()
+    NF_CANARY()
 }

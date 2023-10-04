@@ -2,15 +2,11 @@
     "Should skip a process": {
         "content": [
             {
-                "stderr": [
-                    
-                ],
+                "stderr": [],
                 "errorReport": "",
                 "exitStatus": 0,
                 "failed": false,
-                "stdout": [
-                    
-                ],
+                "stdout": [],
                 "errorMessage": "",
                 "trace": {
                     "tasksFailed": 1,
@@ -33,15 +29,11 @@
     "Should publish to alternative directory": {
         "content": [
             {
-                "stderr": [
-                    
-                ],
+                "stderr": [],
                 "errorReport": "",
                 "exitStatus": 0,
                 "failed": false,
-                "stdout": [
-                    
-                ],
+                "stdout": [],
                 "errorMessage": "",
                 "trace": {
                     "tasksFailed": 1,
@@ -64,15 +56,11 @@
     "Should only run one process": {
         "content": [
             {
-                "stderr": [
-                    
-                ],
+                "stderr": [],
                 "errorReport": "",
                 "exitStatus": 0,
                 "failed": false,
-                "stdout": [
-                    
-                ],
+                "stdout": [],
                 "errorMessage": "",
                 "trace": {
                     "tasksFailed": 0,
@@ -82,24 +70,18 @@
                 "name": "workflow",
                 "success": true
             },
-            [
-                
-            ]
+            []
         ],
         "timestamp": "2023-10-04T12:17:23.982939"
     },
     "Should run without failures": {
         "content": [
             {
-                "stderr": [
-                    
-                ],
+                "stderr": [],
                 "errorReport": "",
                 "exitStatus": 0,
                 "failed": false,
-                "stdout": [
-                    
-                ],
+                "stdout": [],
                 "errorMessage": "",
                 "trace": {
                     "tasksFailed": 1,

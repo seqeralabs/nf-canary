@@ -1,7 +1,6 @@
-nextflow_pipeline {
+nextflow_pipeline{
 
-    name "Test Workflow main.nf"
-    tag "full"
+    name "Test nf-canary"
     script "main.nf"
 
     test("Should run without failures") {
@@ -27,9 +26,14 @@ nextflow_pipeline {
 
         when {
             params {
+<<<<<<< HEAD
               skip       = "test_success"
               remoteFile = "${baseDir}/tests/testfile.txt"
               outdir     = "${launchDir}/output"
+=======
+                skip       = "test_success"
+                remoteFile = "tests/testfile.txt"
+>>>>>>> nf-test-emit-checks
             }
         }
 
@@ -68,14 +72,15 @@ nextflow_pipeline {
 
         when {
             params {
-              outdir = "${launchDir}/output"
+              outdir     = "${launchDir}/output"
+              remoteFile = "${baseDir}/tests/testfile.txt"
             }
         }
 
         then {
             assert workflow.success
-            assert workflow.trace.tasks().size()     == 12
-            assert workflow.trace.succeeded().size() == 11
+            assert workflow.trace.tasks().size()     == 13
+            assert workflow.trace.succeeded().size() == 12
             assert workflow.trace.failed().size()    == 1
             assert snapshot(workflow, path("${launchDir}/output").list()).match()
         }

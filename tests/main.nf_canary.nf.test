@@ -1,0 +1,44 @@
+nextflow_workflow {
+
+    name "Test Workflow NF_CANARY"
+    script "main.nf"
+    workflow "NF_CANARY"
+
+    test("Should run without failures") {
+
+        when {
+            params {
+              remoteFile = "tests/testfile.txt"
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert workflow.trace.tasks().size()     == 13
+            assert workflow.trace.succeeded().size() == 12
+            assert workflow.trace.failed().size()    == 1
+            assert snapshot(workflow.out).match()
+        }
+
+    }
+
+    test("Should publish to alternative directory") {
+
+        when {
+            params {
+              outdir     = "results"
+              remoteFile = "tests/testfile.txt"
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert workflow.trace.tasks().size()     == 13
+            assert workflow.trace.succeeded().size() == 12
+            assert workflow.trace.failed().size()    == 1
+            assert snapshot(workflow.out, path(params.outdir).list()).match()
+        }
+
+    }
+
+}
