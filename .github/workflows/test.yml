@@ -40,6 +40,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
       - name: Cache software installation
         id: cache-software
         uses: actions/cache@v3
