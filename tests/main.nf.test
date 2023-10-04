@@ -8,7 +8,7 @@ nextflow_pipeline {
 
         when {
             params {
-              remoteFile = "tests/testfile.txt"
+              remoteFile = "${baseDir}/tests/testfile.txt"
             }
         }
 
@@ -17,7 +17,7 @@ nextflow_pipeline {
             assert workflow.trace.tasks().size()     == 13
             assert workflow.trace.succeeded().size() == 12
             assert workflow.trace.failed().size()    == 1
-            assert snapshot(workflow.out, path("work/outputs").list()).match()
+            assert snapshot(path("work/outputs").list()).match()
         }
 
     }
@@ -27,7 +27,7 @@ nextflow_pipeline {
         when {
             params {
               skip = "test_success"
-              remoteFile = "tests/testfile.txt"
+              remoteFile = "${baseDir}/tests/testfile.txt"
             }
         }
 
@@ -36,7 +36,7 @@ nextflow_pipeline {
             assert workflow.trace.tasks().size()     == 12
             assert workflow.trace.succeeded().size() == 11
             assert workflow.trace.failed().size()    == 1
-            assert snapshot(workflow.out, path("work/outputs").list()).match()
+            assert snapshot(path("work/outputs").list()).match()
         }
 
     }
@@ -47,7 +47,7 @@ nextflow_pipeline {
         when {
             params {
               run = "test_success"
-              remoteFile = "tests/testfile.txt"
+              remoteFile = "$baseDir/tests/testfile.txt"
             }
         }
 
@@ -56,7 +56,7 @@ nextflow_pipeline {
             assert workflow.trace.tasks().size()     == 1
             assert workflow.trace.succeeded().size() == 1
             assert workflow.trace.failed().size()    == 0
-            assert snapshot(workflow.out, path("work/outputs").list()).match()
+            assert snapshot(path("work/outputs").list()).match()
         }
 
     }
@@ -74,7 +74,7 @@ nextflow_pipeline {
             assert workflow.trace.tasks().size()     == 12
             assert workflow.trace.succeeded().size() == 11
             assert workflow.trace.failed().size()    == 1
-            assert snapshot(workflow.out, path(params.outdir).list()).match()
+            assert snapshot(path(params.outdir).list()).match()
         }
 
     }
