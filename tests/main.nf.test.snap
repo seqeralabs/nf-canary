@@ -1,42 +1,126 @@
 {
     "Should skip a process": {
         "content": [
+            {
+                "stderr": [
+                    
+                ],
+                "errorReport": "",
+                "exitStatus": 0,
+                "failed": false,
+                "stdout": [
+                    
+                ],
+                "errorMessage": "",
+                "trace": {
+                    "tasksFailed": 1,
+                    "tasksCount": 12,
+                    "tasksSucceeded": 11
+                },
+                "name": "workflow",
+                "success": true
+            },
             [
-                "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
-                "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
-            ],
-            "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                [
+                    "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
         ],
-        "timestamp": "2023-10-04T11:44:43.844549"
+        "timestamp": "2023-10-04T12:09:12.963778"
     },
     "Should publish to alternative directory": {
         "content": [
+            {
+                "stderr": [
+                    
+                ],
+                "errorReport": "",
+                "exitStatus": 0,
+                "failed": false,
+                "stdout": [
+                    
+                ],
+                "errorMessage": "",
+                "trace": {
+                    "tasksFailed": 1,
+                    "tasksCount": 12,
+                    "tasksSucceeded": 11
+                },
+                "name": "workflow",
+                "success": true
+            },
             [
-                "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
-                "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
-            ],
-            "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                [
+                    "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
         ],
-        "timestamp": "2023-10-04T11:44:48.06743"
+        "timestamp": "2023-10-04T12:09:17.25461"
     },
     "Should only run one process": {
         "content": [
+            {
+                "stderr": [
+                    
+                ],
+                "errorReport": "",
+                "exitStatus": 0,
+                "failed": false,
+                "stdout": [
+                    
+                ],
+                "errorMessage": "",
+                "trace": {
+                    "tasksFailed": 0,
+                    "tasksCount": 1,
+                    "tasksSucceeded": 1
+                },
+                "name": "workflow",
+                "success": true
+            },
             [
-                "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
-                "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
-            ],
-            "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                [
+                    "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
         ],
-        "timestamp": "2023-10-04T11:44:45.712702"
+        "timestamp": "2023-10-04T12:09:14.732431"
     },
     "Should run without failures": {
         "content": [
+            {
+                "stderr": [
+                    
+                ],
+                "errorReport": "",
+                "exitStatus": 0,
+                "failed": false,
+                "stdout": [
+                    
+                ],
+                "errorMessage": "",
+                "trace": {
+                    "tasksFailed": 1,
+                    "tasksCount": 13,
+                    "tasksSucceeded": 12
+                },
+                "name": "workflow",
+                "success": true
+            },
             [
-                "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
-                "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
-            ],
-            "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                [
+                    "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
         ],
-        "timestamp": "2023-10-04T11:44:41.565486"
+        "timestamp": "2023-10-04T12:07:58.679961"
     }
 }
