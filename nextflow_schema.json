@@ -11,26 +11,27 @@
             "description": "",
             "default": "",
             "properties": {
-                "skip": {
-                    "type": "string",
-                    "description": "Tests to skip as comma delimited values.",
-                    "help_text": "Tests to skip as comma delimited values. E.g. --skip TEST_SUCCESS,TEST_INPUT. Case insensitive."
-                },
                 "run": {
                     "type": "string",
                     "description": "Selectively run tests  as comma delimited values",
                     "help_text": "Tests to run as comma delimited values. E.g. --skip TEST_SUCCESS,TEST_INPUT. Case insensitive. Note this excludes all other tests."
                 },
+                "skip": {
+                    "type": "string",
+                    "description": "Tests to skip as comma delimited values.",
+                    "help_text": "Tests to skip as comma delimited values. E.g. --skip TEST_SUCCESS,TEST_INPUT. Case insensitive."
+                },
                 "remoteFile": {
                     "type": "string",
                     "description": "Path to remote file to download and use.",
                     "help_text": "Path to a remote file to use within the pipeline. This mimics a remote set of files such as reference data that may need to be retrieved prior to analysis. By default this is not specified and the test is not ran, add a remote file using standard Nextflow filenaming to pull a file from your storage (e.g. an S3 bucket or shared storage).",
-                    "format": "path"
+                    "format": "file-path"
                 },
                 "outdir": {
                     "type": "string",
                     "description": "Path to use for publishing output files.",
-                    "help_text": "Path to a remote folder to publish files to. If not specified, this is a subfolder within the working directory but if specified it will publish files to the path specified in this parameter."
+                    "help_text": "Path to a remote folder to publish files to. If not specified, this is a subfolder within the working directory but if specified it will publish files to the path specified in this parameter.",
+                    "format": "directory-path"
                 }
             }
         }
