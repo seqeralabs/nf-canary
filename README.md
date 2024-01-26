@@ -1,4 +1,4 @@
-[![nf-test](https://github.com/adamrtalbot/nf-canary/actions/workflows/test.yml/badge.svg)](https://github.com/adamrtalbot/nf-canary/actions/workflows/test.yml)
+[![nf-test](https://github.com/seqeralabs/nf-canary/actions/workflows/test.yml/badge.svg)](https://github.com/seqeralabs/nf-canary/actions/workflows/test.yml)
 
 # :bird: nf-canary
 
@@ -19,7 +19,7 @@ All tests are in the `main.nf` file and aim to be as simple and legible as possi
 To run locally, you can simply run:
 
 ```
-nextflow run adamrtalbot/nf-canary
+nextflow run seqeralabs/nf-canary
 ```
 
 This will execute on your local machine with default settings. All tests should pass here. If they do not something is incorrect about your Nextflow installation or configuration.
@@ -84,7 +84,7 @@ _Note: This will only be enabled if the parameter `--remoteFile` is specified._
 This process retrieves a file from a remote resource to the worker machine and reads the contents. This uses the URL defined in the parameter `--remoteFile`, e.g. to download this README:
 
 ```
-nextflow run adamrtalbot/nf-canary --remoteFile 'https://raw.githubusercontent.com/adamrtalbot/nf-canary/main/README.md'
+nextflow run seqeralabs/nf-canary --remoteFile 'https://raw.githubusercontent.com/seqeralabs/nf-canary/main/README.md'
 ```
 
 Use this parameter to point to a file that you wish to access when running
