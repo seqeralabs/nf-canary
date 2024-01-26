@@ -79,7 +79,7 @@ Tests a shell script in the `bin/` directory that creates a single file.
 
 ### `TEST_STAGE_REMOTE`
 
-*Note: Enabled only if the parameter `--remoteFile` is specified.*
+_Note: Enabled only if the parameter `--remoteFile` is specified._
 
 This process retrieves a file from a remote resource to the worker machine and reads its contents. Use the `--remoteFile` parameter, e.g., to download this README:
 
@@ -116,4 +116,7 @@ Tests moving a file within the working directory.
 ### `TEST_MV_FOLDER_CONTENTS`
 
 Tests moving the contents of a folder to a new folder within the working directory.
+
+```
+
 ```
