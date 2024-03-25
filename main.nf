@@ -195,6 +195,37 @@ process TEST_MV_FOLDER_CONTENTS {
     """
 }
 
+process TEST_STDOUT {
+    /*
+    This process should create and capture STDOUT
+    */
+
+    output:
+        stdout
+
+    script:
+    """
+    """
+}
+
+process TEST_VAL_INPUT {
+    /*
+    This process should read in val and echo to STDOUT
+    */
+
+
+    input:
+        val input
+
+    output:
+        stdout
+
+    script:
+    """
+    echo $input
+    """
+}
+
 workflow NF_CANARY {
 
     main:
@@ -220,7 +251,8 @@ workflow NF_CANARY {
         TEST_IGNORED_FAIL()
         TEST_MV_FILE()
         TEST_MV_FOLDER_CONTENTS()
-
+        TEST_VAL_INPUT("Hello World")
+        
         // POC of emitting the channel
         Channel.empty()
             .mix(
