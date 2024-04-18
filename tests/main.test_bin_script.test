@@ -4,11 +4,13 @@ nextflow_process {
     script "main.nf"
     process "TEST_BIN_SCRIPT"
 
-    test("Should run without failures") {
+    test("TEST_BIN_SCRIPT") {
 
         then {
-            assert process.success
-            assert snapshot(process.out).match()
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
         }
 
     }

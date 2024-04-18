@@ -4,13 +4,15 @@ nextflow_process {
     script "main.nf"
     process "TEST_SUCCESS"
 
-    test("Should run without failures") {
+    test("TEST_SUCCESS") {
 
         then {
-            assert process.success
-            assert process.exitStatus == 0
-            assert process.trace.tasks().size() == 1
-            assert snapshot(process).match()
+            assertAll(
+                { assert process.success },
+                { assert process.exitStatus == 0 },
+                { assert process.trace.tasks().size() == 1 },
+                { assert snapshot(process).match() }
+            )
         }
 
     }
