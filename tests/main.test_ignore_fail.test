@@ -4,13 +4,15 @@ nextflow_process {
     script "main.nf"
     process "TEST_IGNORED_FAIL"
 
-    test("Should run without failures") {
+    test("TEST_IGNORED_FAIL") {
 
         then {
-            assert process.success
-            assert snapshot(process).match()
-            assert process.trace.failed().size() == 1
-            assert process.trace.succeeded().size() == 0
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process).match() },
+                { assert process.trace.failed().size() == 1 },
+                { assert process.trace.succeeded().size() == 0 }
+            )
         }
 
     }
