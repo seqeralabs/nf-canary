@@ -21,7 +21,7 @@ process TEST_CREATE_FILE {
         path("*.txt"), emit: outfile
 
     """
-    touch test.txt
+    echo "test" > test.txt
     """
 }
 
@@ -35,8 +35,8 @@ process TEST_CREATE_FOLDER {
 
     """
     mkdir -p test
-    touch test/test1.txt
-    touch test/test2.txt
+    echo "test1" > test/test1.txt
+    echo "test2" > test/test2.txt
     """
 }
 
