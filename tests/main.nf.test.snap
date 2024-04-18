@@ -14,8 +14,8 @@
                 "errorMessage": "",
                 "trace": {
                     "tasksFailed": 1,
-                    "tasksCount": 12,
-                    "tasksSucceeded": 11
+                    "tasksCount": 13,
+                    "tasksSucceeded": 12
                 },
                 "name": "workflow",
                 "success": true
@@ -28,7 +28,11 @@
                 "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
-        "timestamp": "2023-10-04T12:09:12.963778"
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-18T17:10:49.052904"
     },
     "Should publish to alternative directory": {
         "content": [
@@ -45,8 +49,8 @@
                 "errorMessage": "",
                 "trace": {
                     "tasksFailed": 1,
-                    "tasksCount": 13,
-                    "tasksSucceeded": 12
+                    "tasksCount": 14,
+                    "tasksSucceeded": 13
                 },
                 "name": "workflow",
                 "success": true
@@ -59,7 +63,11 @@
                 "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
-        "timestamp": "2023-10-04T12:20:22.461185"
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-18T17:10:53.086666"
     },
     "Should only run one process": {
         "content": [
@@ -86,6 +94,10 @@
                 
             ]
         ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
         "timestamp": "2023-10-04T12:17:23.982939"
     },
     "Should run without failures": {
@@ -103,8 +115,8 @@
                 "errorMessage": "",
                 "trace": {
                     "tasksFailed": 1,
-                    "tasksCount": 13,
-                    "tasksSucceeded": 12
+                    "tasksCount": 14,
+                    "tasksSucceeded": 13
                 },
                 "name": "workflow",
                 "success": true
@@ -117,6 +129,10 @@
                 "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
-        "timestamp": "2023-10-04T12:07:58.679961"
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-18T17:10:47.053474"
     }
 }
