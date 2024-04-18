@@ -4,14 +4,14 @@
             {
                 "0": [
                     [
-                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "test1.txt:md5,3e7705498e8be60520841409ebc69bc1",
+                        "test2.txt:md5,126a8a51b9d1bbd07fddc65819a542c3",
                     ]
                 ],
                 "outfolder": [
                     [
-                        "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
-                        "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "test1.txt:md5,3e7705498e8be60520841409ebc69bc1",
+                        "test2.txt:md5,126a8a51b9d1bbd07fddc65819a542c3"
                     ]
                 ]
             }
