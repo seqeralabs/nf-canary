@@ -1,5 +1,5 @@
 {
-    "Should run without failures": {
+    "TEST_PASS_FILE": {
         "content": [
             {
                 "0": [
@@ -10,6 +10,10 @@
                 ]
             }
         ],
-        "timestamp": "2023-10-04T11:56:24.966198"
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "23.10.1"
+        },
+        "timestamp": "2024-04-18T17:19:28.094518"
     }
 }
