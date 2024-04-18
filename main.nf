@@ -25,6 +25,19 @@ process TEST_CREATE_FILE {
     """
 }
 
+process TEST_CREATE_EMPTY_FILE {
+    /*
+    Creates an empty file on the worker node which is uploaded to the working directory.
+    */
+
+    output:
+        path("*.txt"), emit: outfile
+
+    """
+    touch test.txt
+    """
+}
+
 process TEST_CREATE_FOLDER {
     /*
     Creates a file on the worker node which is uploaded to the working directory.
@@ -258,6 +271,7 @@ workflow NF_CANARY {
             .mix(
                 TEST_SUCCESS.out,
                 TEST_CREATE_FILE.out,
+                TEST_CREATE_EMPTY_FILE.out,
                 TEST_CREATE_FOLDER.out,
                 TEST_INPUT.out,
                 TEST_BIN_SCRIPT.out,
