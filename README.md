@@ -65,6 +65,10 @@ This process should succeed automatically with exit status 0.
 
 This process creates a file on the worker machine and then moves it to the working directory.
 
+### `TEST_CREATE_EMPTY_FILE`
+
+This process creates an empty file on the worker machine and then moves it to the working directory.
+
 ### `TEST_CREATE_FOLDER`
 
 This process creates a folder in the working directory.
