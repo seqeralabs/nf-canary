@@ -74,8 +74,8 @@ nextflow_pipeline{
 
         then {
             assert workflow.success
-            assert workflow.trace.tasks().size()     == 13
-            assert workflow.trace.succeeded().size() == 12
+            assert workflow.trace.tasks().size()     == 14
+            assert workflow.trace.succeeded().size() == 13
             assert workflow.trace.failed().size()    == 1
             assert snapshot(workflow, path("${launchDir}/output").list()).match()
         }
