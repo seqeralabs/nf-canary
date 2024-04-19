@@ -1,12 +1,12 @@
 {
-    "TEST_CREATE_FILE": {
+    "TEST_CREATE_EMPTY_FILE": {
         "content": [
             {
                 "0": [
-                    "test.txt:md5,d8e8fca2dc0f896fd7cb4cb0031ba249"
+                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ],
                 "outfile": [
-                    "test.txt:md5,d8e8fca2dc0f896fd7cb4cb0031ba249"
+                    "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ]
             }
         ],

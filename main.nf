@@ -21,6 +21,19 @@ process TEST_CREATE_FILE {
         path("*.txt"), emit: outfile
 
     """
+    echo "test" > test.txt
+    """
+}
+
+process TEST_CREATE_EMPTY_FILE {
+    /*
+    Creates an empty file on the worker node which is uploaded to the working directory.
+    */
+
+    output:
+        path("*.txt"), emit: outfile
+
+    """
     touch test.txt
     """
 }
@@ -35,8 +48,8 @@ process TEST_CREATE_FOLDER {
 
     """
     mkdir -p test
-    touch test/test1.txt
-    touch test/test2.txt
+    echo "test1" > test/test1.txt
+    echo "test2" > test/test2.txt
     """
 }
 
@@ -240,7 +253,8 @@ workflow NF_CANARY {
         // Run tests
         TEST_SUCCESS()
         TEST_CREATE_FILE()
-        TEST_CREATE_FOLDER()
+        TEST_CREATE_EMPTY_FILE()
+	    TEST_CREATE_FOLDER()
         TEST_INPUT(test_file)
         TEST_BIN_SCRIPT()
         TEST_STAGE_REMOTE(remote_file)
@@ -258,6 +272,7 @@ workflow NF_CANARY {
             .mix(
                 TEST_SUCCESS.out,
                 TEST_CREATE_FILE.out,
+                TEST_CREATE_EMPTY_FILE.out,
                 TEST_CREATE_FOLDER.out,
                 TEST_INPUT.out,
                 TEST_BIN_SCRIPT.out,
