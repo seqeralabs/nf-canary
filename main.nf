@@ -254,7 +254,7 @@ workflow NF_CANARY {
         TEST_SUCCESS()
         TEST_CREATE_FILE()
         TEST_CREATE_EMPTY_FILE()
-	TEST_CREATE_FOLDER()
+	    TEST_CREATE_FOLDER()
         TEST_INPUT(test_file)
         TEST_BIN_SCRIPT()
         TEST_STAGE_REMOTE(remote_file)
