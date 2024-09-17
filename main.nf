@@ -248,7 +248,11 @@ workflow NF_CANARY {
             .collectFile(name: 'sample.txt', newLine: true)
             .set { test_file }
 
+        log.warn "${params.remoteFile}"
+
         remote_file = params.remoteFile ? Channel.fromPath(params.remoteFile) : Channel.empty()
+
+        remote_file.view()
 
         // Run tests
         TEST_SUCCESS()
