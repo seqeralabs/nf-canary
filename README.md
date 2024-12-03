@@ -124,3 +124,9 @@ Tests moving the contents of a folder to a new folder within the working directo
 ### `TEST_VAL_INPUT`
 
 Test a process can accept a value as input.
+
+### `TEST_GPU`
+
+_Note: Enabled only if the parameter `--gpu` is specified._
+
+This process tests the ability to use a GPU. It uses the `pytorch` conda environment to test CUDA is available and working. This is disabled by default as it requires a GPU to be available which may not be true.
