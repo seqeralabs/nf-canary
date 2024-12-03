@@ -325,7 +325,7 @@ process TEST_GPU {
     time_difference = cpu_time - gpu_time
     print(f"Time difference (CPU - GPU): {time_difference:.4f} seconds")
 
-    if time_difference > 0:
+    if time_difference < 0:
         raise Exception("GPU is slower than CPU indicating no GPU utilization")
     """
 
