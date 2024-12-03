@@ -255,7 +255,7 @@ process TEST_VAL_INPUT {
 process TEST_GPU {
 
     container 'pytorch/pytorch:latest'
-    conda 'pytorch::pytorch pytorch::torchvision pytorch::cudatoolkit=11.8'
+    conda 'pytorch::pytorch pytorch::torchvision nvidia::cudatoolkit=11.8'
     accelerator 1
     memory '10G'
 
