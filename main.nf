@@ -20,6 +20,7 @@ process TEST_CREATE_FILE {
     output:
         path("*.txt"), emit: outfile
 
+    script:
     """
     echo "test" > test.txt
     """
@@ -33,6 +34,7 @@ process TEST_CREATE_EMPTY_FILE {
     output:
         path("*.txt"), emit: outfile
 
+    script:
     """
     touch test.txt
     """
@@ -46,6 +48,7 @@ process TEST_CREATE_FOLDER {
     output:
         path("test"), type: 'dir', emit: outfolder
 
+    script:
     """
     mkdir -p test
     echo "test1" > test/test1.txt
@@ -64,6 +67,7 @@ process TEST_INPUT {
     output:
         stdout
 
+    script:
     """
     cat $input
     """
@@ -77,6 +81,7 @@ process TEST_BIN_SCRIPT {
     output:
         path("*.txt")
 
+    script:
     """
     bash run.sh
     """
@@ -93,6 +98,7 @@ process TEST_STAGE_REMOTE {
     output:
         stdout
 
+    script:
     """
     cat $input
     """
@@ -109,6 +115,7 @@ process TEST_PASS_FILE {
     output:
         path "out.txt", emit: outfile
 
+    script:
     """
     cp "$input" "out.txt"
     """
@@ -125,6 +132,7 @@ process TEST_PASS_FOLDER {
     output:
         path "out", type: 'dir', emit: outfolder
 
+    script:
     """
     cp -rL $input out
     """
@@ -141,6 +149,7 @@ process TEST_PUBLISH_FILE {
     output:
         path("*.txt")
 
+    script:
     """
     touch test.txt
     """
@@ -156,6 +165,7 @@ process TEST_PUBLISH_FOLDER {
     output:
         path("test", type: 'dir')
 
+    script:
     """
     mkdir -p test
     touch test/test1.txt
@@ -173,6 +183,7 @@ process TEST_IGNORED_FAIL {
     output:
         stdout
 
+    script:
     """
     exit 1
     """
@@ -185,6 +196,7 @@ process TEST_MV_FILE {
     output:
         path "output.txt"
 
+    script:
     """
     touch test.txt
     mv test.txt output.txt
@@ -200,6 +212,7 @@ process TEST_MV_FOLDER_CONTENTS {
     output:
         path "out", type: 'dir', emit: outfolder
 
+    script:
     """
     mkdir -p test
     touch test/test.txt
@@ -242,6 +255,7 @@ process TEST_VAL_INPUT {
 workflow NF_CANARY {
 
     main:
+
         // Create test file on head node
         Channel
             .of("alpha", "beta", "gamma")
