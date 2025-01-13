@@ -10,7 +10,6 @@
             "type": "object",
             "fa_icon": "fas fa-terminal",
             "description": "Parameters for controlling execution of the pipeline.",
-            "required": ["outdir"],
             "properties": {
                 "run": {
                     "type": "string",
