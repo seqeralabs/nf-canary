@@ -34,9 +34,7 @@ nf-canary adheres to the `--outdir` convention established by [nf-core](https://
 
 ### Overriding default container
 
-The param `container` is used to specify the container used to run the pipeline.
-By default it is using `ubuntu:24.04` hosted by `biocontainers` on `quay.io`.
-This can be overridden by changing the `container` param.
+The container is specified by the `container` parameter, which defaults to `quay.io/biocontainers/ubuntu:24.04`. If you wish to use a different container, you can specify an alternative using the --container parameter.
 
 ```nextflow
 params.container = 'docker.io/ubuntu:24.04'

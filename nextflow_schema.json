@@ -30,7 +30,7 @@
                 "container": {
                     "type": "string",
                     "description": "Container URI for nf-canary",
-                    "help_text": "URI for container. By default this is a ubuntu container on quay.io that should not have any hit limit.",
+                    "help_text": "Specifies the container URI. By default, this is an Ubuntu container on quay.io with no usage limits.",
                     "default": "quay.io/biocontainers/ubuntu:24.04"
                 },
                 "gpu": {
