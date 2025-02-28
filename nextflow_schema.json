@@ -27,6 +27,12 @@
                     "help_text": "Path to a remote file to use within the pipeline. This mimics a remote set of files such as reference data that may need to be retrieved prior to analysis. By default this is not specified and the test is not ran, add a remote file using standard Nextflow filenaming to pull a file from your storage (e.g. an S3 bucket or shared storage).",
                     "format": "path"
                 },
+                "container": {
+                    "type": "string",
+                    "description": "Container URI for nf-canary",
+                    "help_text": "Specifies the container URI. By default, this is an Ubuntu container on quay.io with no usage limits.",
+                    "default": "quay.io/biocontainers/ubuntu:24.04"
+                },
                 "gpu": {
                     "type": "boolean",
                     "description": "Whether to test GPU utilization within a process."
