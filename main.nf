@@ -174,7 +174,7 @@ process TEST_PUBLISH_FOLDER {
 }
 
 
-process TEST_IGNORED_FAIL {
+process TEST_FAIL {
     /*
     This process should automatically fail but be ignored.
     */
@@ -358,11 +358,11 @@ workflow NF_CANARY {
         TEST_PASS_FOLDER(TEST_CREATE_FOLDER.out.outfolder)
         TEST_PUBLISH_FILE()
         TEST_PUBLISH_FOLDER()
-        TEST_IGNORED_FAIL()
+        TEST_FAIL()
         TEST_MV_FILE()
         TEST_MV_FOLDER_CONTENTS()
         TEST_VAL_INPUT("Hello World")
-        
+
         TEST_GPU( dummy.filter { params.gpu } )
         // POC of emitting the channel
         Channel.empty()
@@ -378,7 +378,7 @@ workflow NF_CANARY {
                 TEST_PASS_FOLDER.out,
                 TEST_PUBLISH_FILE.out,
                 TEST_PUBLISH_FOLDER.out,
-                TEST_IGNORED_FAIL.out,
+                TEST_FAIL.out,
                 TEST_MV_FILE.out,
                 TEST_MV_FOLDER_CONTENTS.out,
                 TEST_GPU.out
