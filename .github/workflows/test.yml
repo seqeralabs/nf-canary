@@ -34,7 +34,7 @@ jobs:
         run: prettier --check .
 
   nf-test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       NXF_ANSI_LOG: false
     steps:
