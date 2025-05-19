@@ -32,6 +32,14 @@ Configure your infrastructure using the appropriate configuration files listed i
 
 nf-canary adheres to the `--outdir` convention established by [nf-core](https://nf-co.re/) to determine the output file destination. If not specified, output files are written to the work directory under a subfolder named `outputs`.
 
+### Overriding default container
+
+The container is specified by the `container` parameter, which defaults to `quay.io/biocontainers/ubuntu:24.04`. If you wish to use a different container, you can specify an alternative using the --container parameter.
+
+```nextflow
+params.container = 'docker.io/ubuntu:24.04'
+```
+
 ### Skipping Tests
 
 Skip individual tests by name using the `--skip` parameter, e.g., `--skip TEST_INPUT`. Multiple tests can be specified with comma-delimited values, e.g., `--skip TEST_CREATE_FILE,TEST_PASS_FILE`. The parameter is case-insensitive.
