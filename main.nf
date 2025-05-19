@@ -377,11 +377,60 @@ process TEST_GPU {
 }
 
 workflow NF_CANARY {
+    take:
+        run_tools
+        skip_tools
+        gpu
 
     main:
-        // Create dummy channel for inputs
-        Channel.of('dummy')
-            .set { dummy_ch }
+    def default_run_tools = [
+        "TEST_SUCCESS",
+        "TEST_CREATE_FILE",
+        "TEST_MV_FILE",
+        "TEST_CREATE_EMPTY_FILE",
+        "TEST_CREATE_FOLDER",
+        "TEST_INPUT",
+        "TEST_BIN_SCRIPT",
+        "TEST_STAGE_REMOTE",
+        "TEST_PASS_FILE",
+        "TEST_PASS_FOLDER",
+        "TEST_PUBLISH_FILE",
+        "TEST_PUBLISH_FOLDER",
+        "TEST_IGNORED_FAIL",
+        "TEST_GPU",
+        "TEST_MV_FOLDER_CONTENTS",
+        "TEST_VAL_INPUT"
+    ].join(",")
+
+    Channel.of([run_tools, skip_tools])
+        .map { run_str, skip_str->
+            if (!run_str) {
+                run_str = default_run_tools
+            }
+            def run = run_str.tokenize(",")*.toUpperCase()
+            def skip = skip_str.tokenize(",")*.toUpperCase()
+            return run.findAll { it !in skip }
+        }
+        .flatten()
+        .branch { toolname ->
+            TEST_BIN_SCRIPT:         toolname == "TEST_BIN_SCRIPT"
+            TEST_CREATE_EMPTY_FILE:  toolname == "TEST_CREATE_EMPTY_FILE"
+            TEST_CREATE_FILE:        toolname == "TEST_CREATE_FILE"
+            TEST_CREATE_FOLDER:      toolname == "TEST_CREATE_FOLDER"
+            TEST_GPU:                toolname == "TEST_GPU" && gpu
+            TEST_IGNORED_FAIL:       toolname == "TEST_IGNORED_FAIL"
+            TEST_INPUT:              toolname == "TEST_INPUT"
+            TEST_MV_FILE:            toolname == "TEST_MV_FILE"
+            TEST_MV_FOLDER_CONTENTS: toolname == "TEST_MV_FOLDER_CONTENTS"
+            TEST_PASS_FILE:          toolname == "TEST_PASS_FILE"
+            TEST_PASS_FOLDER:        toolname == "TEST_PASS_FOLDER"
+            TEST_PUBLISH_FILE:       toolname == "TEST_PUBLISH_FILE"
+            TEST_PUBLISH_FOLDER:     toolname == "TEST_PUBLISH_FOLDER"
+            TEST_STAGE_REMOTE:       toolname == "TEST_STAGE_REMOTE"
+            TEST_SUCCESS:            toolname == "TEST_SUCCESS"
+            TEST_VAL_INPUT:          toolname == "TEST_VAL_INPUT"
+        }
+        .set { run_ch }
 
         Channel
             .of("alpha", "beta", "gamma")
@@ -391,23 +440,22 @@ workflow NF_CANARY {
         remote_file = params.remoteFile ? Channel.fromPath(params.remoteFile, glob:false) : Channel.empty()
 
         // Run tests
-        TEST_SUCCESS(           dummy_ch.filter { selectTool('TEST_SUCCESS'           ) } )
-        TEST_CREATE_FILE(       dummy_ch.filter { selectTool('TEST_CREATE_FILE'       )} )
-        TEST_CREATE_EMPTY_FILE( dummy_ch.filter { selectTool('TEST_CREATE_EMPTY_FILE' ) })
-	    TEST_CREATE_FOLDER(     dummy_ch.filter { selectTool('TEST_CREATE_FOLDER'     ) })
-        TEST_INPUT(             dummy_ch.filter { selectTool('TEST_INPUT'             ) }, test_file)
-        TEST_BIN_SCRIPT(        dummy_ch.filter { selectTool('TEST_BIN_SCRIPT'        ) })
-        TEST_STAGE_REMOTE(      dummy_ch.filter { selectTool('TEST_STAGE_REMOTE'      ) }, remote_file)
-        TEST_PASS_FILE(         dummy_ch.filter { selectTool('TEST_PASS_FILE'         ) }, TEST_CREATE_FILE.out.outfile)
-        TEST_PASS_FOLDER(       dummy_ch.filter { selectTool('TEST_PASS_FOLDER'       ) }, TEST_CREATE_FOLDER.out.outfolder)
-        TEST_PUBLISH_FILE(      dummy_ch.filter { selectTool('TEST_PUBLISH_FILE'      ) })
-        TEST_PUBLISH_FOLDER(    dummy_ch.filter { selectTool('TEST_PUBLISH_FOLDER'    ) })
-        TEST_IGNORED_FAIL(      dummy_ch.filter { selectTool('TEST_IGNORED_FAIL'      ) })
-        TEST_MV_FILE(           dummy_ch.filter { selectTool('TEST_MV_FILE'           ) })
-        TEST_MV_FOLDER_CONTENTS(dummy_ch.filter { selectTool('TEST_MV_FOLDER_CONTENTS') })
-        TEST_VAL_INPUT(         dummy_ch.filter { selectTool('TEST_VAL_INPUT'         ) }, "Hello World")
-
-        TEST_GPU(               dummy_ch.filter { params.gpu && selectTool("TEST_GPU" ) }, "dummy")
+        TEST_SUCCESS(           run_ch.TEST_SUCCESS )
+        TEST_CREATE_FILE(       run_ch.TEST_CREATE_FILE )
+        TEST_CREATE_EMPTY_FILE( run_ch.TEST_CREATE_EMPTY_FILE )
+        TEST_CREATE_FOLDER(     run_ch.TEST_CREATE_FOLDER )
+        TEST_INPUT(             run_ch.TEST_INPUT, test_file )
+        TEST_BIN_SCRIPT(        run_ch.TEST_BIN_SCRIPT )
+        TEST_STAGE_REMOTE(      run_ch.TEST_STAGE_REMOTE, remote_file )
+        TEST_PASS_FILE(         run_ch.TEST_PASS_FILE, TEST_CREATE_FILE.out.outfile )
+        TEST_PASS_FOLDER(       run_ch.TEST_PASS_FOLDER, TEST_CREATE_FOLDER.out.outfolder )
+        TEST_PUBLISH_FILE(      run_ch.TEST_PUBLISH_FILE )
+        TEST_PUBLISH_FOLDER(    run_ch.TEST_PUBLISH_FOLDER )
+        TEST_IGNORED_FAIL(      run_ch.TEST_IGNORED_FAIL )
+        TEST_MV_FILE(           run_ch.TEST_MV_FILE )
+        TEST_MV_FOLDER_CONTENTS(run_ch.TEST_MV_FOLDER_CONTENTS )
+        TEST_VAL_INPUT(         run_ch.TEST_VAL_INPUT, "Hello World" )
+        TEST_GPU(               run_ch.TEST_GPU, "dummy" )
 
         // POC of emitting the channel
         Channel.empty()
@@ -435,5 +483,5 @@ workflow NF_CANARY {
 }
 
 workflow {
-    NF_CANARY()
+    NF_CANARY(params.run, params.skip, params.gpu)
 }
