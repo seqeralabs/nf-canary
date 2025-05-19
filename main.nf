@@ -145,6 +145,9 @@ process TEST_PUBLISH_FILE {
     Creates a file on the worker node and uploads to the publish directory.
     */
 
+
+    publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs").toUriString()  }, mode: 'copy'
+
     output:
         path("*.txt")
 
@@ -158,6 +161,8 @@ process TEST_PUBLISH_FOLDER {
     /*
     Creates a file on the worker node and uploads to the publish directory.
     */
+
+    publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs").toUriString()  }, mode: 'copy'
 
     output:
         path("test", type: 'dir')
