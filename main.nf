@@ -400,17 +400,11 @@ workflow NF_CANARY {
         "TEST_GPU",
         "TEST_MV_FOLDER_CONTENTS",
         "TEST_VAL_INPUT"
-    ].join(",")
+    ]
 
-    Channel.of([run_tools, skip_tools])
-        .map { run_str, skip_str->
-            if (!run_str) {
-                run_str = default_run_tools
-            }
-            def run = run_str.tokenize(",")*.toUpperCase()
-            def skip = skip_str.tokenize(",")*.toUpperCase()
-            return run.findAll { it !in skip }
-        }
+    def run  = run_tools  ? run_tools.tokenize(",")*.toUpperCase() : default_run_tools
+    def skip = skip_tools.tokenize(",")*.toUpperCase()
+    Channel.fromList(run.findAll { it !in skip })
         .flatten()
         .branch { toolname ->
             TEST_BIN_SCRIPT:         toolname == "TEST_BIN_SCRIPT"
