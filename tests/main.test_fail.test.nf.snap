@@ -2,22 +2,18 @@
     "Should run without failures": {
         "content": [
             {
-                "stderr": [
-                    
-                ],
+                "stderr": [],
                 "errorReport": null,
                 "exitStatus": 0,
                 "failed": false,
-                "stdout": [
-                    
-                ],
+                "stdout": [],
                 "errorMessage": null,
                 "trace": {
                     "tasksFailed": 1,
                     "tasksCount": 1,
                     "tasksSucceeded": 0
                 },
-                "name": "TEST_IGNORED_FAIL",
+                "name": "TEST_FAIL",
                 "success": true
             }
         ],

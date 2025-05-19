@@ -117,7 +117,7 @@ This process creates a file on the worker machine and writes it to the publishDi
 
 This process creates a folder on the worker machine and writes it to the publishDir directory. By default, this is written to a subfolder called `output` in the working directory, but it can be overridden using the `--outdir` parameter. Use this to demonstrate the ability to publish to the relevant output directory.
 
-### `TEST_IGNORED_FAIL`
+### `TEST_FAIL`
 
 This process should fail immediately but be ignored using the default configuration.
 
