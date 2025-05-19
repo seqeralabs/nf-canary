@@ -6,8 +6,17 @@ nextflow_process {
 
     test("TEST_CREATE_FILE") {
 
+        when {
+            process {
+                """
+                input[0] = 'dummy'
+                """
+            }
+        }
+
+
         then {
-            assertAll(                
+            assertAll(
                 { assert process.success },
                 { assert snapshot(process.out).match() }
             )
