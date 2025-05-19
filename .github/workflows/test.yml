@@ -72,7 +72,7 @@ jobs:
 
       - name: Lint workflow
         run: |
-          nextflow lint . --exclude nf-test.config
+          nextflow lint .
 
       - name: Run pipeline and cache dependencies
         run: |
