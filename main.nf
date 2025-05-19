@@ -1,3 +1,5 @@
+nextflow.preview.output = true
+
 process TEST_SUCCESS {
     /*
     This process should automatically succeed
@@ -143,9 +145,6 @@ process TEST_PUBLISH_FILE {
     Creates a file on the worker node and uploads to the publish directory.
     */
 
-
-    publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs").toUriString()  }, mode: 'copy'
-
     output:
         path("*.txt")
 
@@ -159,8 +158,6 @@ process TEST_PUBLISH_FOLDER {
     /*
     Creates a file on the worker node and uploads to the publish directory.
     */
-
-    publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs").toUriString()  }, mode: 'copy'
 
     output:
         path("test", type: 'dir')
@@ -362,7 +359,7 @@ workflow NF_CANARY {
         TEST_MV_FILE()
         TEST_MV_FOLDER_CONTENTS()
         TEST_VAL_INPUT("Hello World")
-        
+
         TEST_GPU( dummy.filter { params.gpu } )
         // POC of emitting the channel
         Channel.empty()
@@ -390,5 +387,18 @@ workflow NF_CANARY {
 }
 
 workflow {
-    NF_CANARY()
+    main:
+    NF_CANARY().collect()
+
+    publish:
+    outputs = NF_CANARY.out.collect()
+}
+
+output {
+    outputs {
+        path "."
+        index {
+            path params.output_index
+        }
+    }
 }
