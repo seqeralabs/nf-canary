@@ -70,6 +70,10 @@ jobs:
           sudo mv nf-test /usr/local/bin/
           nf-test update-plugins
 
+      - name: Lint workflow
+        run: |
+          nextflow lint .
+
       - name: Run pipeline and cache dependencies
         run: |
           nextflow run main.nf
