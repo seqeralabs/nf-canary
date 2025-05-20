@@ -13,7 +13,8 @@ nextflow_process {
                     .of("alpha")
                     .collectFile(name: 'sample.txt', storeDir: ".nf-test/testdir", newLine: true)
                     .set { test_dir_ch }
-                input[0] = Channel.fromPath(".nf-test/testdir", type: "dir")
+                input[0] = 'dummy'
+                input[1] = Channel.fromPath(".nf-test/testdir", type: "dir")
                 """
             }
         }

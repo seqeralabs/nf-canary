@@ -3,6 +3,9 @@ process TEST_SUCCESS {
     This process should automatically succeed
     */
 
+    input:
+        val(dummy_val)
+
     output:
         stdout
 
@@ -16,6 +19,9 @@ process TEST_CREATE_FILE {
     /*
     Creates a file on the worker node which is uploaded to the working directory.
     */
+
+    input:
+        val(dummy_val)
 
     output:
         path("*.txt"), emit: outfile
@@ -31,6 +37,9 @@ process TEST_CREATE_EMPTY_FILE {
     Creates an empty file on the worker node which is uploaded to the working directory.
     */
 
+    input:
+        val(dummy_val)
+
     output:
         path("*.txt"), emit: outfile
 
@@ -44,6 +53,9 @@ process TEST_CREATE_FOLDER {
     /*
     Creates a file on the worker node which is uploaded to the working directory.
     */
+
+    input:
+        val(dummy_val)
 
     output:
         path("test"), type: 'dir', emit: outfolder
@@ -62,6 +74,7 @@ process TEST_INPUT {
     */
 
     input:
+        val(dummy_val)
         path input
 
     output:
@@ -78,6 +91,9 @@ process TEST_BIN_SCRIPT {
     Runs a script from the bin/ directory
     */
 
+    input:
+        val(dummy_val)
+
     output:
         path("*.txt")
 
@@ -93,6 +109,7 @@ process TEST_STAGE_REMOTE {
     */
 
     input:
+        val(dummy_val)
         path input
 
     output:
@@ -110,6 +127,7 @@ process TEST_PASS_FILE {
     */
 
     input:
+        val(dummy_val)
         path input
 
     output:
@@ -127,6 +145,7 @@ process TEST_PASS_FOLDER {
     */
 
     input:
+        val(dummy_val)
         path input
 
     output:
@@ -143,8 +162,10 @@ process TEST_PUBLISH_FILE {
     Creates a file on the worker node and uploads to the publish directory.
     */
 
-
     publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs").toUriString()  }, mode: 'copy'
+
+    input:
+        val(dummy_val)
 
     output:
         path("*.txt")
@@ -161,6 +182,9 @@ process TEST_PUBLISH_FOLDER {
     */
 
     publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs").toUriString()  }, mode: 'copy'
+
+    input:
+        val(dummy_val)
 
     output:
         path("test", type: 'dir')
@@ -180,6 +204,9 @@ process TEST_IGNORED_FAIL {
     */
     errorStrategy 'ignore'
 
+    input:
+        val(dummy_val)
+
     output:
         stdout
 
@@ -193,6 +220,10 @@ process TEST_MV_FILE {
     /*
     This process moves a file within a working directory.
     */
+
+    input:
+        val(dummy_val)
+
     output:
         path "output.txt"
 
@@ -208,6 +239,9 @@ process TEST_MV_FOLDER_CONTENTS {
     /*
     Moves the contents of a folder from within a folder
     */
+
+    input:
+        val(dummy_val)
 
     output:
         path "out", type: 'dir', emit: outfolder
@@ -226,6 +260,9 @@ process TEST_STDOUT {
     This process should create and capture STDOUT
     */
 
+    input:
+        val(dummy_val)
+
     output:
         stdout
 
@@ -241,6 +278,7 @@ process TEST_VAL_INPUT {
 
 
     input:
+        val(dummy_val)
         val input
 
     output:
@@ -260,6 +298,7 @@ process TEST_GPU {
     memory '10G'
 
     input:
+        val(dummy_val)
         val input
 
     output:
@@ -332,13 +371,55 @@ process TEST_GPU {
 }
 
 workflow NF_CANARY {
+    take:
+        run_tools
+        skip_tools
+        gpu
 
     main:
+    def default_run_tools = [
+        "TEST_SUCCESS",
+        "TEST_CREATE_FILE",
+        "TEST_MV_FILE",
+        "TEST_CREATE_EMPTY_FILE",
+        "TEST_CREATE_FOLDER",
+        "TEST_INPUT",
+        "TEST_BIN_SCRIPT",
+        "TEST_STAGE_REMOTE",
+        "TEST_PASS_FILE",
+        "TEST_PASS_FOLDER",
+        "TEST_PUBLISH_FILE",
+        "TEST_PUBLISH_FOLDER",
+        "TEST_IGNORED_FAIL",
+        "TEST_GPU",
+        "TEST_MV_FOLDER_CONTENTS",
+        "TEST_VAL_INPUT"
+    ]
 
-        Channel.of('dummy')
-            .set { dummy }
+    def run  = run_tools  ? run_tools.tokenize(",")*.toUpperCase() : default_run_tools
+    def skip = skip_tools.tokenize(",")*.toUpperCase()
+    Channel.fromList(run.findAll { it !in skip })
+        .flatten()
+        .branch { toolname ->
+            TEST_BIN_SCRIPT:         toolname == "TEST_BIN_SCRIPT"
+            TEST_CREATE_EMPTY_FILE:  toolname == "TEST_CREATE_EMPTY_FILE"
+            TEST_CREATE_FILE:        toolname == "TEST_CREATE_FILE"
+            TEST_CREATE_FOLDER:      toolname == "TEST_CREATE_FOLDER"
+            TEST_GPU:                toolname == "TEST_GPU" && gpu
+            TEST_IGNORED_FAIL:       toolname == "TEST_IGNORED_FAIL"
+            TEST_INPUT:              toolname == "TEST_INPUT"
+            TEST_MV_FILE:            toolname == "TEST_MV_FILE"
+            TEST_MV_FOLDER_CONTENTS: toolname == "TEST_MV_FOLDER_CONTENTS"
+            TEST_PASS_FILE:          toolname == "TEST_PASS_FILE"
+            TEST_PASS_FOLDER:        toolname == "TEST_PASS_FOLDER"
+            TEST_PUBLISH_FILE:       toolname == "TEST_PUBLISH_FILE"
+            TEST_PUBLISH_FOLDER:     toolname == "TEST_PUBLISH_FOLDER"
+            TEST_STAGE_REMOTE:       toolname == "TEST_STAGE_REMOTE"
+            TEST_SUCCESS:            toolname == "TEST_SUCCESS"
+            TEST_VAL_INPUT:          toolname == "TEST_VAL_INPUT"
+        }
+        .set { run_ch }
 
-        // Create test file on head node
         Channel
             .of("alpha", "beta", "gamma")
             .collectFile(name: 'sample.txt', newLine: true)
@@ -347,23 +428,23 @@ workflow NF_CANARY {
         remote_file = params.remoteFile ? Channel.fromPath(params.remoteFile, glob:false) : Channel.empty()
 
         // Run tests
-        TEST_SUCCESS()
-        TEST_CREATE_FILE()
-        TEST_CREATE_EMPTY_FILE()
-	    TEST_CREATE_FOLDER()
-        TEST_INPUT(test_file)
-        TEST_BIN_SCRIPT()
-        TEST_STAGE_REMOTE(remote_file)
-        TEST_PASS_FILE(TEST_CREATE_FILE.out.outfile)
-        TEST_PASS_FOLDER(TEST_CREATE_FOLDER.out.outfolder)
-        TEST_PUBLISH_FILE()
-        TEST_PUBLISH_FOLDER()
-        TEST_IGNORED_FAIL()
-        TEST_MV_FILE()
-        TEST_MV_FOLDER_CONTENTS()
-        TEST_VAL_INPUT("Hello World")
-        
-        TEST_GPU( dummy.filter { params.gpu } )
+        TEST_SUCCESS(           run_ch.TEST_SUCCESS )
+        TEST_CREATE_FILE(       run_ch.TEST_CREATE_FILE )
+        TEST_CREATE_EMPTY_FILE( run_ch.TEST_CREATE_EMPTY_FILE )
+        TEST_CREATE_FOLDER(     run_ch.TEST_CREATE_FOLDER )
+        TEST_INPUT(             run_ch.TEST_INPUT, test_file )
+        TEST_BIN_SCRIPT(        run_ch.TEST_BIN_SCRIPT )
+        TEST_STAGE_REMOTE(      run_ch.TEST_STAGE_REMOTE, remote_file )
+        TEST_PASS_FILE(         run_ch.TEST_PASS_FILE, TEST_CREATE_FILE.out.outfile )
+        TEST_PASS_FOLDER(       run_ch.TEST_PASS_FOLDER, TEST_CREATE_FOLDER.out.outfolder )
+        TEST_PUBLISH_FILE(      run_ch.TEST_PUBLISH_FILE )
+        TEST_PUBLISH_FOLDER(    run_ch.TEST_PUBLISH_FOLDER )
+        TEST_IGNORED_FAIL(      run_ch.TEST_IGNORED_FAIL )
+        TEST_MV_FILE(           run_ch.TEST_MV_FILE )
+        TEST_MV_FOLDER_CONTENTS(run_ch.TEST_MV_FOLDER_CONTENTS )
+        TEST_VAL_INPUT(         run_ch.TEST_VAL_INPUT, "Hello World" )
+        TEST_GPU(               run_ch.TEST_GPU, "dummy" )
+
         // POC of emitting the channel
         Channel.empty()
             .mix(
@@ -390,5 +471,5 @@ workflow NF_CANARY {
 }
 
 workflow {
-    NF_CANARY()
+    NF_CANARY(params.run, params.skip, params.gpu)
 }
