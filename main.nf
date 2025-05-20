@@ -1,9 +1,3 @@
-def selectTool(toolname) {
-    def inRunParam = ( params.run ? params.run.split(',').any{ runName -> "${runName.toUpperCase()}".contains(toolname) } : true )
-    def inSkipParam = (!params.skip.split(',').any{ runName -> "${runName.toUpperCase()}".contains(toolname) } )
-    return inRunParam && inSkipParam
-}
-
 process TEST_SUCCESS {
     /*
     This process should automatically succeed
