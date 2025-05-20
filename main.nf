@@ -398,7 +398,7 @@ workflow NF_CANARY {
 
     def run  = run_tools  ? run_tools.tokenize(",")*.toUpperCase() : default_run_tools
     def skip = skip_tools.tokenize(",")*.toUpperCase()
-    Channel.fromList(run.findAll { it !in skip })
+    Channel.fromList(run.minus(skip))
         .flatten()
         .branch { toolname ->
             TEST_BIN_SCRIPT:         toolname == "TEST_BIN_SCRIPT"
