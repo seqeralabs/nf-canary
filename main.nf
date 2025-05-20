@@ -1,3 +1,5 @@
+nextflow.preview.output = true
+
 process TEST_SUCCESS {
     /*
     This process should automatically succeed
@@ -471,5 +473,18 @@ workflow NF_CANARY {
 }
 
 workflow {
+    main:
     NF_CANARY(params.run, params.skip, params.gpu)
+
+    publish:
+    outputs = NF_CANARY.out.collect()
+}
+
+output {
+    outputs {
+        path "."
+        index {
+            path params.output_index
+        }
+    }
 }
