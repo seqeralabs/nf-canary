@@ -14,7 +14,8 @@
                 "run": {
                     "type": "string",
                     "description": "Selectively run tests  as comma delimited values",
-                    "help_text": "Tests to run as comma delimited values. E.g. --skip TEST_SUCCESS,TEST_INPUT. Case insensitive. Note this excludes all other tests."
+                    "help_text": "Tests to run, specified as comma-delimited values (e.g., --skip TEST_SUCCESS,TEST_INPUT). Case-insensitive. By default, all tests are included, but you can override this to selectively include specific tests.",
+                    "default": "TEST_BIN_SCRIPT,TEST_CREATE_EMPTY_FILE,TEST_CREATE_FILE,TEST_CREATE_FOLDER,TEST_GPU,TEST_IGNORED_FAIL,TEST_INPUT,TEST_MV_FILE,TEST_MV_FOLDER_CONTENTS,TEST_PASS_FILE,TEST_PASS_FOLDER,TEST_PUBLISH_FILE,TEST_PUBLISH_FOLDER,TEST_STAGE_REMOTE,TEST_SUCCESS,TEST_VAL_INPUT"
                 },
                 "skip": {
                     "type": "string",

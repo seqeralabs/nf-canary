@@ -377,26 +377,8 @@ workflow NF_CANARY {
         gpu
 
     main:
-    def default_run_tools = [
-        "TEST_SUCCESS",
-        "TEST_CREATE_FILE",
-        "TEST_MV_FILE",
-        "TEST_CREATE_EMPTY_FILE",
-        "TEST_CREATE_FOLDER",
-        "TEST_INPUT",
-        "TEST_BIN_SCRIPT",
-        "TEST_STAGE_REMOTE",
-        "TEST_PASS_FILE",
-        "TEST_PASS_FOLDER",
-        "TEST_PUBLISH_FILE",
-        "TEST_PUBLISH_FOLDER",
-        "TEST_IGNORED_FAIL",
-        "TEST_GPU",
-        "TEST_MV_FOLDER_CONTENTS",
-        "TEST_VAL_INPUT"
-    ]
 
-    def run  = run_tools  ? run_tools.tokenize(",")*.toUpperCase() : default_run_tools
+    def run  = run_tools.tokenize(",")*.toUpperCase()
     def skip = skip_tools.tokenize(",")*.toUpperCase()
     Channel.fromList(run.findAll { it !in skip })
         .flatten()
@@ -428,41 +410,41 @@ workflow NF_CANARY {
         remote_file = params.remoteFile ? Channel.fromPath(params.remoteFile, glob:false) : Channel.empty()
 
         // Run tests
-        TEST_SUCCESS(           run_ch.TEST_SUCCESS )
-        TEST_CREATE_FILE(       run_ch.TEST_CREATE_FILE )
-        TEST_CREATE_EMPTY_FILE( run_ch.TEST_CREATE_EMPTY_FILE )
-        TEST_CREATE_FOLDER(     run_ch.TEST_CREATE_FOLDER )
-        TEST_INPUT(             run_ch.TEST_INPUT, test_file )
         TEST_BIN_SCRIPT(        run_ch.TEST_BIN_SCRIPT )
-        TEST_STAGE_REMOTE(      run_ch.TEST_STAGE_REMOTE, remote_file )
+        TEST_CREATE_EMPTY_FILE( run_ch.TEST_CREATE_EMPTY_FILE )
+        TEST_CREATE_FILE(       run_ch.TEST_CREATE_FILE )
+        TEST_CREATE_FOLDER(     run_ch.TEST_CREATE_FOLDER )
+        TEST_GPU(               run_ch.TEST_GPU, "dummy" )
+        TEST_IGNORED_FAIL(      run_ch.TEST_IGNORED_FAIL )
+        TEST_INPUT(             run_ch.TEST_INPUT, test_file )
+        TEST_MV_FILE(           run_ch.TEST_MV_FILE )
+        TEST_MV_FOLDER_CONTENTS(run_ch.TEST_MV_FOLDER_CONTENTS )
         TEST_PASS_FILE(         run_ch.TEST_PASS_FILE, TEST_CREATE_FILE.out.outfile )
         TEST_PASS_FOLDER(       run_ch.TEST_PASS_FOLDER, TEST_CREATE_FOLDER.out.outfolder )
         TEST_PUBLISH_FILE(      run_ch.TEST_PUBLISH_FILE )
         TEST_PUBLISH_FOLDER(    run_ch.TEST_PUBLISH_FOLDER )
-        TEST_IGNORED_FAIL(      run_ch.TEST_IGNORED_FAIL )
-        TEST_MV_FILE(           run_ch.TEST_MV_FILE )
-        TEST_MV_FOLDER_CONTENTS(run_ch.TEST_MV_FOLDER_CONTENTS )
+        TEST_STAGE_REMOTE(      run_ch.TEST_STAGE_REMOTE, remote_file )
+        TEST_SUCCESS(           run_ch.TEST_SUCCESS )
         TEST_VAL_INPUT(         run_ch.TEST_VAL_INPUT, "Hello World" )
-        TEST_GPU(               run_ch.TEST_GPU, "dummy" )
 
         // POC of emitting the channel
         Channel.empty()
             .mix(
-                TEST_SUCCESS.out,
-                TEST_CREATE_FILE.out,
-                TEST_CREATE_EMPTY_FILE.out,
-                TEST_CREATE_FOLDER.out,
-                TEST_INPUT.out,
                 TEST_BIN_SCRIPT.out,
-                TEST_STAGE_REMOTE.out,
+                TEST_CREATE_EMPTY_FILE.out,
+                TEST_CREATE_FILE.out,
+                TEST_CREATE_FOLDER.out,
+                TEST_GPU.out,
+                TEST_IGNORED_FAIL.out,
+                TEST_INPUT.out,
+                TEST_MV_FILE.out,
+                TEST_MV_FOLDER_CONTENTS.out,
                 TEST_PASS_FILE.out,
                 TEST_PASS_FOLDER.out,
                 TEST_PUBLISH_FILE.out,
                 TEST_PUBLISH_FOLDER.out,
-                TEST_IGNORED_FAIL.out,
-                TEST_MV_FILE.out,
-                TEST_MV_FOLDER_CONTENTS.out,
-                TEST_GPU.out
+                TEST_STAGE_REMOTE.out,
+                TEST_SUCCESS.out
             )
             .set { ch_out }
 
