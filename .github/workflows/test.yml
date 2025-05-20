@@ -34,7 +34,7 @@ jobs:
         run: prettier --check .
 
   nf-test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       NXF_ANSI_LOG: false
     steps:
@@ -69,6 +69,10 @@ jobs:
           wget -qO- https://code.askimed.com/install/nf-test | bash
           sudo mv nf-test /usr/local/bin/
           nf-test update-plugins
+
+      - name: Lint workflow
+        run: |
+          nextflow lint .
 
       - name: Run pipeline and cache dependencies
         run: |

@@ -6,6 +6,14 @@ nextflow_process {
 
     test("TEST_SUCCESS") {
 
+        when {
+            process {
+                """
+                input[0] = 'dummy'
+                """
+            }
+        }
+
         then {
             assertAll(
                 { assert process.success },

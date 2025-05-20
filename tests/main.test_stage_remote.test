@@ -14,7 +14,8 @@ nextflow_process {
 
             process {
                 """
-                input[0] = Channel.fromPath(params.remoteFile)
+                input[0] = 'dummy'
+                input[1] = Channel.fromPath(params.remoteFile)
                 """
             }
         }

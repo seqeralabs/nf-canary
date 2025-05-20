@@ -9,7 +9,8 @@ nextflow_process {
         when {
             process {
                 """
-                input[0] = Channel.of("alpha").collectFile(name: 'sample.txt', newLine: true)
+                input[0] = 'dummy'
+                input[1] = Channel.of("alpha").collectFile(name: 'sample.txt', newLine: true)
                 """
             }
         }
