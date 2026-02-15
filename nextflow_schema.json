@@ -42,6 +42,24 @@
                     "format": "directory-path",
                     "description": "Path to use for publishing output files.",
                     "help_text": "Path to a remote folder to publish files to. If not specified, this is a subfolder within the working directory but if specified it will publish files to the path specified in this parameter."
+                },
+                "fusion": {
+                    "type": "boolean",
+                    "description": "Run Fusion filesystem diagnostics via fusion doctor.",
+                    "help_text": "When enabled, runs the TEST_FUSION_DOCTOR process to validate system requirements, FUSE device availability, and cloud bucket access. Requires the fusion binary in the task environment. Usually enabled by a fusion profile (e.g. -profile fusion_aws_recommended).",
+                    "default": false
+                },
+                "fusion_reference_profile": {
+                    "type": "string",
+                    "format": "path",
+                    "description": "Path to Fusion requirements YAML file for validation thresholds.",
+                    "help_text": "Path to a YAML file with validation thresholds passed to fusion doctor --reference-profile. Supported fields: kernel_version_min, memory_gb_min, disk_gb_min. Usually set by a fusion profile rather than directly."
+                },
+                "fusion_cache_path": {
+                    "type": "string",
+                    "description": "Path to Fusion cache directory for disk space checks.",
+                    "help_text": "Filesystem path where Fusion caches data. Used with --check-disk-usage to verify sufficient disk space.",
+                    "default": "/tmp"
                 }
             }
         }

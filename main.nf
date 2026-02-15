@@ -370,11 +370,50 @@ process TEST_GPU {
 
 }
 
+process TEST_FUSION_DOCTOR {
+    /*
+    Runs fusion doctor to validate the Fusion filesystem configuration.
+    Produces a JSON diagnostic report. Skips gracefully if the fusion
+    binary is not available in the task environment.
+    */
+
+    publishDir "${params.outdir}/fusion", mode: 'copy', enabled: params.outdir != null
+
+    input:
+        val(dummy_val)
+        val(work_dir)
+        path(reference_profile)
+
+    output:
+        path("fusion-doctor-report.json"), emit: report
+
+    script:
+    def is_cloud_uri = work_dir.toString() ==~ /^(s3|gs|az):\/\/.+/
+    def bucket_flag  = is_cloud_uri ? "--check-bucket-read-write ${work_dir}" : ""
+    def profile_flag = (reference_profile.name != 'NO_FILE' && reference_profile.name != 'null') ? "--reference-profile ${reference_profile}" : ""
+    def cache_path   = params.fusion_cache_path ?: '/tmp'
+    def disk_flag    = "--check-disk-usage ${cache_path}"
+
+    """
+    #!/bin/bash
+    set -euo pipefail
+
+    fusion doctor \\
+        --format json \\
+        --output fusion-doctor-report.json \\
+        ${profile_flag} \\
+        ${bucket_flag} \\
+        ${disk_flag} \\
+        || true
+    """
+}
+
 workflow NF_CANARY {
     take:
         run_tools
         skip_tools
         gpu
+        fusion
 
     main:
     def default_run_tools = [
@@ -393,7 +432,8 @@ workflow NF_CANARY {
         "TEST_IGNORED_FAIL",
         "TEST_GPU",
         "TEST_MV_FOLDER_CONTENTS",
-        "TEST_VAL_INPUT"
+        "TEST_VAL_INPUT",
+        "TEST_FUSION_DOCTOR"
     ]
 
     def run  = run_tools  ? run_tools.tokenize(",")*.toUpperCase() : default_run_tools
@@ -401,6 +441,7 @@ workflow NF_CANARY {
     Channel.fromList(run.findAll { it !in skip })
         .flatten()
         .branch { toolname ->
+            TEST_FUSION_DOCTOR:           toolname == "TEST_FUSION_DOCTOR" && fusion
             TEST_BIN_SCRIPT:         toolname == "TEST_BIN_SCRIPT"
             TEST_CREATE_EMPTY_FILE:  toolname == "TEST_CREATE_EMPTY_FILE"
             TEST_CREATE_FILE:        toolname == "TEST_CREATE_FILE"
@@ -427,6 +468,10 @@ workflow NF_CANARY {
 
         remote_file = params.remoteFile ? Channel.fromPath(params.remoteFile, glob:false) : Channel.empty()
 
+        ref_profile_ch = params.fusion_reference_profile
+            ? Channel.fromPath(params.fusion_reference_profile, checkIfExists: true)
+            : Channel.value(file("NO_FILE"))
+
         // Run tests
         TEST_SUCCESS(           run_ch.TEST_SUCCESS )
         TEST_CREATE_FILE(       run_ch.TEST_CREATE_FILE )
@@ -444,6 +489,7 @@ workflow NF_CANARY {
         TEST_MV_FOLDER_CONTENTS(run_ch.TEST_MV_FOLDER_CONTENTS )
         TEST_VAL_INPUT(         run_ch.TEST_VAL_INPUT, "Hello World" )
         TEST_GPU(               run_ch.TEST_GPU, "dummy" )
+        TEST_FUSION_DOCTOR(          run_ch.TEST_FUSION_DOCTOR, workflow.workDir, ref_profile_ch )
 
         // POC of emitting the channel
         Channel.empty()
@@ -462,7 +508,9 @@ workflow NF_CANARY {
                 TEST_IGNORED_FAIL.out,
                 TEST_MV_FILE.out,
                 TEST_MV_FOLDER_CONTENTS.out,
-                TEST_GPU.out
+                TEST_VAL_INPUT.out,
+                TEST_GPU.out,
+                TEST_FUSION_DOCTOR.out
             )
             .set { ch_out }
 
@@ -471,5 +519,5 @@ workflow NF_CANARY {
 }
 
 workflow {
-    NF_CANARY(params.run, params.skip, params.gpu)
+    NF_CANARY(params.run, params.skip, params.gpu, params.fusion)
 }

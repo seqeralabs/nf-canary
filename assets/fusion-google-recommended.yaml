@@ -1,0 +1,8 @@
+# Google Cloud-specific Fusion filesystem requirements
+# For production workloads on GCP, consider instances with local SSD scratch disks
+# Recommended: n2, n2d, or c2 machine types with local SSD scratch disks
+kernel_version_min: "5.10"
+memory_gb_min: 8
+disk_gb_min: 200
+disk_throughput_mbps_min: 1000
+# For large production pipelines, consider 16+ vCPUs and 128+ GB memory

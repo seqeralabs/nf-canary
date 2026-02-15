@@ -1,0 +1,28 @@
+nextflow_process {
+
+    name "Test Process TEST_FUSION_DOCTOR"
+    script "main.nf"
+    process "TEST_FUSION_DOCTOR"
+
+    test("TEST_FUSION_DOCTOR fails when fusion binary is not available") {
+
+        when {
+            params {
+                fusion = true
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                input[1] = '/tmp/work'
+                input[2] = file("NO_FILE")
+                """
+            }
+        }
+
+        then {
+            assert process.failed
+        }
+
+    }
+
+}

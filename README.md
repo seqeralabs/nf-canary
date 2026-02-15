@@ -138,3 +138,43 @@ Test a process can accept a value as input.
 _Note: Enabled only if the parameter `--gpu` is specified._
 
 This process tests the ability to use a GPU. It uses the `pytorch` conda environment to test CUDA is available and working. This is disabled by default as it requires a GPU to be available which may not be true.
+
+### `TEST_FUSION_DOCTOR`
+
+_Note: Enabled only if the parameter `--fusion` is specified (or set to `true` by a profile)._
+
+This process runs `fusion doctor` to validate the Fusion filesystem configuration. It checks system requirements (kernel version, memory, disk space), FUSE device availability, and cloud bucket accessibility. The process produces a JSON diagnostic report published to `${outdir}/fusion/`.
+
+This test requires the `fusion` binary to be available in the task environment and will fail if it is not found.
+
+#### Fusion Profiles
+
+Use a built-in profile to enable Fusion validation with recommended thresholds:
+
+```bash
+nextflow run seqeralabs/nf-canary -profile fusion_aws_recommended
+```
+
+Available profiles:
+
+| Profile | Description |
+|---------|-------------|
+| `fusion_aws_recommended` | AWS Batch recommended thresholds |
+| `fusion_google_recommended` | Google Cloud Batch recommended thresholds |
+| `fusion_azure_recommended` | Azure Batch recommended thresholds |
+
+#### Custom Requirements
+
+You can provide a custom requirements YAML file:
+
+```bash
+nextflow run seqeralabs/nf-canary --fusion --fusion_reference_profile /path/to/requirements.yaml
+```
+
+The YAML file supports the following fields:
+
+```yaml
+kernel_version_min: "5.10"
+memory_gb_min: 8
+disk_gb_min: 100
+```
