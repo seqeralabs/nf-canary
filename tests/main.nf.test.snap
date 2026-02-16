@@ -16,7 +16,7 @@
                     
                 ],
                 "stderr": [
-                    "\u001b[33mNextflow 25.10.4 is available - Please consider updating your version to it\u001b(B\u001b[m"
+
                 ],
                 "name": "workflow"
             },
@@ -48,10 +48,10 @@
                     "tasksSucceeded": 14
                 },
                 "stdout": [
-                    
+
                 ],
                 "stderr": [
-                    "\u001b[33mNextflow 25.10.4 is available - Please consider updating your version to it\u001b(B\u001b[m"
+
                 ],
                 "name": "workflow"
             },
@@ -86,12 +86,12 @@
                     
                 ],
                 "stderr": [
-                    "\u001b[33mNextflow 25.10.4 is available - Please consider updating your version to it\u001b(B\u001b[m"
+
                 ],
                 "name": "workflow"
             },
             [
-                
+
             ]
         ],
         "timestamp": "2026-02-15T12:25:14.674258637",
@@ -117,7 +117,7 @@
                     
                 ],
                 "stderr": [
-                    "\u001b[33mNextflow 25.10.4 is available - Please consider updating your version to it\u001b(B\u001b[m"
+
                 ],
                 "name": "workflow"
             },
