@@ -403,8 +403,7 @@ process TEST_FUSION_DOCTOR {
         --output fusion-doctor-report.json \\
         ${profile_flag} \\
         ${bucket_flag} \\
-        ${disk_flag} \\
-        || true
+        ${disk_flag}
     """
 }
 
