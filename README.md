@@ -157,11 +157,11 @@ nextflow run seqeralabs/nf-canary -profile fusion_aws_recommended
 
 Available profiles:
 
-| Profile | Description |
-|---------|-------------|
-| `fusion_aws_recommended` | AWS Batch recommended thresholds |
+| Profile                     | Description                               |
+| --------------------------- | ----------------------------------------- |
+| `fusion_aws_recommended`    | AWS Batch recommended thresholds          |
 | `fusion_google_recommended` | Google Cloud Batch recommended thresholds |
-| `fusion_azure_recommended` | Azure Batch recommended thresholds |
+| `fusion_azure_recommended`  | Azure Batch recommended thresholds        |
 
 #### Custom Requirements
 
