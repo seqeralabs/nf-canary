@@ -42,24 +42,49 @@
                     "format": "directory-path",
                     "description": "Path to use for publishing output files.",
                     "help_text": "Path to a remote folder to publish files to. If not specified, this is a subfolder within the working directory but if specified it will publish files to the path specified in this parameter."
-                },
+                }
+            }
+        },
+        "fusion_options": {
+            "title": "Fusion Filesystem Options",
+            "type": "object",
+            "fa_icon": "fas fa-layer-group",
+            "description": "Configure Fusion filesystem validation and diagnostics.",
+            "properties": {
                 "fusion": {
                     "type": "boolean",
-                    "description": "Run Fusion filesystem diagnostics via fusion doctor.",
-                    "help_text": "When enabled, runs the TEST_FUSION_DOCTOR process to validate system requirements, FUSE device availability, and cloud bucket access. Requires the fusion binary in the task environment. Usually enabled by a fusion profile (e.g. -profile fusion_aws_recommended).",
-                    "default": false
+                    "description": "Run Fusion filesystem diagnostics via 'fusion doctor'.",
+                    "help_text": "When enabled, run the TEST_FUSION_DOCTOR process to validate Fusion requirements.",
+                    "fa_icon": "fas fa-stethoscope"
                 },
                 "fusion_reference_profile": {
                     "type": "string",
-                    "format": "path",
-                    "description": "Path to Fusion requirements YAML file for validation thresholds.",
-                    "help_text": "Path to a YAML file with validation thresholds passed to fusion doctor --reference-profile. Supported fields: kernel_version_min, memory_gb_min, disk_gb_min. Usually set by a fusion profile rather than directly."
+                    "format": "file-path",
+                    "description": "Path to YAML file defining Fusion validation requirements.",
+                    "help_text": "Path to the YAML configuration file containing validation thresholds passed to the diagnostics process. Typically configured automatically when using a fusion profile (e.g., 'assets/fusion-aws-recommended.yaml)'.",
+                    "fa_icon": "fas fa-file-code"
                 },
                 "fusion_cache_path": {
                     "type": "string",
-                    "description": "Path to Fusion cache directory for disk space checks.",
-                    "help_text": "Filesystem path where Fusion caches data. Used with --check-disk-usage to verify sufficient disk space.",
-                    "default": "/tmp"
+                    "description": "Filesystem path for Fusion cache directory.",
+                    "help_text": "Specifies the directory where Fusion should cache data locally. Used by the diagnostics process to verify sufficient disk space is available.",
+                    "default": "/tmp",
+                    "pattern": "^/.*$",
+                    "fa_icon": "fas fa-hdd"
+                },
+                "fusion_read_only_buckets": {
+                    "type": "string",
+                    "description": "Comma-separated list of read-only cloud storage buckets to validate access.",
+                    "help_text": "Comma-separated URIs of cloud storage buckets that require read-only access. The diagnostics process will validate if the task can read from these buckets. Supports AWS S3 (s3://), Google Cloud Storage (gs://), and Azure Blob Storage (az://). Example: 's3://reference-data,gs://shared-files'",
+                    "pattern": "^(s3://|gs://|az://)[a-zA-Z0-9][a-zA-Z0-9._/-]*(,(s3://|gs://|az://)[a-zA-Z0-9][a-zA-Z0-9._/-]*)*$",
+                    "fa_icon": "fas fa-eye"
+                },
+                "fusion_read_write_buckets": {
+                    "type": "string",
+                    "description": "Comma-separated list of read-write cloud storage buckets to validate access.",
+                    "help_text": "Comma-separated URIs of cloud storage buckets that require read-write access. The diagnostics process will validate if the task can read from and write to these buckets. Supports AWS S3 (s3://), Google Cloud Storage (gs://), and Azure Blob Storage (az://). Example: 's3://results,gs://output-data'",
+                    "pattern": "^(s3://|gs://|az://)[a-zA-Z0-9][a-zA-Z0-9._/-]*(,(s3://|gs://|az://)[a-zA-Z0-9][a-zA-Z0-9._/-]*)*$",
+                    "fa_icon": "fas fa-pen"
                 }
             }
         }
@@ -67,6 +92,9 @@
     "allOf": [
         {
             "$ref": "#/$defs/parameters"
+        },
+        {
+            "$ref": "#/$defs/fusion_options"
         }
     ]
 }

@@ -393,6 +393,16 @@ process TEST_FUSION_DOCTOR {
     def profile_flag = (reference_profile.name != 'NO_FILE' && reference_profile.name != 'null') ? "--reference-profile ${reference_profile}" : ""
     def cache_path   = params.fusion_cache_path ?: '/tmp'
     def disk_flag    = "--check-disk-usage ${cache_path}"
+    
+    // Process read-only buckets
+    def ro_buckets = params.fusion_read_only_buckets
+        ? params.fusion_read_only_buckets.tokenize(',').collect { "--check-bucket-read-only ${it.trim()}" }.join(' ')
+        : ""
+    
+    // Process read-write buckets
+    def rw_buckets = params.fusion_read_write_buckets
+        ? params.fusion_read_write_buckets.tokenize(',').collect { "--check-bucket-read-write ${it.trim()}" }.join(' ')
+        : ""
 
     """
     #!/bin/bash
@@ -403,7 +413,9 @@ process TEST_FUSION_DOCTOR {
         --output fusion-doctor-report.json \\
         ${profile_flag} \\
         ${bucket_flag} \\
-        ${disk_flag}
+        ${disk_flag} \\
+        ${ro_buckets} \\
+        ${rw_buckets}
     """
 }
 
