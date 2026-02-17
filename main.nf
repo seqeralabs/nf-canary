@@ -373,8 +373,9 @@ process TEST_GPU {
 process TEST_FUSION_DOCTOR {
     /*
     Runs fusion doctor to validate the Fusion filesystem configuration.
-    Produces a JSON diagnostic report. Fails if the fusion binary is
-    not available in the task environment.
+    Prints a text diagnostic report to stdout and saves a JSON report
+    to file. Fails if the fusion binary is not available in the task
+    environment.
     */
 
     publishDir "${params.outdir}/fusion", mode: 'copy', enabled: params.outdir != null
@@ -407,7 +408,6 @@ process TEST_FUSION_DOCTOR {
     """
     #!/bin/bash
     fusion doctor \\
-        --format json \\
         --output fusion-doctor-report.json \\
         ${profile_flag} \\
         ${bucket_flag} \\
