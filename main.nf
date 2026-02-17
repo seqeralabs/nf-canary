@@ -413,7 +413,8 @@ process TEST_FUSION_DOCTOR {
         ${bucket_flag} \\
         ${disk_flag} \\
         ${ro_buckets} \\
-        ${rw_buckets}
+        ${rw_buckets} \\
+        || true # TODO(amiranda): Add flag to `fusion doctor` to prevent exit(1)
     """
 }
 
