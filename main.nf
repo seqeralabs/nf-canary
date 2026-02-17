@@ -378,7 +378,7 @@ process TEST_FUSION_DOCTOR {
     environment.
     */
 
-    publishDir "${params.outdir}/fusion", mode: 'copy', enabled: params.outdir != null
+    publishDir { params.outdir ? "${params.outdir}/fusion" : "${workflow.workDir}/outputs/fusion" }, mode: 'copy'
 
     input:
         val(dummy_val)
