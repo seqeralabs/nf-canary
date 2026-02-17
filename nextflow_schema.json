@@ -62,7 +62,8 @@
                     "format": "file-path",
                     "description": "Path to YAML file defining Fusion validation requirements.",
                     "help_text": "Path to the YAML configuration file containing validation thresholds passed to the diagnostics process. Typically configured automatically when using a fusion profile (e.g., 'assets/fusion-aws-recommended.yaml)'.",
-                    "fa_icon": "fas fa-file-code"
+                    "fa_icon": "fas fa-file-code",
+                    "hidden": true
                 },
                 "fusion_cache_path": {
                     "type": "string",
@@ -70,7 +71,8 @@
                     "help_text": "Specifies the directory where Fusion should cache data locally. Used by the diagnostics process to verify sufficient disk space is available.",
                     "default": "/tmp",
                     "pattern": "^/.*$",
-                    "fa_icon": "fas fa-hdd"
+                    "fa_icon": "fas fa-hdd",
+                    "hidden": true
                 },
                 "fusion_read_only_buckets": {
                     "type": "string",
