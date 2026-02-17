@@ -89,6 +89,20 @@
                     "fa_icon": "fas fa-pen"
                 }
             }
+        },
+        "reports": {
+            "title": "Reports",
+            "type": "object",
+            "description": "Pipeline execution reports",
+            "properties": {
+                "fusion_doctor_report": {
+                    "type": "string",
+                    "format": "file-path",
+                    "mimetype": "application/json",
+                    "description": "Fusion filesystem diagnostics report",
+                    "fa_icon": "fas fa-chart-bar"
+                }
+            }
         }
     },
     "allOf": [
@@ -97,6 +111,9 @@
         },
         {
             "$ref": "#/$defs/fusion_options"
+        },
+        {
+            "$ref": "#/$defs/reports"
         }
     ]
 }

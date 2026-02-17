@@ -378,8 +378,6 @@ process TEST_FUSION_DOCTOR {
     environment.
     */
 
-    publishDir "${params.outdir}/fusion", mode: 'copy', enabled: params.outdir != null
-
     input:
         val(dummy_val)
         val(work_dir)
@@ -525,6 +523,7 @@ workflow NF_CANARY {
 
     emit:
         out = ch_out
+        fusion_report = TEST_FUSION_DOCTOR.out.report
 }
 
 workflow {
