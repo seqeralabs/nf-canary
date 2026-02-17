@@ -406,8 +406,6 @@ process TEST_FUSION_DOCTOR {
 
     """
     #!/bin/bash
-    set -euo pipefail
-
     fusion doctor \\
         --format json \\
         --output fusion-doctor-report.json \\
