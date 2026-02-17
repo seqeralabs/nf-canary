@@ -1,4 +1,4 @@
 reports:
   "fusion/fusion-doctor-report.json":
     display: "Fusion Diagnostics Report"
-    mimeType: "application/json"
+    mimeType: "text/plain"
