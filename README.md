@@ -143,7 +143,7 @@ This process tests the ability to use a GPU. It uses the `pytorch` conda environ
 
 _Note: Enabled only if the parameter `--fusion` is specified (or set to `true` by a profile)._
 
-This process runs `fusion doctor` to validate the Fusion filesystem configuration. It checks system requirements (kernel version, memory, disk space), FUSE device availability, and cloud bucket accessibility. The process produces a JSON diagnostic report published to `${outdir}/fusion/`.
+This process runs `fusion doctor` to validate the Fusion filesystem configuration. It checks system requirements (kernel version, memory, and disk space), FUSE device availability, and cloud bucket accessibility. The process produces a JSON diagnostic report published to `${outdir}/fusion/`.
 
 This test requires the `fusion` binary to be available in the task environment and will fail if it is not found.
 
