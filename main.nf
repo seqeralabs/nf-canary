@@ -391,7 +391,7 @@ process TEST_FUSION_DOCTOR {
     script:
     def is_cloud_uri = work_dir.toString() ==~ /^(s3|gs|az):\/\/.+/
     def bucket_flag  = is_cloud_uri ? "--check-bucket-read-write ${work_dir}" : ""
-    def profile_flag = (reference_profile.name != 'NO_FILE' && reference_profile.name != 'null') ? "--reference-profile ${reference_profile}" : ""
+    def profile_flag = reference_profile.name ? "--reference-profile ${reference_profile}" : ""
     def cache_path   = params.fusion_cache_path ?: '/tmp'
     def disk_flag    = "--check-disk-usage ${cache_path}"
     
@@ -480,7 +480,7 @@ workflow NF_CANARY {
 
         ref_profile_ch = params.fusion_reference_profile
             ? Channel.fromPath(params.fusion_reference_profile, checkIfExists: true)
-            : Channel.value(file("NO_FILE"))
+            : Channel.value([])
 
         // Run tests
         TEST_SUCCESS(           run_ch.TEST_SUCCESS )

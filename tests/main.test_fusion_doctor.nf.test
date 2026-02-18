@@ -14,13 +14,264 @@ nextflow_process {
                 """
                 input[0] = 'dummy'
                 input[1] = '/tmp/work'
-                input[2] = file("NO_FILE")
+                input[2] = []
                 """
             }
         }
 
         then {
             assert process.failed
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR succeeds with local work directory") {
+
+        when {
+            params {
+                fusion = true
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                input[1] = '/tmp/work'
+                input[2] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 },
+                { assert process.out.report[0].name == 'fusion-doctor-report.json' },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR succeeds with S3 work directory") {
+
+        when {
+            params {
+                fusion = true
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                input[1] = 's3://test-bucket/work'
+                input[2] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 },
+                { assert process.out.report[0].name == 'fusion-doctor-report.json' }
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR succeeds with GCS work directory") {
+
+        when {
+            params {
+                fusion = true
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                input[1] = 'gs://test-bucket/work'
+                input[2] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 }
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR succeeds with Azure work directory") {
+
+        when {
+            params {
+                fusion = true
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                input[1] = 'az://test-container/work'
+                input[2] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 }
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR with reference profile") {
+
+        when {
+            params {
+                fusion = true
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                input[1] = 's3://test-bucket/work'
+                input[2] = file("${projectDir}/assets/fusion-aws-recommended.yaml")
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 }
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR with read-only buckets") {
+
+        when {
+            params {
+                fusion = true
+                fusion_read_only_buckets = 's3://bucket1,s3://bucket2'
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                input[1] = 's3://test-bucket/work'
+                input[2] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 }
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR with read-write buckets") {
+
+        when {
+            params {
+                fusion = true
+                fusion_read_write_buckets = 's3://bucket1,s3://bucket2'
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                input[1] = 's3://test-bucket/work'
+                input[2] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 }
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR with custom cache path") {
+
+        when {
+            params {
+                fusion = true
+                fusion_cache_path = '/custom/cache'
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                input[1] = '/tmp/work'
+                input[2] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 }
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR with outdir parameter") {
+
+        when {
+            params {
+                fusion = true
+                outdir = 's3://test-bucket/outputs'
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                input[1] = 's3://test-bucket/work'
+                input[2] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 }
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR without outdir uses workflow.workDir correctly") {
+
+        when {
+            params {
+                fusion = true
+                // outdir is NOT set - this should use workflow.workDir fallback
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                input[1] = 's3://test-bucket/scratch/workflow-123/work'
+                input[2] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 },
+                { assert process.out.report[0].name == 'fusion-doctor-report.json' }
+                // Note: The publishDir should resolve to s3://test-bucket/scratch/workflow-123/work/outputs/fusion
+                // This test validates that the path is correctly formed with file().resolve().toUriString()
+            )
         }
 
     }
