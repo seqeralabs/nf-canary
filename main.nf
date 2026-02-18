@@ -451,7 +451,7 @@ workflow NF_CANARY {
     Channel.fromList(run.findAll { it !in skip })
         .flatten()
         .branch { toolname ->
-            TEST_FUSION_DOCTOR:           toolname == "TEST_FUSION_DOCTOR" && fusion
+            TEST_FUSION_DOCTOR:      toolname == "TEST_FUSION_DOCTOR" && fusion
             TEST_BIN_SCRIPT:         toolname == "TEST_BIN_SCRIPT"
             TEST_CREATE_EMPTY_FILE:  toolname == "TEST_CREATE_EMPTY_FILE"
             TEST_CREATE_FILE:        toolname == "TEST_CREATE_FILE"
@@ -499,7 +499,7 @@ workflow NF_CANARY {
         TEST_MV_FOLDER_CONTENTS(run_ch.TEST_MV_FOLDER_CONTENTS )
         TEST_VAL_INPUT(         run_ch.TEST_VAL_INPUT, "Hello World" )
         TEST_GPU(               run_ch.TEST_GPU, "dummy" )
-        TEST_FUSION_DOCTOR(          run_ch.TEST_FUSION_DOCTOR, workflow.workDir, ref_profile_ch )
+        TEST_FUSION_DOCTOR(     run_ch.TEST_FUSION_DOCTOR, workflow.workDir, ref_profile_ch )
 
         // POC of emitting the channel
         Channel.empty()
