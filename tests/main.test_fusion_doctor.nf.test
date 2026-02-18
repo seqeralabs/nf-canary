@@ -38,6 +38,8 @@ nextflow_process {
                 input[0] = 'dummy'
                 input[1] = '/tmp/work'
                 input[2] = []
+                input[3] = []
+                input[4] = []
                 """
             }
         }
@@ -64,6 +66,8 @@ nextflow_process {
                 input[0] = 'dummy'
                 input[1] = 's3://test-bucket/work'
                 input[2] = []
+                input[3] = []
+                input[4] = []
                 """
             }
         }
@@ -89,6 +93,8 @@ nextflow_process {
                 input[0] = 'dummy'
                 input[1] = 'gs://test-bucket/work'
                 input[2] = []
+                input[3] = []
+                input[4] = []
                 """
             }
         }
@@ -113,6 +119,8 @@ nextflow_process {
                 input[0] = 'dummy'
                 input[1] = 'az://test-container/work'
                 input[2] = []
+                input[3] = []
+                input[4] = []
                 """
             }
         }
@@ -137,6 +145,8 @@ nextflow_process {
                 input[0] = 'dummy'
                 input[1] = 's3://test-bucket/work'
                 input[2] = file("${projectDir}/assets/fusion-aws-recommended.yaml")
+                input[3] = []
+                input[4] = []
                 """
             }
         }
@@ -155,13 +165,14 @@ nextflow_process {
         when {
             params {
                 fusion = true
-                fusion_read_only_buckets = 's3://bucket1,s3://bucket2'
             }
             process {
                 """
                 input[0] = 'dummy'
                 input[1] = 's3://test-bucket/work'
                 input[2] = []
+                input[3] = []
+                input[4] = ['s3://bucket1', 's3://bucket2']
                 """
             }
         }
@@ -180,13 +191,14 @@ nextflow_process {
         when {
             params {
                 fusion = true
-                fusion_read_write_buckets = 's3://bucket1,s3://bucket2'
             }
             process {
                 """
                 input[0] = 'dummy'
                 input[1] = 's3://test-bucket/work'
                 input[2] = []
+                input[3] = ['s3://bucket1', 's3://bucket2']
+                input[4] = []
                 """
             }
         }
@@ -212,6 +224,8 @@ nextflow_process {
                 input[0] = 'dummy'
                 input[1] = '/tmp/work'
                 input[2] = []
+                input[3] = []
+                input[4] = []
                 """
             }
         }
@@ -237,6 +251,8 @@ nextflow_process {
                 input[0] = 'dummy'
                 input[1] = 's3://test-bucket/work'
                 input[2] = []
+                input[3] = []
+                input[4] = []
                 """
             }
         }
@@ -263,6 +279,8 @@ nextflow_process {
                 input[0] = 'dummy'
                 input[1] = 's3://test-bucket/scratch/workflow-123/work'
                 input[2] = []
+                input[3] = []
+                input[4] = []
                 """
             }
         }

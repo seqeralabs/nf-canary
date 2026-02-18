@@ -384,6 +384,8 @@ process TEST_FUSION_DOCTOR {
         val(dummy_val)
         val(work_dir)
         path(reference_profile)
+        val(rw_buckets)
+        val(ro_buckets)
 
     output:
         path("fusion-doctor-report.json"), emit: report
@@ -395,15 +397,9 @@ process TEST_FUSION_DOCTOR {
     def cache_path   = params.fusion_cache_path ?: '/tmp'
     def disk_flag    = "--check-disk-usage ${cache_path}"
     
-    // Process read-only buckets
-    def ro_buckets = params.fusion_read_only_buckets
-        ? params.fusion_read_only_buckets.tokenize(',').collect { "--check-bucket-read-only ${it.trim()}" }.join(' ')
-        : ""
-    
-    // Process read-write buckets
-    def rw_buckets = params.fusion_read_write_buckets
-        ? params.fusion_read_write_buckets.tokenize(',').collect { "--check-bucket-read-write ${it.trim()}" }.join(' ')
-        : ""
+    // Build bucket args from lists
+    def rw_bucket_args = rw_buckets ? rw_buckets.collect { bucket -> "--check-bucket-read-write ${bucket}" }.join(' ') : ""
+    def ro_bucket_args = ro_buckets ? ro_buckets.collect { bucket -> "--check-bucket-read-only ${bucket}" }.join(' ') : ""
 
     """
     #!/bin/bash
@@ -418,8 +414,8 @@ process TEST_FUSION_DOCTOR {
         ${profile_flag} \\
         ${bucket_flag} \\
         ${disk_flag} \\
-        ${ro_buckets} \\
-        ${rw_buckets}
+        ${rw_bucket_args} \\
+        ${ro_bucket_args}
     """
 }
 
@@ -487,6 +483,15 @@ workflow NF_CANARY {
             ? Channel.fromPath(params.fusion_reference_profile, checkIfExists: true)
             : Channel.value([])
 
+        // Parse bucket parameters into lists
+        def rw_buckets_list = params.fusion_read_write_buckets
+            ? params.fusion_read_write_buckets.tokenize(',').collect { it.trim() }.findAll { it }
+            : []
+        
+        def ro_buckets_list = params.fusion_read_only_buckets
+            ? params.fusion_read_only_buckets.tokenize(',').collect { it.trim() }.findAll { it }
+            : []
+
         // Run tests
         TEST_SUCCESS(           run_ch.TEST_SUCCESS )
         TEST_CREATE_FILE(       run_ch.TEST_CREATE_FILE )
@@ -504,7 +509,7 @@ workflow NF_CANARY {
         TEST_MV_FOLDER_CONTENTS(run_ch.TEST_MV_FOLDER_CONTENTS )
         TEST_VAL_INPUT(         run_ch.TEST_VAL_INPUT, "Hello World" )
         TEST_GPU(               run_ch.TEST_GPU, "dummy" )
-        TEST_FUSION_DOCTOR(     run_ch.TEST_FUSION_DOCTOR, workflow.workDir, ref_profile_ch )
+        TEST_FUSION_DOCTOR(     run_ch.TEST_FUSION_DOCTOR, workflow.workDir, ref_profile_ch, rw_buckets_list, ro_buckets_list )
 
         // POC of emitting the channel
         Channel.empty()
