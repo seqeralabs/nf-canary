@@ -391,7 +391,7 @@ process TEST_FUSION_DOCTOR {
     script:
     def is_cloud_uri = work_dir.toString() ==~ /^(s3|gs|az):\/\/.+/
     def bucket_flag  = is_cloud_uri ? "--check-bucket-read-write ${work_dir}" : ""
-    def profile_flag = reference_profile.name ? "--reference-profile ${reference_profile}" : ""
+    def profile_flag = reference_profile ? "--reference-profile ${reference_profile}" : ""
     def cache_path   = params.fusion_cache_path ?: '/tmp'
     def disk_flag    = "--check-disk-usage ${cache_path}"
     
@@ -407,14 +407,19 @@ process TEST_FUSION_DOCTOR {
 
     """
     #!/bin/bash
+
+    # TODO(amiranda): Workaround to circumvent the lack of dedicated container
+    if command -v fusion.mock >/dev/null 2>&1; then
+      fusion() { fusion.mock "\$@"; }
+    fi
+
     fusion doctor \\
         --output fusion-doctor-report.json \\
         ${profile_flag} \\
         ${bucket_flag} \\
         ${disk_flag} \\
         ${ro_buckets} \\
-        ${rw_buckets} \\
-        || true # TODO(amiranda): Add flag to `fusion doctor` to prevent exit(1)
+        ${rw_buckets}
     """
 }
 
