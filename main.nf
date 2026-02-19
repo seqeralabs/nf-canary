@@ -513,7 +513,7 @@ workflow NF_CANARY {
             : []
 
         // Add work_dir to rw_buckets_list if it's a cloud URI
-        if (workflow.workDir.scheme) {
+        if (workflow.workDir.scheme in ['s3', 'gs', 'az']) {
             rw_buckets_list = rw_buckets_list + [workflow.workDir.toUriString()]
         }
 
