@@ -407,13 +407,13 @@ process TEST_FUSION_DOCTOR {
     // Build YAML content for reference profile
     def yaml_content = []
     if (params.fusion_kernel_version_min) {
-        yaml_content.add("kernel_version: \"${params.fusion_kernel_version_min}\"")
+        yaml_content.add("kernel_version_min: \"${params.fusion_kernel_version_min}\"")
     }
     if (params.fusion_memory_gb_min) {
-        yaml_content.add("memory_gb: ${params.fusion_memory_gb_min}")
+        yaml_content.add("memory_gb_min: ${params.fusion_memory_gb_min}")
     }
     if (params.fusion_disk_gb_min) {
-        yaml_content.add("disk_gb: ${params.fusion_disk_gb_min}")
+        yaml_content.add("disk_gb_min: ${params.fusion_disk_gb_min}")
     }
     def yaml_body = yaml_content.join('\n')
 
