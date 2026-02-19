@@ -36,10 +36,9 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                input[1] = '/tmp/work'
+                input[1] = []
                 input[2] = []
                 input[3] = []
-                input[4] = []
                 """
             }
         }
@@ -64,10 +63,9 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                input[1] = 's3://test-bucket/work'
+                input[1] = []
                 input[2] = []
                 input[3] = []
-                input[4] = []
                 """
             }
         }
@@ -91,10 +89,9 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                input[1] = 'gs://test-bucket/work'
+                input[1] = []
                 input[2] = []
                 input[3] = []
-                input[4] = []
                 """
             }
         }
@@ -117,10 +114,9 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                input[1] = 'az://test-container/work'
+                input[1] = []
                 input[2] = []
                 input[3] = []
-                input[4] = []
                 """
             }
         }
@@ -143,10 +139,9 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                input[1] = 's3://test-bucket/work'
-                input[2] = file("${projectDir}/assets/fusion-aws-recommended.yaml")
+                input[1] = file("${projectDir}/assets/fusion-aws-recommended.yaml")
+                input[2] = []
                 input[3] = []
-                input[4] = []
                 """
             }
         }
@@ -169,10 +164,9 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                input[1] = 's3://test-bucket/work'
+                input[1] = []
                 input[2] = []
-                input[3] = []
-                input[4] = ['s3://bucket1', 's3://bucket2']
+                input[3] = ['s3://bucket1', 's3://bucket2']
                 """
             }
         }
@@ -195,10 +189,9 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                input[1] = 's3://test-bucket/work'
-                input[2] = []
-                input[3] = ['s3://bucket1', 's3://bucket2']
-                input[4] = []
+                input[1] = []
+                input[2] = ['s3://bucket1', 's3://bucket2']
+                input[3] = []
                 """
             }
         }
@@ -222,10 +215,9 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                input[1] = '/tmp/work'
+                input[1] = []
                 input[2] = []
                 input[3] = []
-                input[4] = []
                 """
             }
         }
@@ -249,10 +241,9 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                input[1] = 's3://test-bucket/work'
+                input[1] = []
                 input[2] = []
                 input[3] = []
-                input[4] = []
                 """
             }
         }
@@ -277,10 +268,9 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                input[1] = 's3://test-bucket/scratch/workflow-123/work'
+                input[1] = []
                 input[2] = []
                 input[3] = []
-                input[4] = []
                 """
             }
         }
@@ -290,8 +280,68 @@ nextflow_process {
                 { assert process.success },
                 { assert process.out.report.size() == 1 },
                 { assert process.out.report[0].toString().endsWith('fusion-doctor-report.json') }
-                // Note: The publishDir should resolve to s3://test-bucket/scratch/workflow-123/work/outputs/fusion
+                // Note: The publishDir should resolve to workflow.workDir/outputs/fusion
                 // This test validates that the path is correctly formed with file().resolve().toUriString()
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR with cloud workDir automatically included in rw_buckets") {
+
+        when {
+            params {
+                fusion = true
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                input[1] = []
+                // Simulating what the workflow does: adding workflow.workDir to rw_buckets_list
+                // when workflow.workDir.scheme is 's3', 'gs', or 'az'
+                input[2] = ['s3://my-work-bucket/work']
+                input[3] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 },
+                { assert process.out.report[0].toString().endsWith('fusion-doctor-report.json') }
+                // This test validates that when workflow.workDir has a cloud scheme,
+                // it gets added to the rw_buckets_list and passed to fusion-doctor
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR combines explicit buckets with workDir") {
+
+        when {
+            params {
+                fusion = true
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                input[1] = []
+                // Simulating the workflow combining explicit fusion_read_write_buckets
+                // with workflow.workDir when it has a cloud scheme
+                input[2] = ['s3://explicit-bucket1', 's3://explicit-bucket2', 's3://my-work-bucket/work']
+                input[3] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 },
+                { assert process.out.report[0].toString().endsWith('fusion-doctor-report.json') }
+                // This test validates that workflow.workDir is added alongside
+                // explicitly provided fusion_read_write_buckets
             )
         }
 

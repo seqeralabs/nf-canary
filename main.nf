@@ -382,7 +382,6 @@ process TEST_FUSION_DOCTOR {
 
     input:
         val(dummy_val)
-        val(work_dir)
         path(reference_profile)
         val(rw_buckets)
         val(ro_buckets)
@@ -391,8 +390,6 @@ process TEST_FUSION_DOCTOR {
         path("fusion-doctor-report.json"), emit: report
 
     script:
-    def is_cloud_uri = work_dir.toString() ==~ /^(s3|gs|az):\/\/.+/
-    def bucket_flag  = is_cloud_uri ? "--check-bucket-read-write ${work_dir}" : ""
     def profile_flag = reference_profile ? "--reference-profile ${reference_profile}" : ""
     def cache_path   = params.fusion_cache_path ?: '/tmp'
     def disk_flag    = "--check-disk-usage ${cache_path}"
@@ -412,7 +409,6 @@ process TEST_FUSION_DOCTOR {
     fusion doctor \\
         --output fusion-doctor-report.json \\
         ${profile_flag} \\
-        ${bucket_flag} \\
         ${disk_flag} \\
         ${rw_bucket_args} \\
         ${ro_bucket_args}
@@ -492,6 +488,11 @@ workflow NF_CANARY {
             ? params.fusion_read_only_buckets.tokenize(',').collect { it.trim() }.findAll { it }
             : []
 
+        // Add work_dir to rw_buckets_list if it's a cloud URI
+        if (workflow.workDir.scheme) {
+            rw_buckets_list = rw_buckets_list + [workflow.workDir.toUriString()]
+        }
+
         // Run tests
         TEST_SUCCESS(           run_ch.TEST_SUCCESS )
         TEST_CREATE_FILE(       run_ch.TEST_CREATE_FILE )
@@ -509,7 +510,7 @@ workflow NF_CANARY {
         TEST_MV_FOLDER_CONTENTS(run_ch.TEST_MV_FOLDER_CONTENTS )
         TEST_VAL_INPUT(         run_ch.TEST_VAL_INPUT, "Hello World" )
         TEST_GPU(               run_ch.TEST_GPU, "dummy" )
-        TEST_FUSION_DOCTOR(     run_ch.TEST_FUSION_DOCTOR, workflow.workDir, ref_profile_ch, rw_buckets_list, ro_buckets_list )
+        TEST_FUSION_DOCTOR(     run_ch.TEST_FUSION_DOCTOR, ref_profile_ch, rw_buckets_list, ro_buckets_list )
 
         // POC of emitting the channel
         Channel.empty()
