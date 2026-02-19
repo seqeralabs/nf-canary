@@ -57,14 +57,6 @@
                     "help_text": "When enabled, run the TEST_FUSION_DOCTOR process to validate Fusion requirements.",
                     "fa_icon": "fas fa-stethoscope"
                 },
-                "fusion_reference_profile": {
-                    "type": "string",
-                    "format": "file-path",
-                    "description": "Path to YAML file defining Fusion validation requirements.",
-                    "help_text": "Path to the YAML configuration file containing validation thresholds passed to the diagnostics process. Typically configured automatically when using a fusion profile (e.g., 'assets/fusion-aws-recommended.yaml)'.",
-                    "fa_icon": "fas fa-file-code",
-                    "hidden": true
-                },
                 "fusion_cache_path": {
                     "type": "string",
                     "description": "Filesystem path for Fusion cache directory.",

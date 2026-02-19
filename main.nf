@@ -382,7 +382,6 @@ process TEST_FUSION_DOCTOR {
 
     input:
         val(dummy_val)
-        path(reference_profile)
         val(rw_buckets)
         val(ro_buckets)
 
@@ -390,13 +389,33 @@ process TEST_FUSION_DOCTOR {
         path("fusion-doctor-report.json"), emit: report
 
     script:
-    def profile_flag = reference_profile ? "--reference-profile ${reference_profile}" : ""
-    def cache_path   = params.fusion_cache_path ?: '/tmp'
-    def disk_flag    = "--check-disk-usage ${cache_path}"
+    // Generate temporary YAML reference profile if fusion parameters are provided
+    def has_fusion_params = params.fusion_kernel_version_min || params.fusion_memory_gb_min || params.fusion_disk_gb_min
+    def reference_profile_flag = ""
+    
+    if (has_fusion_params) {
+        reference_profile_flag = "--reference-profile fusion-reference-profile.yaml"
+    }
+    
+    def cache_path = params.fusion_cache_path ?: '/tmp'
+    def disk_flag  = "--check-disk-usage ${cache_path}"
     
     // Build bucket args from lists
     def rw_bucket_args = rw_buckets ? rw_buckets.collect { bucket -> "--check-bucket-read-write ${bucket}" }.join(' ') : ""
     def ro_bucket_args = ro_buckets ? ro_buckets.collect { bucket -> "--check-bucket-read-only ${bucket}" }.join(' ') : ""
+
+    // Build YAML content for reference profile
+    def yaml_content = []
+    if (params.fusion_kernel_version_min) {
+        yaml_content.add("kernel_version: \"${params.fusion_kernel_version_min}\"")
+    }
+    if (params.fusion_memory_gb_min) {
+        yaml_content.add("memory_gb: ${params.fusion_memory_gb_min}")
+    }
+    if (params.fusion_disk_gb_min) {
+        yaml_content.add("disk_gb: ${params.fusion_disk_gb_min}")
+    }
+    def yaml_body = yaml_content.join('\n')
 
     """
     #!/bin/bash
@@ -406,9 +425,16 @@ process TEST_FUSION_DOCTOR {
       fusion() { fusion.mock "\$@"; }
     fi
 
+    # Generate temporary YAML reference profile if needed
+    if [ -n "${reference_profile_flag}" ]; then
+        cat > fusion-reference-profile.yaml <<'EOF'
+${yaml_body}
+EOF
+    fi
+
     fusion doctor \\
         --output fusion-doctor-report.json \\
-        ${profile_flag} \\
+        ${reference_profile_flag} \\
         ${disk_flag} \\
         ${rw_bucket_args} \\
         ${ro_bucket_args}
@@ -475,10 +501,6 @@ workflow NF_CANARY {
 
         remote_file = params.remoteFile ? Channel.fromPath(params.remoteFile, glob:false) : Channel.empty()
 
-        ref_profile_ch = params.fusion_reference_profile
-            ? Channel.fromPath(params.fusion_reference_profile, checkIfExists: true)
-            : Channel.value([])
-
         // Parse bucket parameters into lists
         def rw_buckets_list = params.fusion_read_write_buckets
             ? params.fusion_read_write_buckets.tokenize(',').collect { it.trim() }.findAll { it }
@@ -510,7 +532,7 @@ workflow NF_CANARY {
         TEST_MV_FOLDER_CONTENTS(run_ch.TEST_MV_FOLDER_CONTENTS )
         TEST_VAL_INPUT(         run_ch.TEST_VAL_INPUT, "Hello World" )
         TEST_GPU(               run_ch.TEST_GPU, "dummy" )
-        TEST_FUSION_DOCTOR(     run_ch.TEST_FUSION_DOCTOR, ref_profile_ch, rw_buckets_list, ro_buckets_list )
+        TEST_FUSION_DOCTOR(     run_ch.TEST_FUSION_DOCTOR, rw_buckets_list, ro_buckets_list )
 
         // POC of emitting the channel
         Channel.empty()

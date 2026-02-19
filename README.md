@@ -165,16 +165,21 @@ Available profiles:
 
 #### Custom Requirements
 
-You can provide a custom requirements YAML file:
+You can override the default requirements using command-line parameters:
 
 ```bash
-nextflow run seqeralabs/nf-canary --fusion --fusion_reference_profile /path/to/requirements.yaml
+nextflow run seqeralabs/nf-canary \
+    --fusion \
+    --fusion_kernel_version_min "5.10" \
+    --fusion_memory_gb_min 8 \
+    --fusion_disk_gb_min 100
 ```
 
-The YAML file supports the following fields:
+Available parameters:
 
-```yaml
-kernel_version_min: "5.10"
-memory_gb_min: 8
-disk_gb_min: 100
-```
+- `--fusion_kernel_version_min` - Minimum Linux kernel version (e.g., "5.10")
+- `--fusion_memory_gb_min` - Minimum memory in GB (e.g., 8)
+- `--fusion_disk_gb_min` - Minimum disk space in GB (e.g., 100)
+- `--fusion_cache_path` - Path for Fusion cache directory (default: `/tmp`)
+- `--fusion_read_write_buckets` - Comma-separated list of read-write bucket URIs
+- `--fusion_read_only_buckets` - Comma-separated list of read-only bucket URIs
