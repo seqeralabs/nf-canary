@@ -421,8 +421,10 @@ process TEST_FUSION_DOCTOR {
     #!/bin/bash
 
     # TODO(amiranda): Workaround to circumvent the lack of dedicated container
-    if command -v fusion.mock >/dev/null 2>&1; then
-      fusion() { fusion.mock "\$@"; }
+    if ! command -v fusion >/dev/null 2>&1; then
+      if command -v fusion.mock >/dev/null 2>&1; then
+        fusion() { fusion.mock "\$@"; }
+      fi
     fi
 
     # Generate temporary YAML reference profile if needed
