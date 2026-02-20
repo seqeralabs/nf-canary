@@ -15,10 +15,12 @@ nextflow_pipeline{
         then {
             assertAll(
                 { assert workflow.success },
-                { assert workflow.trace.tasks().size()     == 15 },
-                { assert workflow.trace.succeeded().size() == 14 },
+                { assert workflow.trace.tasks().size()     == 16 },
+                { assert workflow.trace.succeeded().size() == 15 },
                 { assert workflow.trace.failed().size()    == 1 },
-                { assert snapshot(workflow, path(params.outdir).list()).match() }
+                // Check fusion-doctor-report.json exists but don't snapshot its content (contains workDir paths)
+                { assert path(params.outdir).resolve("fusion-doctor-report.json").exists() },
+                { assert snapshot(workflow, path(params.outdir).list().findAll { !it.toString().contains("fusion-doctor-report.json") }).match() }
             )
         }
 
@@ -37,10 +39,12 @@ nextflow_pipeline{
         then {
             assertAll(
                 { assert workflow.success },
-                { assert workflow.trace.tasks().size()     == 14 },
-                { assert workflow.trace.succeeded().size() == 13 },
+                { assert workflow.trace.tasks().size()     == 15 },
+                { assert workflow.trace.succeeded().size() == 14 },
                 { assert workflow.trace.failed().size()    == 1 },
-                { assert snapshot(workflow, path(params.outdir).list()).match() }
+                // Check fusion-doctor-report.json exists but don't snapshot its content (contains workDir paths)
+                { assert path(params.outdir).resolve("fusion-doctor-report.json").exists() },
+                { assert snapshot(workflow, path(params.outdir).list().findAll { !it.toString().contains("fusion-doctor-report.json") }).match() }
             )
         }
 
@@ -81,10 +85,12 @@ nextflow_pipeline{
         then {
             assertAll(
                 { assert workflow.success },
-                { assert workflow.trace.tasks().size()     == 15 },
-                { assert workflow.trace.succeeded().size() == 14 },
+                { assert workflow.trace.tasks().size()     == 16 },
+                { assert workflow.trace.succeeded().size() == 15 },
                 { assert workflow.trace.failed().size()    == 1 },
-                { assert snapshot(workflow, path("${launchDir}/output").list()).match() }
+                // Check fusion-doctor-report.json exists but don't snapshot its content (contains workDir paths)
+                { assert path("${launchDir}/output").resolve("fusion-doctor-report.json").exists() },
+                { assert snapshot(workflow, path("${launchDir}/output").list().findAll { !it.toString().contains("fusion-doctor-report.json") }).match() }
             )
         }
 

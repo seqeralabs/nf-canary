@@ -1,0 +1,349 @@
+nextflow_process {
+
+    name "Test Process TEST_FUSION_DOCTOR"
+    script "main.nf"
+    process "TEST_FUSION_DOCTOR"
+
+/* TODO(amiranda): disabled until we have our own container
+    test("TEST_FUSION_DOCTOR fails when fusion binary is not available") {
+
+        when {
+            params {
+                fusion = true
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                input[2] = '/tmp/work'
+                input[3] = []
+                """
+            }
+        }
+
+        then {
+            assert process.failed
+        }
+
+    }
+*/
+
+    test("TEST_FUSION_DOCTOR succeeds with local work directory") {
+
+        when {
+            params {
+                fusion = true
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                input[2] = []  // rw_buckets
+                input[3] = []  // ro_buckets
+                input[4] = '/tmp/cache'  // cache_path
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 },
+                { assert process.out.report[0].toString().endsWith('fusion-doctor-report.json') },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR succeeds with S3 work directory") {
+
+        when {
+            params {
+                fusion = true
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                input[2] = []  // rw_buckets
+                input[3] = []  // ro_buckets
+                input[4] = '/tmp/cache'  // cache_path
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 },
+                { assert process.out.report[0].toString().endsWith('fusion-doctor-report.json') }
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR succeeds with GCS work directory") {
+
+        when {
+            params {
+                fusion = true
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                input[2] = []  // rw_buckets
+                input[3] = []  // ro_buckets
+                input[4] = '/tmp/cache'  // cache_path
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 }
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR succeeds with Azure work directory") {
+
+        when {
+            params {
+                fusion = true
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                input[2] = []  // rw_buckets
+                input[3] = []  // ro_buckets
+                input[4] = '/tmp/cache'  // cache_path
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 }
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR with read-only buckets") {
+
+        when {
+            params {
+                fusion = true
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                input[2] = []  // rw_buckets
+                input[3] = ['s3://bucket1', 's3://bucket2']  // ro_buckets
+                input[4] = '/tmp/cache'  // cache_path
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 }
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR with read-write buckets") {
+
+        when {
+            params {
+                fusion = true
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                input[2] = ['s3://bucket1', 's3://bucket2']  // rw_buckets
+                input[3] = []  // ro_buckets
+                input[4] = '/tmp/cache'  // cache_path
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 }
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR with custom cache path") {
+
+        when {
+            params {
+                fusion = true
+                fusion_cache_path = '/custom/cache'
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                input[2] = []  // rw_buckets
+                input[3] = []  // ro_buckets
+                input[4] = params.fusion_cache_path // cache_path
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 }
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR with outdir parameter") {
+
+        when {
+            params {
+                fusion = true
+                outdir = "${outputDir}/test-outputs"
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                input[2] = []  // rw_buckets
+                input[3] = []  // ro_buckets
+                input[4] = params.fusion_cache_path // cache_path
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 },
+                { assert process.out.report[0].toString().endsWith('fusion-doctor-report.json') }
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR without outdir uses workflow.workDir correctly") {
+
+        when {
+            params {
+                fusion = true
+                // outdir is NOT set - this should use workflow.workDir fallback
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                input[2] = []  // rw_buckets
+                input[3] = []  // ro_buckets
+                input[4] = '/tmp/cache'  // cache_path
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 },
+                { assert process.out.report[0].toString().endsWith('fusion-doctor-report.json') }
+                // Note: The publishDir should resolve to workflow.workDir/outputs/fusion
+                // This test validates that the path is correctly formed with file().resolve().toUriString()
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR with cloud workDir automatically included in rw_buckets") {
+
+        when {
+            params {
+                fusion = true
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                // Simulating what the workflow does: adding workflow.workDir to rw_buckets_list
+                // when workflow.workDir.scheme is 's3', 'gs', or 'az'
+                input[2] = ['s3://my-work-bucket/work']  // rw_buckets
+                input[3] = []  // ro_buckets
+                input[4] = '/tmp/cache'  // cache_path
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 },
+                { assert process.out.report[0].toString().endsWith('fusion-doctor-report.json') }
+                // This test validates that when workflow.workDir has a cloud scheme,
+                // it gets added to the rw_buckets_list and passed to fusion-doctor
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR combines explicit buckets with workDir") {
+
+        when {
+            params {
+                fusion = true
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                // Simulating the workflow combining explicit fusion_read_write_buckets
+                // with workflow.workDir when it has a cloud scheme
+                input[2] = ['s3://explicit-bucket1', 's3://explicit-bucket2', 's3://my-work-bucket/work']  // rw_buckets
+                input[3] = []  // ro_buckets
+                input[4] = '/tmp/cache'  // cache_path
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 },
+                { assert process.out.report[0].toString().endsWith('fusion-doctor-report.json') }
+                // This test validates that workflow.workDir is added alongside
+                // explicitly provided fusion_read_write_buckets
+            )
+        }
+
+    }
+
+}

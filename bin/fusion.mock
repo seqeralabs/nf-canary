@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+#
+# Mock fusion binary for testing
+#
+# This script simulates the fusion doctor command for nf-test
+
+set -euo pipefail
+
+# Parse command-line arguments
+if [[ "${1:-}" != "doctor" ]]; then
+    echo "ERROR: Mock fusion only supports 'doctor' command" >&2
+    exit 1
+fi
+
+# Shift past 'doctor' command
+shift
+
+# Initialize variables
+OUTPUT_FILE="fusion-doctor-report.json"
+REFERENCE_PROFILE=""
+BUCKETS=()
+DISK_PATH=""
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --output)
+            OUTPUT_FILE="$2"
+            shift 2
+            ;;
+        --reference-profile)
+            REFERENCE_PROFILE="$2"
+            shift 2
+            ;;
+        --check-bucket-read-write|--check-bucket-read-only)
+            BUCKETS+=("$2")
+            shift 2
+            ;;
+        --check-disk-usage)
+            DISK_PATH="$2"
+            shift 2
+            ;;
+        *)
+            # Skip unknown arguments
+            shift
+            ;;
+    esac
+done
+
+# Generate a mock fusion doctor report
+cat > "$OUTPUT_FILE" <<EOF
+{
+  "timestamp": "2026-02-18T20:19:45Z",
+  "version": "mock-fusion-v1.0.0",
+  "checks": {
+    "binary": {
+      "status": "pass",
+      "message": "Fusion binary is available"
+    }
+EOF
+
+# Add disk check if specified
+if [[ -n "$DISK_PATH" ]]; then
+    cat >> "$OUTPUT_FILE" <<EOF
+,
+    "disk": {
+      "status": "pass",
+      "path": "$DISK_PATH",
+      "message": "Disk usage check passed"
+    }
+EOF
+fi
+
+# Add bucket checks if specified
+if [[ ${#BUCKETS[@]} -gt 0 ]]; then
+    cat >> "$OUTPUT_FILE" <<EOF
+,
+    "buckets": {
+      "status": "pass",
+      "checked": [
+EOF
+    
+    for i in "${!BUCKETS[@]}"; do
+        if [[ $i -gt 0 ]]; then
+            echo "," >> "$OUTPUT_FILE"
+        fi
+        echo "        \"${BUCKETS[$i]}\"" >> "$OUTPUT_FILE"
+    done
+    
+    cat >> "$OUTPUT_FILE" <<EOF
+
+      ],
+      "message": "All bucket checks passed"
+    }
+EOF
+fi
+
+# Add reference profile check if specified
+if [[ -n "$REFERENCE_PROFILE" ]]; then
+    cat >> "$OUTPUT_FILE" <<EOF
+,
+    "reference_profile": {
+      "status": "pass",
+      "file": "$REFERENCE_PROFILE",
+      "message": "Reference profile validation passed"
+    }
+EOF
+fi
+
+# Close the JSON
+cat >> "$OUTPUT_FILE" <<EOF
+
+  },
+  "summary": {
+    "status": "pass",
+    "message": "Mock fusion doctor: all checks passed"
+  }
+}
+EOF
+
+echo "Mock fusion doctor report generated: $OUTPUT_FILE"
+exit 0

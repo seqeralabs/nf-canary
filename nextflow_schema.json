@@ -44,11 +44,53 @@
                     "help_text": "Path to a remote folder to publish files to. If not specified, this is a subfolder within the working directory but if specified it will publish files to the path specified in this parameter."
                 }
             }
+        },
+        "fusion_options": {
+            "title": "Fusion Filesystem Options",
+            "type": "object",
+            "fa_icon": "fas fa-layer-group",
+            "description": "Configure Fusion filesystem validation and diagnostics.",
+            "properties": {
+                "fusion": {
+                    "type": "boolean",
+                    "description": "Run Fusion filesystem diagnostics via 'fusion doctor'.",
+                    "help_text": "When enabled, run the TEST_FUSION_DOCTOR process to validate Fusion requirements.",
+                    "fa_icon": "fas fa-stethoscope"
+                },
+                "fusion_cache_path": {
+                    "type": "string",
+                    "description": "Filesystem path for Fusion cache directory.",
+                    "help_text": "Specifies the directory where Fusion should cache data locally. Used by the diagnostics process to verify sufficient disk space is available.",
+                    "default": "/tmp",
+                    "pattern": "^/.*$",
+                    "fa_icon": "fas fa-hdd",
+                    "hidden": true
+                },
+                "fusion_read_only_buckets": {
+                    "type": "string",
+                    "description": "Comma-separated list of read-only cloud storage buckets to validate access.",
+                    "help_text": "Comma-separated URIs of cloud storage buckets that require read-only access. The diagnostics process will validate if the task can read from these buckets. Supports AWS S3 (s3://), Google Cloud Storage (gs://), and Azure Blob Storage (az://). Example: 's3://reference-data,gs://shared-files'",
+                    "pattern": "^((s3://|gs://|az://)[a-zA-Z0-9][a-zA-Z0-9._/-]*(,(s3://|gs://|az://)[a-zA-Z0-9][a-zA-Z0-9._/-]*)*)?$",
+                    "fa_icon": "fas fa-eye",
+                    "default": ""
+                },
+                "fusion_read_write_buckets": {
+                    "type": "string",
+                    "description": "Comma-separated list of read-write cloud storage buckets to validate access.",
+                    "help_text": "Comma-separated URIs of cloud storage buckets that require read-write access. The diagnostics process will validate if the task can read from and write to these buckets. Supports AWS S3 (s3://), Google Cloud Storage (gs://), and Azure Blob Storage (az://). Example: 's3://results,gs://output-data'",
+                    "pattern": "^((s3://|gs://|az://)[a-zA-Z0-9][a-zA-Z0-9._/-]*(,(s3://|gs://|az://)[a-zA-Z0-9][a-zA-Z0-9._/-]*)*)?$",
+                    "fa_icon": "fas fa-pen",
+                    "default": ""
+                }
+            }
         }
     },
     "allOf": [
         {
             "$ref": "#/$defs/parameters"
+        },
+        {
+            "$ref": "#/$defs/fusion_options"
         }
     ]
 }

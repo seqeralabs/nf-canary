@@ -1,0 +1,19 @@
+{
+    "TEST_FUSION_DOCTOR succeeds with local work directory": {
+        "content": [
+            {
+                "0": [
+                    "fusion-doctor-report.json:md5,10480b3252d7592965f54e1de71dfb24"
+                ],
+                "report": [
+                    "fusion-doctor-report.json:md5,10480b3252d7592965f54e1de71dfb24"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-02-20T12:16:45.898429"
+    }
+}

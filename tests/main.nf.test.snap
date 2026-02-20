@@ -2,23 +2,23 @@
     "Should skip a process": {
         "content": [
             {
-                "stderr": [
-                    
-                ],
-                "errorReport": "",
+                "success": true,
                 "exitStatus": 0,
+                "errorMessage": "",
+                "errorReport": "",
                 "failed": false,
+                "trace": {
+                    "tasksCount": 15,
+                    "tasksFailed": 1,
+                    "tasksSucceeded": 14
+                },
                 "stdout": [
                     
                 ],
-                "errorMessage": "",
-                "trace": {
-                    "tasksFailed": 1,
-                    "tasksCount": 14,
-                    "tasksSucceeded": 13
-                },
-                "name": "workflow",
-                "success": true
+                "stderr": [
+                    
+                ],
+                "name": "workflow"
             },
             [
                 [
@@ -28,32 +28,32 @@
                 "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
+        "timestamp": "2026-02-20T16:21:07.54100674",
         "meta": {
-            "nf-test": "0.8.4",
-            "nextflow": "23.10.1"
-        },
-        "timestamp": "2024-04-19T09:04:04.680628"
+            "nf-test": "0.9.4",
+            "nextflow": "25.10.4"
+        }
     },
     "Should publish to alternative directory": {
         "content": [
             {
-                "stderr": [
-                    
-                ],
-                "errorReport": "",
+                "success": true,
                 "exitStatus": 0,
+                "errorMessage": "",
+                "errorReport": "",
                 "failed": false,
+                "trace": {
+                    "tasksCount": 16,
+                    "tasksFailed": 1,
+                    "tasksSucceeded": 15
+                },
                 "stdout": [
                     
                 ],
-                "errorMessage": "",
-                "trace": {
-                    "tasksFailed": 1,
-                    "tasksCount": 15,
-                    "tasksSucceeded": 14
-                },
-                "name": "workflow",
-                "success": true
+                "stderr": [
+                    
+                ],
+                "name": "workflow"
             },
             [
                 [
@@ -63,63 +63,63 @@
                 "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
+        "timestamp": "2026-02-20T16:21:40.15320284",
         "meta": {
-            "nf-test": "0.8.4",
-            "nextflow": "23.10.1"
-        },
-        "timestamp": "2024-04-19T09:04:08.847329"
+            "nf-test": "0.9.4",
+            "nextflow": "25.10.4"
+        }
     },
     "Should only run one process": {
         "content": [
             {
-                "stderr": [
-                    
-                ],
-                "errorReport": "",
+                "success": true,
                 "exitStatus": 0,
+                "errorMessage": "",
+                "errorReport": "",
                 "failed": false,
+                "trace": {
+                    "tasksCount": 1,
+                    "tasksFailed": 0,
+                    "tasksSucceeded": 1
+                },
                 "stdout": [
                     
                 ],
-                "errorMessage": "",
-                "trace": {
-                    "tasksFailed": 0,
-                    "tasksCount": 1,
-                    "tasksSucceeded": 1
-                },
-                "name": "workflow",
-                "success": true
+                "stderr": [
+                    
+                ],
+                "name": "workflow"
             },
             [
                 
             ]
         ],
+        "timestamp": "2026-02-20T15:19:47.178347532",
         "meta": {
-            "nf-test": "0.8.4",
-            "nextflow": "23.10.1"
-        },
-        "timestamp": "2023-10-04T12:17:23.982939"
+            "nf-test": "0.9.4",
+            "nextflow": "25.10.4"
+        }
     },
     "Should run without failures": {
         "content": [
             {
-                "stderr": [
-                    
-                ],
-                "errorReport": "",
+                "success": true,
                 "exitStatus": 0,
+                "errorMessage": "",
+                "errorReport": "",
                 "failed": false,
+                "trace": {
+                    "tasksCount": 16,
+                    "tasksFailed": 1,
+                    "tasksSucceeded": 15
+                },
                 "stdout": [
                     
                 ],
-                "errorMessage": "",
-                "trace": {
-                    "tasksFailed": 1,
-                    "tasksCount": 15,
-                    "tasksSucceeded": 14
-                },
-                "name": "workflow",
-                "success": true
+                "stderr": [
+                    
+                ],
+                "name": "workflow"
             },
             [
                 [
@@ -129,10 +129,10 @@
                 "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
+        "timestamp": "2026-02-20T16:20:48.129435245",
         "meta": {
-            "nf-test": "0.8.4",
-            "nextflow": "23.10.1"
-        },
-        "timestamp": "2024-04-19T09:04:02.601858"
+            "nf-test": "0.9.4",
+            "nextflow": "25.10.4"
+        }
     }
 }
