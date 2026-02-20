@@ -385,12 +385,13 @@ process TEST_FUSION_DOCTOR {
         path(reference_profile)
         val(rw_buckets)
         val(ro_buckets)
+        val(cache_path)
 
     output:
         path("fusion-doctor-report.json"), emit: report
 
     script:
-    def cache_path = params.fusion_cache_path ?: '/tmp'
+    def cache_path = cache_path ?: '/tmp'
     def disk_flag  = "--check-disk-usage ${cache_path}"
 
     // Build bucket args from lists
@@ -480,8 +481,8 @@ workflow NF_CANARY {
         remote_file = params.remoteFile ? Channel.fromPath(params.remoteFile, glob:false) : Channel.empty()
 
         // Parse bucket parameters into lists
-        def rw_buckets_list = params.fusion_read_write_buckets.tokenize(',').collect { it.trim(), checkIfExists: true } + [workflow.workDir.toUriString()]
-        def ro_buckets_list = params.fusion_read_only_buckets.tokenize(',').collect { it.trim(), checkIfExists: true }
+        def rw_buckets_list = params.fusion_read_write_buckets.tokenize(',').collect { it.trim() } + [workflow.workDir.toUriString()]
+        def ro_buckets_list = params.fusion_read_only_buckets.tokenize(',').collect { it.trim() }
 
         // Build fusion-doctor reference profile YAML from fusion parameters
         def yaml_lines = []
@@ -509,7 +510,7 @@ workflow NF_CANARY {
         TEST_VAL_INPUT(         run_ch.TEST_VAL_INPUT, "Hello World" )
         TEST_GPU(               run_ch.TEST_GPU, "dummy" )
 
-        TEST_FUSION_DOCTOR(     run_ch.TEST_FUSION_DOCTOR, reference_profile_ch, rw_buckets_list, ro_buckets_list )
+        TEST_FUSION_DOCTOR(run_ch.TEST_FUSION_DOCTOR, reference_profile_ch, rw_buckets_list, ro_buckets_list, params.fusion_cache_path)
 
         // POC of emitting the channel
         Channel.empty()

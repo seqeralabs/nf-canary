@@ -42,6 +42,7 @@ nextflow_process {
                 input[1] = ref_profile  // reference_profile
                 input[2] = []  // rw_buckets
                 input[3] = []  // ro_buckets
+                input[4] = '/tmp/cache'  // cache_path
                 """
             }
         }
@@ -70,6 +71,7 @@ nextflow_process {
                 input[1] = ref_profile  // reference_profile
                 input[2] = []  // rw_buckets
                 input[3] = []  // ro_buckets
+                input[4] = '/tmp/cache'  // cache_path
                 """
             }
         }
@@ -97,6 +99,7 @@ nextflow_process {
                 input[1] = ref_profile  // reference_profile
                 input[2] = []  // rw_buckets
                 input[3] = []  // ro_buckets
+                input[4] = '/tmp/cache'  // cache_path
                 """
             }
         }
@@ -123,6 +126,7 @@ nextflow_process {
                 input[1] = ref_profile  // reference_profile
                 input[2] = []  // rw_buckets
                 input[3] = []  // ro_buckets
+                input[4] = '/tmp/cache'  // cache_path
                 """
             }
         }
@@ -149,6 +153,7 @@ nextflow_process {
                 input[1] = ref_profile  // reference_profile
                 input[2] = []  // rw_buckets
                 input[3] = ['s3://bucket1', 's3://bucket2']  // ro_buckets
+                input[4] = '/tmp/cache'  // cache_path
                 """
             }
         }
@@ -175,6 +180,7 @@ nextflow_process {
                 input[1] = ref_profile  // reference_profile
                 input[2] = ['s3://bucket1', 's3://bucket2']  // rw_buckets
                 input[3] = []  // ro_buckets
+                input[4] = '/tmp/cache'  // cache_path
                 """
             }
         }
@@ -202,6 +208,7 @@ nextflow_process {
                 input[1] = ref_profile  // reference_profile
                 input[2] = []  // rw_buckets
                 input[3] = []  // ro_buckets
+                input[4] = params.fusion_cache_path // cache_path
                 """
             }
         }
@@ -229,6 +236,7 @@ nextflow_process {
                 input[1] = ref_profile  // reference_profile
                 input[2] = []  // rw_buckets
                 input[3] = []  // ro_buckets
+                input[4] = params.fusion_cache_path // cache_path
                 """
             }
         }
@@ -257,6 +265,7 @@ nextflow_process {
                 input[1] = ref_profile  // reference_profile
                 input[2] = []  // rw_buckets
                 input[3] = []  // ro_buckets
+                input[4] = '/tmp/cache'  // cache_path
                 """
             }
         }
@@ -288,6 +297,7 @@ nextflow_process {
                 // when workflow.workDir.scheme is 's3', 'gs', or 'az'
                 input[2] = ['s3://my-work-bucket/work']  // rw_buckets
                 input[3] = []  // ro_buckets
+                input[4] = '/tmp/cache'  // cache_path
                 """
             }
         }
@@ -319,6 +329,7 @@ nextflow_process {
                 // with workflow.workDir when it has a cloud scheme
                 input[2] = ['s3://explicit-bucket1', 's3://explicit-bucket2', 's3://my-work-bucket/work']  // rw_buckets
                 input[3] = []  // ro_buckets
+                input[4] = '/tmp/cache'  // cache_path
                 """
             }
         }

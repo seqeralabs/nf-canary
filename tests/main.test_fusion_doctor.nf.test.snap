@@ -3,17 +3,17 @@
         "content": [
             {
                 "0": [
-                    "fusion-doctor-report.json:md5,d02acfc1f0726eaec99c3ade755b4e89"
+                    "fusion-doctor-report.json:md5,10480b3252d7592965f54e1de71dfb24"
                 ],
                 "report": [
-                    "fusion-doctor-report.json:md5,d02acfc1f0726eaec99c3ade755b4e89"
+                    "fusion-doctor-report.json:md5,10480b3252d7592965f54e1de71dfb24"
                 ]
             }
         ],
-        "timestamp": "2026-02-18T21:20:50.22210018",
         "meta": {
-            "nf-test": "0.9.4",
+            "nf-test": "0.9.2",
             "nextflow": "25.10.4"
-        }
+        },
+        "timestamp": "2026-02-20T12:16:45.898429"
     }
 }
