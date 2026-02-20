@@ -70,7 +70,7 @@
                     "type": "string",
                     "description": "Comma-separated list of read-only cloud storage buckets to validate access.",
                     "help_text": "Comma-separated URIs of cloud storage buckets that require read-only access. The diagnostics process will validate if the task can read from these buckets. Supports AWS S3 (s3://), Google Cloud Storage (gs://), and Azure Blob Storage (az://). Example: 's3://reference-data,gs://shared-files'",
-                    "pattern": "^(s3://|gs://|az://)[a-zA-Z0-9][a-zA-Z0-9._/-]*(,(s3://|gs://|az://)[a-zA-Z0-9][a-zA-Z0-9._/-]*)*$",
+                    "pattern": "^((s3://|gs://|az://)[a-zA-Z0-9][a-zA-Z0-9._/-]*(,(s3://|gs://|az://)[a-zA-Z0-9][a-zA-Z0-9._/-]*)*)?$",
                     "fa_icon": "fas fa-eye",
                     "default": ""
                 },
@@ -78,7 +78,7 @@
                     "type": "string",
                     "description": "Comma-separated list of read-write cloud storage buckets to validate access.",
                     "help_text": "Comma-separated URIs of cloud storage buckets that require read-write access. The diagnostics process will validate if the task can read from and write to these buckets. Supports AWS S3 (s3://), Google Cloud Storage (gs://), and Azure Blob Storage (az://). Example: 's3://results,gs://output-data'",
-                    "pattern": "^(s3://|gs://|az://)[a-zA-Z0-9][a-zA-Z0-9._/-]*(,(s3://|gs://|az://)[a-zA-Z0-9][a-zA-Z0-9._/-]*)*$",
+                    "pattern": "^((s3://|gs://|az://)[a-zA-Z0-9][a-zA-Z0-9._/-]*(,(s3://|gs://|az://)[a-zA-Z0-9][a-zA-Z0-9._/-]*)*)?$",
                     "fa_icon": "fas fa-pen",
                     "default": ""
                 }

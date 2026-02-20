@@ -1,0 +1,111 @@
+nextflow_pipeline {
+
+    name "Test FUSION_DOCTOR with empty bucket parameters"
+    script "../main.nf"
+
+    test("Should handle empty fusion_read_only_buckets parameter") {
+
+        when {
+            params {
+                fusion = true
+                fusion_read_only_buckets = ""
+                fusion_read_write_buckets = ""
+                run = "TEST_FUSION_DOCTOR"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.trace.tasks().size() == 1 },
+                { assert workflow.trace.succeeded().size() == 1 }
+            )
+        }
+
+    }
+
+    test("Should handle empty fusion_read_write_buckets with non-empty read_only") {
+
+        when {
+            params {
+                fusion = true
+                fusion_read_only_buckets = "s3://test-bucket"
+                fusion_read_write_buckets = ""
+                run = "TEST_FUSION_DOCTOR"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.trace.tasks().size() == 1 },
+                { assert workflow.trace.succeeded().size() == 1 }
+            )
+        }
+
+    }
+
+    test("Should handle empty fusion_read_only_buckets with non-empty read_write") {
+
+        when {
+            params {
+                fusion = true
+                fusion_read_only_buckets = ""
+                fusion_read_write_buckets = "s3://test-bucket"
+                run = "TEST_FUSION_DOCTOR"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.trace.tasks().size() == 1 },
+                { assert workflow.trace.succeeded().size() == 1 }
+            )
+        }
+
+    }
+
+    test("Should handle both bucket parameters with values") {
+
+        when {
+            params {
+                fusion = true
+                fusion_read_only_buckets = "s3://readonly-bucket1,s3://readonly-bucket2"
+                fusion_read_write_buckets = "s3://readwrite-bucket"
+                run = "TEST_FUSION_DOCTOR"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.trace.tasks().size() == 1 },
+                { assert workflow.trace.succeeded().size() == 1 }
+            )
+        }
+
+    }
+
+    test("Should handle multiple buckets with proper trimming") {
+
+        when {
+            params {
+                fusion = true
+                fusion_read_only_buckets = "s3://bucket1, s3://bucket2 , s3://bucket3"
+                fusion_read_write_buckets = "gs://bucket4,  gs://bucket5"
+                run = "TEST_FUSION_DOCTOR"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.trace.tasks().size() == 1 },
+                { assert workflow.trace.succeeded().size() == 1 }
+            )
+        }
+
+    }
+
+}

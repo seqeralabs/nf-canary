@@ -2,26 +2,26 @@
     "Should skip a process": {
         "content": [
             {
-                "stderr": [
-                    
-                ],
-                "errorReport": "",
+                "success": true,
                 "exitStatus": 0,
+                "errorMessage": "",
+                "errorReport": "",
                 "failed": false,
+                "trace": {
+                    "tasksCount": 15,
+                    "tasksFailed": 1,
+                    "tasksSucceeded": 14
+                },
                 "stdout": [
                     
                 ],
-                "errorMessage": "",
-                "trace": {
-                    "tasksFailed": 1,
-                    "tasksCount": 15,
-                    "tasksSucceeded": 14
-                },
-                "name": "workflow",
-                "success": true
+                "stderr": [
+                    
+                ],
+                "name": "workflow"
             },
             [
-                "fusion-doctor-report.json:md5,0b2997c1623f5fe0c54f0db1a09323e4",
+                "fusion-doctor-report.json:md5,839fb1ab362a254b98e566e5ec6afd82",
                 [
                     "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
@@ -29,35 +29,35 @@
                 "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
+        "timestamp": "2026-02-20T15:19:42.278851865",
         "meta": {
-            "nf-test": "0.9.2",
+            "nf-test": "0.9.4",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-02-20T12:41:56.179861"
+        }
     },
     "Should publish to alternative directory": {
         "content": [
             {
-                "stderr": [
-                    
-                ],
-                "errorReport": "",
+                "success": true,
                 "exitStatus": 0,
+                "errorMessage": "",
+                "errorReport": "",
                 "failed": false,
+                "trace": {
+                    "tasksCount": 16,
+                    "tasksFailed": 1,
+                    "tasksSucceeded": 15
+                },
                 "stdout": [
                     
                 ],
-                "errorMessage": "",
-                "trace": {
-                    "tasksFailed": 1,
-                    "tasksCount": 16,
-                    "tasksSucceeded": 15
-                },
-                "name": "workflow",
-                "success": true
+                "stderr": [
+                    
+                ],
+                "name": "workflow"
             },
             [
-                "fusion-doctor-report.json:md5,55879acaa4210e0d77229ee4ce15b833",
+                "fusion-doctor-report.json:md5,5bbfde5a86584f0a21bde7a04a1bb5a5",
                 [
                     "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
@@ -65,66 +65,66 @@
                 "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
+        "timestamp": "2026-02-20T15:19:55.409133871",
         "meta": {
-            "nf-test": "0.9.2",
+            "nf-test": "0.9.4",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-02-20T12:42:01.628889"
+        }
     },
     "Should only run one process": {
         "content": [
             {
-                "stderr": [
-                    
-                ],
-                "errorReport": "",
+                "success": true,
                 "exitStatus": 0,
+                "errorMessage": "",
+                "errorReport": "",
                 "failed": false,
+                "trace": {
+                    "tasksCount": 1,
+                    "tasksFailed": 0,
+                    "tasksSucceeded": 1
+                },
                 "stdout": [
                     
                 ],
-                "errorMessage": "",
-                "trace": {
-                    "tasksFailed": 0,
-                    "tasksCount": 1,
-                    "tasksSucceeded": 1
-                },
-                "name": "workflow",
-                "success": true
+                "stderr": [
+                    
+                ],
+                "name": "workflow"
             },
             [
                 
             ]
         ],
+        "timestamp": "2026-02-20T15:19:47.178347532",
         "meta": {
-            "nf-test": "0.9.2",
+            "nf-test": "0.9.4",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-02-20T12:41:58.795159"
+        }
     },
     "Should run without failures": {
         "content": [
             {
-                "stderr": [
-                    
-                ],
-                "errorReport": "",
+                "success": true,
                 "exitStatus": 0,
+                "errorMessage": "",
+                "errorReport": "",
                 "failed": false,
+                "trace": {
+                    "tasksCount": 16,
+                    "tasksFailed": 1,
+                    "tasksSucceeded": 15
+                },
                 "stdout": [
                     
                 ],
-                "errorMessage": "",
-                "trace": {
-                    "tasksFailed": 1,
-                    "tasksCount": 16,
-                    "tasksSucceeded": 15
-                },
-                "name": "workflow",
-                "success": true
+                "stderr": [
+                    
+                ],
+                "name": "workflow"
             },
             [
-                "fusion-doctor-report.json:md5,b3761cd6fe13550977c15199d028f5dd",
+                "fusion-doctor-report.json:md5,2e0ca3bc3466ffcde5246fbd7eb1f087",
                 [
                     "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
                     "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
@@ -132,10 +132,10 @@
                 "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
+        "timestamp": "2026-02-20T15:19:36.062841686",
         "meta": {
-            "nf-test": "0.9.2",
+            "nf-test": "0.9.4",
             "nextflow": "25.10.4"
-        },
-        "timestamp": "2026-02-20T12:41:53.070652"
+        }
     }
 }
