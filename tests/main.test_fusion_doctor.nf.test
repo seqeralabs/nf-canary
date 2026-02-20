@@ -14,8 +14,10 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                input[1] = '/tmp/work'
-                input[2] = []
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                input[2] = '/tmp/work'
+                input[3] = []
                 """
             }
         }
@@ -36,8 +38,10 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                input[1] = []  // rw_buckets
-                input[2] = []  // ro_buckets
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                input[2] = []  // rw_buckets
+                input[3] = []  // ro_buckets
                 """
             }
         }
@@ -62,8 +66,10 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                input[1] = []  // rw_buckets
-                input[2] = []  // ro_buckets
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                input[2] = []  // rw_buckets
+                input[3] = []  // ro_buckets
                 """
             }
         }
@@ -87,8 +93,10 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                input[1] = []  // rw_buckets
-                input[2] = []  // ro_buckets
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                input[2] = []  // rw_buckets
+                input[3] = []  // ro_buckets
                 """
             }
         }
@@ -111,8 +119,10 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                input[1] = []  // rw_buckets
-                input[2] = []  // ro_buckets
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                input[2] = []  // rw_buckets
+                input[3] = []  // ro_buckets
                 """
             }
         }
@@ -135,8 +145,10 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                input[1] = []  // rw_buckets
-                input[2] = ['s3://bucket1', 's3://bucket2']  // ro_buckets
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                input[2] = []  // rw_buckets
+                input[3] = ['s3://bucket1', 's3://bucket2']  // ro_buckets
                 """
             }
         }
@@ -159,8 +171,10 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                input[1] = ['s3://bucket1', 's3://bucket2']  // rw_buckets
-                input[2] = []  // ro_buckets
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                input[2] = ['s3://bucket1', 's3://bucket2']  // rw_buckets
+                input[3] = []  // ro_buckets
                 """
             }
         }
@@ -184,8 +198,10 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                input[1] = []  // rw_buckets
-                input[2] = []  // ro_buckets
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                input[2] = []  // rw_buckets
+                input[3] = []  // ro_buckets
                 """
             }
         }
@@ -209,8 +225,10 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                input[1] = []  // rw_buckets
-                input[2] = []  // ro_buckets
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                input[2] = []  // rw_buckets
+                input[3] = []  // ro_buckets
                 """
             }
         }
@@ -235,8 +253,10 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                input[1] = []  // rw_buckets
-                input[2] = []  // ro_buckets
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
+                input[2] = []  // rw_buckets
+                input[3] = []  // ro_buckets
                 """
             }
         }
@@ -262,10 +282,12 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
                 // Simulating what the workflow does: adding workflow.workDir to rw_buckets_list
                 // when workflow.workDir.scheme is 's3', 'gs', or 'az'
-                input[1] = ['s3://my-work-bucket/work']  // rw_buckets
-                input[2] = []  // ro_buckets
+                input[2] = ['s3://my-work-bucket/work']  // rw_buckets
+                input[3] = []  // ro_buckets
                 """
             }
         }
@@ -291,10 +313,12 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile
                 // Simulating the workflow combining explicit fusion_read_write_buckets
                 // with workflow.workDir when it has a cloud scheme
-                input[1] = ['s3://explicit-bucket1', 's3://explicit-bucket2', 's3://my-work-bucket/work']  // rw_buckets
-                input[2] = []  // ro_buckets
+                input[2] = ['s3://explicit-bucket1', 's3://explicit-bucket2', 's3://my-work-bucket/work']  // rw_buckets
+                input[3] = []  // ro_buckets
                 """
             }
         }

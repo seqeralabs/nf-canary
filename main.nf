@@ -382,6 +382,7 @@ process TEST_FUSION_DOCTOR {
 
     input:
         val(dummy_val)
+        path(reference_profile)
         val(rw_buckets)
         val(ro_buckets)
 
@@ -389,54 +390,29 @@ process TEST_FUSION_DOCTOR {
         path("fusion-doctor-report.json"), emit: report
 
     script:
-    // Generate temporary YAML reference profile if fusion parameters are provided
-    def has_fusion_params = params.fusion_kernel_version_min || params.fusion_memory_gb_min || params.fusion_disk_gb_min
-    def reference_profile_flag = ""
-    
-    if (has_fusion_params) {
-        reference_profile_flag = "--reference-profile fusion-reference-profile.yaml"
-    }
-    
     def cache_path = params.fusion_cache_path ?: '/tmp'
     def disk_flag  = "--check-disk-usage ${cache_path}"
-    
+
     // Build bucket args from lists
     def rw_bucket_args = rw_buckets ? rw_buckets.collect { bucket -> "--check-bucket-read-write ${bucket}" }.join(' ') : ""
     def ro_bucket_args = ro_buckets ? ro_buckets.collect { bucket -> "--check-bucket-read-only ${bucket}" }.join(' ') : ""
 
-    // Build YAML content for reference profile
-    def yaml_content = []
-    if (params.fusion_kernel_version_min) {
-        yaml_content.add("kernel_version_min: \"${params.fusion_kernel_version_min}\"")
-    }
-    if (params.fusion_memory_gb_min) {
-        yaml_content.add("memory_gb_min: ${params.fusion_memory_gb_min}")
-    }
-    if (params.fusion_disk_gb_min) {
-        yaml_content.add("disk_gb_min: ${params.fusion_disk_gb_min}")
-    }
-    def yaml_body = yaml_content.join('\n')
-
     """
     #!/bin/bash
+    set -euo pipefail
 
     # TODO(amiranda): Workaround to circumvent the lack of dedicated container
-    if ! command -v fusion >/dev/null 2>&1; then
+    # Check if fusion is executable, not just if it exists in PATH
+    if ! fusion --version >/dev/null 2>&1; then
       if command -v fusion.mock >/dev/null 2>&1; then
         fusion() { fusion.mock "\$@"; }
+        export -f fusion
       fi
-    fi
-
-    # Generate temporary YAML reference profile if needed
-    if [ -n "${reference_profile_flag}" ]; then
-        cat > fusion-reference-profile.yaml <<'EOF'
-${yaml_body}
-EOF
     fi
 
     fusion doctor \\
         --output fusion-doctor-report.json \\
-        ${reference_profile_flag} \\
+        --reference-profile ${reference_profile} \\
         ${disk_flag} \\
         ${rw_bucket_args} \\
         ${ro_bucket_args}
@@ -476,11 +452,11 @@ workflow NF_CANARY {
     Channel.fromList(run.findAll { it !in skip })
         .flatten()
         .branch { toolname ->
-            TEST_FUSION_DOCTOR:      toolname == "TEST_FUSION_DOCTOR" && fusion
             TEST_BIN_SCRIPT:         toolname == "TEST_BIN_SCRIPT"
             TEST_CREATE_EMPTY_FILE:  toolname == "TEST_CREATE_EMPTY_FILE"
             TEST_CREATE_FILE:        toolname == "TEST_CREATE_FILE"
             TEST_CREATE_FOLDER:      toolname == "TEST_CREATE_FOLDER"
+            TEST_FUSION_DOCTOR:      toolname == "TEST_FUSION_DOCTOR" || fusion
             TEST_GPU:                toolname == "TEST_GPU" && gpu
             TEST_IGNORED_FAIL:       toolname == "TEST_IGNORED_FAIL"
             TEST_INPUT:              toolname == "TEST_INPUT"
@@ -504,18 +480,16 @@ workflow NF_CANARY {
         remote_file = params.remoteFile ? Channel.fromPath(params.remoteFile, glob:false) : Channel.empty()
 
         // Parse bucket parameters into lists
-        def rw_buckets_list = params.fusion_read_write_buckets
-            ? params.fusion_read_write_buckets.tokenize(',').collect { it.trim() }.findAll { it }
-            : []
-        
-        def ro_buckets_list = params.fusion_read_only_buckets
-            ? params.fusion_read_only_buckets.tokenize(',').collect { it.trim() }.findAll { it }
-            : []
+        def rw_buckets_list = params.fusion_read_write_buckets.tokenize(',').collect { file(it.trim(), checkIfExists: true) } + [workflow.workDir.toUriString()]
+        def ro_buckets_list = params.fusion_read_only_buckets.tokenize(',').collect { file(it.trim(), checkIfExists: true) }
 
-        // Add work_dir to rw_buckets_list if it's a cloud URI
-        if (workflow.workDir.scheme in ['s3', 'gs', 'az']) {
-            rw_buckets_list = rw_buckets_list + [workflow.workDir.toUriString()]
-        }
+        // Build fusion-doctor reference profile YAML from fusion parameters
+        def yaml_lines = []
+        if (params.fusion_kernel_version_min) yaml_lines.add("kernel_version_min: \"${params.fusion_kernel_version_min}\"")
+        if (params.fusion_memory_gb_min) yaml_lines.add("memory_gb_min: ${params.fusion_memory_gb_min}")
+        if (params.fusion_disk_gb_min) yaml_lines.add("disk_gb_min: ${params.fusion_disk_gb_min}")
+        reference_profile_ch = channel.of(yaml_lines.join('\n'))
+            .collectFile(name: 'fusion-reference-profile.yaml', newLine: true)
 
         // Run tests
         TEST_SUCCESS(           run_ch.TEST_SUCCESS )
@@ -534,7 +508,8 @@ workflow NF_CANARY {
         TEST_MV_FOLDER_CONTENTS(run_ch.TEST_MV_FOLDER_CONTENTS )
         TEST_VAL_INPUT(         run_ch.TEST_VAL_INPUT, "Hello World" )
         TEST_GPU(               run_ch.TEST_GPU, "dummy" )
-        TEST_FUSION_DOCTOR(     run_ch.TEST_FUSION_DOCTOR, rw_buckets_list, ro_buckets_list )
+
+        TEST_FUSION_DOCTOR(     run_ch.TEST_FUSION_DOCTOR, reference_profile_ch, rw_buckets_list, ro_buckets_list )
 
         // POC of emitting the channel
         Channel.empty()
