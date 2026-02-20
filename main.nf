@@ -480,8 +480,8 @@ workflow NF_CANARY {
         remote_file = params.remoteFile ? Channel.fromPath(params.remoteFile, glob:false) : Channel.empty()
 
         // Parse bucket parameters into lists
-        def rw_buckets_list = params.fusion_read_write_buckets.tokenize(',').collect { file(it.trim(), checkIfExists: true) } + [workflow.workDir.toUriString()]
-        def ro_buckets_list = params.fusion_read_only_buckets.tokenize(',').collect { file(it.trim(), checkIfExists: true) }
+        def rw_buckets_list = params.fusion_read_write_buckets.tokenize(',').collect { it.trim(), checkIfExists: true } + [workflow.workDir.toUriString()]
+        def ro_buckets_list = params.fusion_read_only_buckets.tokenize(',').collect { it.trim(), checkIfExists: true }
 
         // Build fusion-doctor reference profile YAML from fusion parameters
         def yaml_lines = []
