@@ -391,8 +391,7 @@ process TEST_FUSION_DOCTOR {
         path("fusion-doctor-report.json"), emit: report
 
     script:
-    def cache_path = cache_path ?: '/tmp'
-    def disk_flag  = "--check-disk-usage ${cache_path}"
+    def disk_flag  = "--check-disk-usage ${cache_path ?: '/tmp'}"
 
     // Build bucket args from lists
     def rw_bucket_args = rw_buckets ? rw_buckets.collect { bucket -> "--check-bucket-read-write ${bucket}" }.join(' ') : ""
