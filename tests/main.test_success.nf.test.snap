@@ -2,34 +2,34 @@
     "TEST_SUCCESS": {
         "content": [
             {
-                "success": true,
-                "exitStatus": 0,
-                "errorMessage": null,
-                "errorReport": null,
-                "failed": false,
-                "trace": {
-                    "tasksCount": 1,
-                    "tasksFailed": 0,
-                    "tasksSucceeded": 1
-                },
-                "stdout": [
-                    
-                ],
                 "stderr": [
                     
                 ],
+                "errorReport": null,
+                "exitStatus": 0,
                 "out": {
                     "0": [
                         ""
                     ]
                 },
-                "name": "TEST_SUCCESS"
+                "failed": false,
+                "stdout": [
+                    
+                ],
+                "errorMessage": null,
+                "trace": {
+                    "tasksFailed": 0,
+                    "tasksCount": 1,
+                    "tasksSucceeded": 1
+                },
+                "name": "TEST_SUCCESS",
+                "success": true
             }
         ],
-        "timestamp": "2026-02-18T19:51:09.303356821",
         "meta": {
-            "nf-test": "0.9.4",
+            "nf-test": "0.9.2",
             "nextflow": "25.10.4"
-        }
+        },
+        "timestamp": "2026-02-20T12:42:58.75868"
     }
 }
