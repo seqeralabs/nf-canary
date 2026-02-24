@@ -17,8 +17,8 @@ nextflow_pipeline {
         then {
             assertAll(
                 { assert workflow.success },
-                { assert workflow.trace.tasks().size() == 1 },
-                { assert workflow.trace.succeeded().size() == 1 }
+                { assert workflow.trace.tasks().size() == 2 },
+                { assert workflow.trace.succeeded().size() == 2 }
             )
         }
 
@@ -38,8 +38,8 @@ nextflow_pipeline {
         then {
             assertAll(
                 { assert workflow.success },
-                { assert workflow.trace.tasks().size() == 1 },
-                { assert workflow.trace.succeeded().size() == 1 }
+                { assert workflow.trace.tasks().size() == 2 },
+                { assert workflow.trace.succeeded().size() == 2 }
             )
         }
 
@@ -59,8 +59,8 @@ nextflow_pipeline {
         then {
             assertAll(
                 { assert workflow.success },
-                { assert workflow.trace.tasks().size() == 1 },
-                { assert workflow.trace.succeeded().size() == 1 }
+                { assert workflow.trace.tasks().size() == 2 },
+                { assert workflow.trace.succeeded().size() == 2 }
             )
         }
 
@@ -80,8 +80,8 @@ nextflow_pipeline {
         then {
             assertAll(
                 { assert workflow.success },
-                { assert workflow.trace.tasks().size() == 1 },
-                { assert workflow.trace.succeeded().size() == 1 }
+                { assert workflow.trace.tasks().size() == 2 },
+                { assert workflow.trace.succeeded().size() == 2 }
             )
         }
 
@@ -101,8 +101,8 @@ nextflow_pipeline {
         then {
             assertAll(
                 { assert workflow.success },
-                { assert workflow.trace.tasks().size() == 1 },
-                { assert workflow.trace.succeeded().size() == 1 }
+                { assert workflow.trace.tasks().size() == 2 },
+                { assert workflow.trace.succeeded().size() == 2 }
             )
         }
 

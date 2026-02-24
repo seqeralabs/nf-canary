@@ -419,6 +419,31 @@ process TEST_FUSION_DOCTOR {
     """
 }
 
+process FUSION_DOCTOR_GENERATE_REPORT {
+    /*
+    Aggregates doctor, bench, and objbench JSON reports into a single
+    consolidated HTML report and combined JSON report using the Python
+    generate_fusion_report.py script.
+    */
+
+    publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs/fusion").toUriString() }, mode: 'copy'
+
+    input:
+        path(doctor_report)
+
+    output:
+        path("fusion_report.html"), emit: html_report
+        path("fusion_report.json"), emit: json_report
+
+    script:
+    """
+    generate_fusion_report.py \\
+        --doctor ${doctor_report} \\
+        --output-html fusion_report.html \\
+        --output-json fusion_report.json
+    """
+}
+
 workflow NF_CANARY {
     take:
         run_tools
@@ -511,6 +536,12 @@ workflow NF_CANARY {
 
         TEST_FUSION_DOCTOR(run_ch.TEST_FUSION_DOCTOR, reference_profile_ch, rw_buckets_list, ro_buckets_list, params.fusion_cache_path)
 
+        // Generate consolidated fusion report from doctor output
+        // Only run FUSION_DOCTOR_GENERATE_REPORT if TEST_FUSION_DOCTOR produced output
+        FUSION_DOCTOR_GENERATE_REPORT(
+            TEST_FUSION_DOCTOR.out.report
+        )
+
         // POC of emitting the channel
         Channel.empty()
             .mix(
@@ -530,7 +561,9 @@ workflow NF_CANARY {
                 TEST_MV_FOLDER_CONTENTS.out,
                 TEST_VAL_INPUT.out,
                 TEST_GPU.out,
-                TEST_FUSION_DOCTOR.out
+                TEST_FUSION_DOCTOR.out,
+                FUSION_DOCTOR_GENERATE_REPORT.out.html_report.ifEmpty([]),
+                FUSION_DOCTOR_GENERATE_REPORT.out.json_report.ifEmpty([])
             )
             .set { ch_out }
 

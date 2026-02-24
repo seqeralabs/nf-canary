@@ -1,0 +1,53 @@
+nextflow_pipeline {
+
+    name "Test FUSION_DOCTOR_GENERATE_REPORT conditional execution"
+    script "main.nf"
+
+    test("Report process does NOT run when fusion is disabled") {
+
+        when {
+            params {
+                fusion = false
+                run = 'TEST_SUCCESS'  // Run a different test
+                outdir = "${launchDir}/output"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                // TEST_FUSION_DOCTOR should not run
+                { assert workflow.trace.tasks().findAll { it.name == 'NF_CANARY:TEST_FUSION_DOCTOR' }.size() == 0 },
+                // FUSION_DOCTOR_GENERATE_REPORT should not run
+                { assert workflow.trace.tasks().findAll { it.name == 'NF_CANARY:FUSION_DOCTOR_GENERATE_REPORT' }.size() == 0 }
+            )
+        }
+
+    }
+
+    test("Report process DOES run when fusion is enabled") {
+
+        when {
+            params {
+                fusion = true
+                run = 'TEST_FUSION_DOCTOR'
+                outdir = "${launchDir}/output"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                // Both processes should run (2 tasks total)
+                { assert workflow.trace.tasks().size() == 2 },
+                { assert workflow.trace.succeeded().size() == 2 },
+                // Check that report files exist in outputs
+                { assert path("${launchDir}/output/fusion_report.html").exists() },
+                { assert path("${launchDir}/output/fusion_report.json").exists() },
+                { assert path("${launchDir}/output/fusion-doctor-report.json").exists() }
+            )
+        }
+
+    }
+
+}
