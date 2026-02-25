@@ -33,6 +33,18 @@ jobs:
       - name: Run Prettier --check
         run: prettier --check .
 
+  python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Run generate_report tests
+        run: ./tests/test_generate_fusion_report.py
+
   nf-test:
     runs-on: ubuntu-latest
     env:
