@@ -426,7 +426,7 @@ process FUSION_DOCTOR_GENERATE_REPORT {
     generate_fusion_report.py script.
     */
 
-    container 'ghcr.io/astral-sh/uv:0.10.6'
+    container 'ghcr.io/astral-sh/uv:python3.12-bookworm-slim'
     publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs/fusion").toUriString() }, mode: 'copy'
 
     input:
