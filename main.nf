@@ -426,7 +426,7 @@ process FUSION_DOCTOR_GENERATE_REPORT {
     generate_fusion_report.py script.
     */
 
-    container 'ghcr.io/astral-sh/uv:python3.12-bookworm-slim'
+    container 'community.wave.seqera.io/library/jinja2_python_uv:7113b0a0e59d95a6'
     publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs/fusion").toUriString() }, mode: 'copy'
 
     input:
