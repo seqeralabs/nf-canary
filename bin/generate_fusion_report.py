@@ -158,8 +158,8 @@ def main():
         help="Path to fusion objbench JSON report"
     )
     parser.add_argument(
-        "--output-html", type=str, default="fusion_report.html",
-        help="Output path for HTML report (default: fusion_report.html)"
+        "--output-html", type=str, default="fusion-report.html",
+        help="Output path for HTML report (default: fusion-report.html)"
     )
     parser.add_argument(
         "--output-json", type=str, default="fusion_report.json",
