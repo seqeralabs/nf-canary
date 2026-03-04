@@ -439,12 +439,9 @@ process FUSION_DOCTOR_GENERATE_REPORT {
 
     script:
     """
-    # Create the expected directory structure for the template
-    mkdir -p assets/templates
-    cp ${template_file} assets/templates/fusion_report_template.html
-
     generate_fusion_report.py \\
         --doctor ${doctor_report} \\
+        --template ${template_file} \\
         --output-html fusion_report.html \\
         --output-json fusion_report.json
     """
