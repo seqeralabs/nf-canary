@@ -90,6 +90,7 @@
                 color: #c41e1e;
             }
 
+            /* Collapsible sections using native <details>/<summary> */
             .section {
                 margin-bottom: 2rem;
                 border: 1px solid #dadde1;
@@ -98,7 +99,7 @@
                 background: #fff;
             }
 
-            .section-header {
+            .section > summary {
                 background: #f5f6f7;
                 padding: 1rem;
                 border-bottom: 1px solid #dadde1;
@@ -108,20 +109,30 @@
                 align-items: center;
                 transition: background-color 0.15s;
                 user-select: none;
+                list-style: none;
             }
 
-            .section-header:hover {
+            .section > summary::-webkit-details-marker {
+                display: none;
+            }
+
+            .section > summary::marker {
+                display: none;
+                content: "";
+            }
+
+            .section > summary:hover {
                 background: #ebedf0;
             }
 
-            .section-header h2 {
+            .section > summary h2 {
                 font-size: 1.15rem;
                 font-weight: 600;
                 color: #1c1e21;
                 margin: 0;
             }
 
-            .section-header .toggle-icon {
+            .section > summary .toggle-icon {
                 display: inline-block;
                 width: 20px;
                 height: 20px;
@@ -131,26 +142,15 @@
                 font-weight: 700;
                 font-size: 0.9rem;
                 transition: transform 0.2s ease;
+                transform: rotate(-90deg);
             }
 
-            .section-header.collapsed .toggle-icon {
-                transform: rotate(-90deg);
+            .section[open] > summary .toggle-icon {
+                transform: rotate(0deg);
             }
 
             .section-content {
                 padding: 1.5rem;
-                display: block;
-                max-height: 10000px;
-                overflow: hidden;
-                transition:
-                    max-height 0.3s ease,
-                    padding 0.3s ease;
-            }
-
-            .section-content.collapsed {
-                max-height: 0;
-                padding: 0 1.5rem;
-                overflow: hidden;
             }
 
             .check-item {
@@ -191,6 +191,12 @@
                 width: 20px;
                 display: flex;
                 justify-content: center;
+            }
+
+            .check-category {
+                font-size: 0.75em;
+                color: #606770;
+                font-weight: 400;
             }
 
             .check-message {
@@ -245,11 +251,180 @@
                 color: #1c1e21;
             }
 
+            .summary-card-value.sm {
+                font-size: 1rem;
+            }
+
+            .summary-card-sub {
+                font-size: 0.85rem;
+                color: #606770;
+                margin-top: 0.25rem;
+            }
+
             h3 {
                 font-size: 1.1rem;
                 font-weight: 600;
                 color: #1c1e21;
                 margin: 1.5rem 0 1rem 0;
+            }
+
+            h3:first-child,
+            h3.mt-0 {
+                margin-top: 0;
+            }
+
+            .info-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 0.95rem;
+                margin-bottom: 1rem;
+            }
+
+            .info-table caption {
+                text-align: left;
+                font-weight: 600;
+                font-size: 1.1rem;
+                color: #1c1e21;
+                padding-bottom: 0.5rem;
+            }
+
+            .info-table th {
+                text-align: left;
+                padding: 0.5rem 0.75rem;
+                background: #f5f6f7;
+                border-bottom: 1px solid #dadde1;
+                font-weight: 500;
+                color: #606770;
+                font-size: 0.8rem;
+                text-transform: uppercase;
+                letter-spacing: 0.02em;
+            }
+
+            .info-table td {
+                padding: 0.5rem 0.75rem;
+                border-bottom: 1px solid #ebedf0;
+                color: #1c1e21;
+            }
+
+            .info-table tr:last-child td {
+                border-bottom: none;
+            }
+
+            .info-table .label {
+                color: #606770;
+                font-weight: 500;
+                width: 40%;
+            }
+
+            .mono {
+                font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+                font-size: 0.9em;
+            }
+
+            .usage-bar {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .usage-bar-track {
+                flex: 1;
+                height: 8px;
+                background: #ebedf0;
+                border-radius: 4px;
+                overflow: hidden;
+                max-width: 120px;
+            }
+
+            .usage-bar-fill {
+                height: 100%;
+                border-radius: 4px;
+                background: #00a400;
+            }
+
+            .usage-bar-fill.warn {
+                background: #ffba00;
+            }
+
+            .usage-bar-fill.critical {
+                background: #fa383e;
+            }
+
+            .usage-pct {
+                font-size: 0.85rem;
+                min-width: 3em;
+            }
+
+            .text-muted {
+                font-size: 0.85rem;
+                color: #606770;
+            }
+
+            .inline-warn {
+                display: inline-block;
+                font-size: 0.8rem;
+                color: #b38200;
+                background: #fff8e6;
+                padding: 0.1rem 0.4rem;
+                border-radius: 0.2rem;
+                margin-left: 0.5rem;
+                font-weight: 500;
+            }
+
+            .inline-critical {
+                display: inline-block;
+                font-size: 0.8rem;
+                color: #c41e1e;
+                background: #ffe6e6;
+                padding: 0.1rem 0.4rem;
+                border-radius: 0.2rem;
+                margin-left: 0.5rem;
+                font-weight: 500;
+            }
+
+            .detail-kv {
+                display: flex;
+                gap: 0.5rem;
+                padding: 0.2rem 0;
+                font-size: 0.9rem;
+            }
+
+            .detail-kv .dk-key {
+                color: #606770;
+                font-weight: 500;
+                min-width: 8em;
+            }
+
+            .detail-kv .dk-val {
+                color: #1c1e21;
+                font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+                font-size: 0.85em;
+            }
+
+            .copy-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.25rem;
+                background: none;
+                border: 1px solid #dadde1;
+                border-radius: 0.25rem;
+                padding: 0.15rem 0.4rem;
+                font-size: 0.75rem;
+                color: #606770;
+                cursor: pointer;
+                margin-left: 0.5rem;
+                vertical-align: middle;
+                transition: background 0.15s, color 0.15s;
+            }
+
+            .copy-btn:hover {
+                background: #ebedf0;
+                color: #1c1e21;
+            }
+
+            .copy-btn.copied {
+                color: #00a400;
+                border-color: #00a400;
             }
 
             footer {
@@ -269,8 +444,17 @@
                     max-width: none;
                     padding: 0;
                 }
-                .section-content {
-                    display: block !important;
+                .section {
+                    break-inside: avoid;
+                }
+                .section > summary .toggle-icon {
+                    display: none;
+                }
+                details.section {
+                    display: block;
+                }
+                details.section > summary ~ * {
+                    display: block;
                 }
             }
 
@@ -297,6 +481,7 @@
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 576 512"
+                        aria-hidden="true"
                         style="
                             width: 1.4em;
                             height: 1.4em;
@@ -315,8 +500,15 @@
                 <div class="metadata">
                     <div>
                         <strong>Generated</strong>
-                        {{ timestamp }}
+                        <time datetime="{{ timestamp }}" class="local-time">{{ timestamp }}</time>
                     </div>
+                    {% if doctor_report.fusion_version or doctor_report.version %}
+                    {% set version = doctor_report.fusion_version or doctor_report.version %}
+                    <div>
+                        <strong>Fusion Version</strong>
+                        <span>{{ version }}<button class="copy-btn" data-copy="{{ version }}">Copy</button></span>
+                    </div>
+                    {% endif %}
                     <div>
                         <strong>Status</strong>
                         <span class="status-badge status-{{ overall_status }}">{{ overall_status }}</span>
@@ -324,13 +516,13 @@
                 </div>
             </header>
 
-            <!-- Summary section -->
+            <!-- Validation Checks section (first — the most important info) -->
             {% if doctor_report %}
-            <section class="section">
-                <div class="section-header">
-                    <h2>System & Validation</h2>
+            <details id="validation-checks" class="section" open>
+                <summary>
+                    <h2>Validation Checks</h2>
                     <span class="toggle-icon">▼</span>
-                </div>
+                </summary>
                 <div class="section-content">
                     {% if doctor_report.check_summary or doctor_report.summary %} {% set summary =
                     doctor_report.check_summary or doctor_report.summary %} {% set summary_status = summary.overall or
@@ -342,14 +534,7 @@
                                 <span class="status-badge status-{{ summary_status }}">{{ summary_status }}</span>
                             </div>
                         </div>
-                        {% if doctor_report.fusion_version or doctor_report.version %}
-                        <div class="summary-card">
-                            <div class="summary-card-label">Fusion Version</div>
-                            <div class="summary-card-value">
-                                {{ doctor_report.fusion_version or doctor_report.version }}
-                            </div>
-                        </div>
-                        {% endif %} {% if summary.passed is defined or summary.failed is defined %}
+                        {% if summary.passed is defined or summary.failed is defined %}
                         <div class="summary-card">
                             <div class="summary-card-label">Checks</div>
                             <div class="summary-card-value">
@@ -374,8 +559,17 @@
                         <div class="check-message">{{ check_data.message }}</div>
                         {% if check_data.details %}
                         <div class="check-details">
-                            <strong>Details:</strong>
+                            {% if check_data.details is mapping %}
+                            {% for key, val in check_data.details.items() %}
+                            <div class="detail-kv">
+                                <span class="dk-key">{{ key|replace('_', ' ')|title }}</span>
+                                <span class="dk-val">{{ val }}</span>
+                            </div>
+                            {% endfor %}
+                            {% else %}
                             <pre>{{ check_data.details|tojson(indent=2) }}</pre>
+                            {% endif %}
+                            <button class="copy-btn" data-copy="{{ check_data.details|tojson }}">Copy</button>
                         </div>
                         {% endif %} {% if check_data.remediation %}
                         <div class="check-details"><strong>Remediation:</strong> {{ check_data.remediation }}</div>
@@ -390,16 +584,23 @@
                             </span>
                             {{ (check_data.check or check_data.name or 'Unknown')|replace('_', ' ')|title }} {% if
                             check_data.category %}
-                            <span style="font-size: 0.75em; color: #606770; font-weight: 400"
-                                >({{ check_data.category }})</span
-                            >
+                            <span class="check-category">({{ check_data.category }})</span>
                             {% endif %}
                         </div>
                         <div class="check-message">{{ check_data.message }}</div>
                         {% if check_data.details %}
                         <div class="check-details">
-                            <strong>Details:</strong>
+                            {% if check_data.details is mapping %}
+                            {% for key, val in check_data.details.items() %}
+                            <div class="detail-kv">
+                                <span class="dk-key">{{ key|replace('_', ' ')|title }}</span>
+                                <span class="dk-val">{{ val }}</span>
+                            </div>
+                            {% endfor %}
+                            {% else %}
                             <pre>{{ check_data.details|tojson(indent=2) }}</pre>
+                            {% endif %}
+                            <button class="copy-btn" data-copy="{{ check_data.details|tojson }}">Copy</button>
                         </div>
                         {% endif %} {% if check_data.remediation %}
                         <div class="check-details"><strong>Remediation:</strong> {{ check_data.remediation }}</div>
@@ -407,16 +608,229 @@
                     </div>
                     {% endfor %} {% endif %} {% endif %}
                 </div>
-            </section>
+            </details>
+            {% endif %}
+
+            <!-- System Environment section -->
+            {% if doctor_report.system %}
+            <details id="system-environment" class="section"{% if overall_status != 'pass' %} open{% endif %}>
+                <summary>
+                    <h2>System Environment</h2>
+                    <span class="toggle-icon">▼</span>
+                </summary>
+                <div class="section-content">
+                    {% set sys = doctor_report.system %}
+                    <div class="summary-grid">
+                        {% if sys.os %}
+                        <div class="summary-card">
+                            <div class="summary-card-label">Operating System</div>
+                            <div class="summary-card-value sm">
+                                {{ sys.os.name|default('Unknown')|title }} {{ sys.os.version|default('') }}
+                            </div>
+                            <div class="summary-card-sub">
+                                Kernel {{ sys.os.kernel|default('N/A') }} &middot; {{ sys.os.architecture|default('N/A') }}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if sys.cpu %}
+                        <div class="summary-card">
+                            <div class="summary-card-label">CPU</div>
+                            <div class="summary-card-value sm">
+                                {{ sys.cpu.cores|default('?') }} cores / {{ sys.cpu.threads|default('?') }} threads
+                            </div>
+                            <div class="summary-card-sub">
+                                {{ sys.cpu.model|default('Unknown') }}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if sys.memory %}
+                        {% set mem_total_gb = (sys.memory.total_bytes / 1073741824)|round(1) %}
+                        {% set mem_used_gb = ((sys.memory.total_bytes - sys.memory.available_bytes) / 1073741824)|round(1) %}
+                        {% set mem_avail_gb = (sys.memory.available_bytes / 1073741824)|round(1) %}
+                        {% set mem_used_pct = (((sys.memory.total_bytes - sys.memory.available_bytes) / sys.memory.total_bytes) * 100)|round(0)|int %}
+                        <div class="summary-card">
+                            <div class="summary-card-label">Memory</div>
+                            <div class="summary-card-value sm">
+                                {{ mem_used_gb }} GB used of {{ mem_total_gb }} GB
+                            </div>
+                            <div class="usage-bar" style="margin-top: 0.4rem">
+                                <div class="usage-bar-track">
+                                    <div class="usage-bar-fill {% if mem_used_pct >= 90 %}critical{% elif mem_used_pct >= 75 %}warn{% endif %}" style="width: {{ mem_used_pct }}%"></div>
+                                </div>
+                                <span class="usage-pct">{{ mem_used_pct }}%</span>
+                                <span class="text-muted">({{ mem_avail_gb }} GB available)</span>
+                            </div>
+                            {% if sys.memory.swap_total_bytes and sys.memory.swap_total_bytes > 0 %}
+                            {% set swap_total_bytes = sys.memory.swap_total_bytes %}
+                            {% set swap_free_bytes = sys.memory.swap_free_bytes %}
+                            {% set swap_used_pct = (((swap_total_bytes - swap_free_bytes) / swap_total_bytes) * 100)|round(0)|int %}
+                            {% set swap_total_gb = (swap_total_bytes / 1073741824)|round(1) %}
+                            <div class="summary-card-sub" style="margin-top: 0.35rem">
+                                Swap:
+                                {% if swap_free_bytes < 1073741824 %}
+                                {{ (swap_free_bytes / 1048576)|round(0)|int }} MB free
+                                {% else %}
+                                {{ (swap_free_bytes / 1073741824)|round(1) }} GB free
+                                {% endif %}
+                                of {{ swap_total_gb }} GB
+                                {% if swap_used_pct >= 95 %}
+                                <span class="inline-critical">{{ swap_used_pct }}% used</span>
+                                {% elif swap_used_pct >= 80 %}
+                                <span class="inline-warn">{{ swap_used_pct }}% used</span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </details>
+            {% endif %}
+
+            <!-- Storage section -->
+            {% if doctor_report.storage %}
+            <details id="storage" class="section">
+                <summary>
+                    <h2>Storage</h2>
+                    <span class="toggle-icon">▼</span>
+                </summary>
+                <div class="section-content">
+                    {% if doctor_report.storage.nvme_devices %}
+                    <table class="info-table">
+                        <caption>NVMe Devices</caption>
+                        <thead>
+                            <tr>
+                                <th>Device</th>
+                                <th>Model</th>
+                                <th>Size</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dev in doctor_report.storage.nvme_devices %}
+                            <tr>
+                                <td>{{ dev.name }}</td>
+                                <td>{{ dev.model }}</td>
+                                <td>{{ (dev.size_bytes / 1073741824)|round(0)|int }} GB</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% endif %}
+
+                    {% if doctor_report.storage.filesystems %}
+                    <table class="info-table">
+                        <caption>Filesystems</caption>
+                        <thead>
+                            <tr>
+                                <th>Mount</th>
+                                <th>Device</th>
+                                <th>Type</th>
+                                <th>Usage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for fs in doctor_report.storage.filesystems %}
+                            {% if fs.total_bytes and fs.total_bytes > 0 %}
+                            {% set fs_total_gb = (fs.total_bytes / 1073741824)|round(1) %}
+                            {% set fs_avail_gb = (fs.available_bytes / 1073741824)|round(1) %}
+                            {% set fs_used_pct = (((fs.total_bytes - fs.available_bytes) / fs.total_bytes) * 100)|round(0)|int %}
+                            <tr>
+                                <td class="mono">{{ fs.mount_point }}</td>
+                                <td class="mono">{{ fs.device }}</td>
+                                <td>{{ fs.type }}</td>
+                                <td>
+                                    <div class="usage-bar">
+                                        <div class="usage-bar-track">
+                                            <div class="usage-bar-fill {% if fs_used_pct >= 90 %}critical{% elif fs_used_pct >= 75 %}warn{% endif %}" style="width: {{ fs_used_pct }}%"></div>
+                                        </div>
+                                        <span class="usage-pct">{{ fs_used_pct }}%</span>
+                                        <span class="text-muted">{{ fs_avail_gb }} / {{ fs_total_gb }} GB free</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% endif %}
+                </div>
+            </details>
+            {% endif %}
+
+            <!-- Resource Limits section -->
+            {% if doctor_report.resources %}
+            <details id="resource-limits" class="section">
+                <summary>
+                    <h2>Resource Limits</h2>
+                    <span class="toggle-icon">▼</span>
+                </summary>
+                <div class="section-content">
+                    {% set res = doctor_report.resources %}
+                    {% set unlimited = 18446744073709551615 %}
+                    <table class="info-table">
+                        <thead>
+                            <tr>
+                                <th>Resource</th>
+                                <th>Soft Limit</th>
+                                <th>Hard Limit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if res.open_files %}
+                            <tr>
+                                <td class="label">Open Files</td>
+                                <td>{{ res.open_files.soft|intcomma if res.open_files.soft != unlimited else 'unlimited' }}{% if res.open_files.soft != unlimited and res.open_files.soft < 65536 %} <span class="inline-warn">Low</span>{% endif %}</td>
+                                <td>{{ res.open_files.hard|intcomma if res.open_files.hard != unlimited else 'unlimited' }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if res.max_procs %}
+                            <tr>
+                                <td class="label">Max Processes</td>
+                                <td>{{ res.max_procs.soft|intcomma if res.max_procs.soft != unlimited else 'unlimited' }}</td>
+                                <td>{{ res.max_procs.hard|intcomma if res.max_procs.hard != unlimited else 'unlimited' }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if res.mem_lock %}
+                            <tr>
+                                <td class="label">Memory Lock</td>
+                                <td>{% if res.mem_lock.soft == unlimited %}unlimited{% else %}{{ (res.mem_lock.soft / 1073741824)|round(1) }} GB{% endif %}</td>
+                                <td>{% if res.mem_lock.hard == unlimited %}unlimited{% else %}{{ (res.mem_lock.hard / 1073741824)|round(1) }} GB{% endif %}</td>
+                            </tr>
+                            {% endif %}
+                            {% if res.stack_size %}
+                            <tr>
+                                <td class="label">Stack Size</td>
+                                <td>{% if res.stack_size.soft == unlimited %}unlimited{% else %}{{ (res.stack_size.soft / 1048576)|round(1) }} MB{% endif %}</td>
+                                <td>{% if res.stack_size.hard == unlimited %}unlimited{% else %}{{ (res.stack_size.hard / 1048576)|round(1) }} MB{% endif %}</td>
+                            </tr>
+                            {% endif %}
+                            {% if res.file_size %}
+                            <tr>
+                                <td class="label">Max File Size</td>
+                                <td>{{ 'unlimited' if res.file_size.soft == unlimited else res.file_size.soft }}</td>
+                                <td>{{ 'unlimited' if res.file_size.hard == unlimited else res.file_size.hard }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if res.address_space %}
+                            <tr>
+                                <td class="label">Address Space</td>
+                                <td>{{ 'unlimited' if res.address_space.soft == unlimited else res.address_space.soft }}</td>
+                                <td>{{ 'unlimited' if res.address_space.hard == unlimited else res.address_space.hard }}</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </details>
             {% endif %}
 
             <!-- Benchmark section -->
             {% if bench_report and bench_report.keys()|length > 0 and 'error' not in bench_report %}
-            <section class="section">
-                <div class="section-header">
+            <details id="benchmark" class="section" open>
+                <summary>
                     <h2>Filesystem Benchmark</h2>
                     <span class="toggle-icon">▼</span>
-                </div>
+                </summary>
                 <div class="section-content">
                     {% if bench_report.summary %}
                     <div class="summary-grid">
@@ -440,19 +854,19 @@
                         <div class="check-message">Error: {{ bench_report.error }}</div>
                     </div>
                     {% else %}
-                    <p style="color: #606770">No benchmark results available</p>
+                    <p class="text-muted">No benchmark results available</p>
                     {% endif %}
                 </div>
-            </section>
+            </details>
             {% endif %}
 
             <!-- Object Storage Benchmark section -->
             {% if objbench_report and objbench_report.keys()|length > 0 and 'error' not in objbench_report %}
-            <section class="section">
-                <div class="section-header">
+            <details id="objbench" class="section" open>
+                <summary>
                     <h2>Object Storage Benchmark</h2>
                     <span class="toggle-icon">▼</span>
-                </div>
+                </summary>
                 <div class="section-content">
                     {% if objbench_report.summary %}
                     <div class="summary-grid">
@@ -476,22 +890,45 @@
                         <div class="check-message">Error: {{ objbench_report.error }}</div>
                     </div>
                     {% else %}
-                    <p style="color: #606770">No benchmark results available</p>
+                    <p class="text-muted">No benchmark results available</p>
                     {% endif %}
                 </div>
-            </section>
+            </details>
             {% endif %}
 
-            <footer>Fusion Diagnostic Report • Generated on {{ timestamp }}</footer>
+            <footer>Fusion Diagnostic Report &bull; Generated on <time datetime="{{ timestamp }}" class="local-time">{{ timestamp }}</time></footer>
         </div>
 
         <script>
-            document.querySelectorAll(".section-header").forEach((header) => {
-                header.addEventListener("click", function () {
-                    const content = this.parentElement.querySelector(".section-content");
-                    this.classList.toggle("collapsed");
-                    content.classList.toggle("collapsed");
+            // Copy-to-clipboard
+            document.querySelectorAll(".copy-btn").forEach(function (btn) {
+                btn.addEventListener("click", function (e) {
+                    e.stopPropagation();
+                    var text = btn.getAttribute("data-copy") ||
+                        btn.parentElement.querySelector("pre, .dk-val")?.textContent || "";
+                    navigator.clipboard.writeText(text.trim()).then(function () {
+                        btn.textContent = "Copied";
+                        btn.classList.add("copied");
+                        setTimeout(function () {
+                            btn.textContent = "Copy";
+                            btn.classList.remove("copied");
+                        }, 1500);
+                    });
                 });
+            });
+
+            // Localize timestamps to viewer's timezone
+            document.querySelectorAll("time.local-time").forEach(function (el) {
+                try {
+                    var d = new Date(el.getAttribute("datetime"));
+                    if (!isNaN(d)) {
+                        el.textContent = d.toLocaleString(undefined, {
+                            year: "numeric", month: "short", day: "numeric",
+                            hour: "2-digit", minute: "2-digit", second: "2-digit",
+                            timeZoneName: "short"
+                        });
+                    }
+                } catch (e) { /* keep original ISO string on failure */ }
             });
         </script>
     </body>

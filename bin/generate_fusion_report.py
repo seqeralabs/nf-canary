@@ -98,18 +98,43 @@ def render_html(combined_report: Dict[str, Any], template_str: Optional[str] = N
     Returns:
         HTML string with inline CSS/JS
     """
-    from jinja2 import Template
+    from jinja2 import Environment
 
     # Load template if not provided (for backward compatibility with tests)
     if template_str is None:
         template_str = load_template(template_path)
 
-    template = Template(template_str)
+    env = Environment()
+    env.filters['intcomma'] = lambda v: f"{int(v):,}" if isinstance(v, (int, float)) else str(v)
+    template = env.from_string(template_str)
+
+    doctor_report = combined_report.get("reports", {}).get("doctor", {})
+
+    # Sort filesystems by usage% descending and filter out zero-size / noise mounts
+    storage = doctor_report.get("storage", {})
+    if storage.get("filesystems"):
+        noise_prefixes = ("/var/snap/", "/snap/")
+        noise_types = ("squashfs", "tmpfs")
+        filtered = []
+        for fs in storage["filesystems"]:
+            total = fs.get("total_bytes", 0)
+            if total <= 0:
+                continue
+            mount = fs.get("mount_point", "")
+            fs_type = fs.get("type", "")
+            if any(mount.startswith(p) for p in noise_prefixes):
+                continue
+            if fs_type in noise_types and mount != "/tmp":
+                continue
+            # Attach computed usage% for sorting
+            fs["_used_pct"] = ((total - fs.get("available_bytes", 0)) / total) * 100
+            filtered.append(fs)
+        storage["filesystems"] = sorted(filtered, key=lambda f: f["_used_pct"], reverse=True)
 
     html = template.render(
         timestamp=combined_report.get("timestamp", ""),
         overall_status=combined_report.get("overall_status", "unknown"),
-        doctor_report=combined_report.get("reports", {}).get("doctor", {}),
+        doctor_report=doctor_report,
         bench_report=combined_report.get("reports", {}).get("bench", {}),
         objbench_report=combined_report.get("reports", {}).get("objbench", {}),
     )
