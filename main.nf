@@ -431,6 +431,7 @@ process FUSION_DOCTOR_GENERATE_REPORT {
 
     input:
         path(doctor_report)
+        path(template_file)
 
     output:
         path("fusion_report.html"), emit: html_report
@@ -438,6 +439,10 @@ process FUSION_DOCTOR_GENERATE_REPORT {
 
     script:
     """
+    # Create the expected directory structure for the template
+    mkdir -p assets/templates
+    cp ${template_file} assets/templates/fusion_report_template.html
+
     generate_fusion_report.py \\
         --doctor ${doctor_report} \\
         --output-html fusion_report.html \\
@@ -540,7 +545,8 @@ workflow NF_CANARY {
         // Generate consolidated fusion report from doctor output
         // Only run FUSION_DOCTOR_GENERATE_REPORT if TEST_FUSION_DOCTOR produced output
         FUSION_DOCTOR_GENERATE_REPORT(
-            TEST_FUSION_DOCTOR.out.report
+            TEST_FUSION_DOCTOR.out.report,
+            file("${projectDir}/assets/templates/fusion_report_template.html")
         )
 
         // POC of emitting the channel
