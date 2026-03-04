@@ -173,8 +173,8 @@ def main():
         help="Output path for HTML report (default: fusion-report.html)"
     )
     parser.add_argument(
-        "--output-json", type=str, default="fusion_report.json",
-        help="Output path for combined JSON report (default: fusion_report.json)"
+        "--output-json", type=str, default="fusion-report.json",
+        help="Output path for combined JSON report (default: fusion-report.json)"
     )
     parser.add_argument(
         "--template", type=str, required=False,

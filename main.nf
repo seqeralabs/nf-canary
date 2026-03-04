@@ -427,23 +427,23 @@ process FUSION_DOCTOR_GENERATE_REPORT {
     */
 
     container 'community.wave.seqera.io/library/jinja2_python_uv:7113b0a0e59d95a6'
-    publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs/fusion").toUriString() }, mode: 'copy'
+    publishDir { (params.outdir ? file(params.outdir) : file(workflow.workDir).resolve("outputs")).resolve("fusion").toUriString() }, mode: 'copy'
 
     input:
         path(doctor_report)
         path(template_file)
 
     output:
-        path("fusion_report.html"), emit: html_report
-        path("fusion_report.json"), emit: json_report
+        path("fusion-report.html"), emit: html_report
+        path("fusion-report.json"), emit: json_report
 
     script:
     """
     generate_fusion_report.py \\
         --doctor ${doctor_report} \\
         --template ${template_file} \\
-        --output-html fusion_report.html \\
-        --output-json fusion_report.json
+        --output-html fusion-report.html \\
+        --output-json fusion-report.json
     """
 }
 
