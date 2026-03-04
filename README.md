@@ -69,25 +69,37 @@ Each test includes a brief comment explaining its purpose. In case of failure, r
 
 This process should succeed automatically with exit status 0.
 
+---
+
 ### `TEST_CREATE_FILE`
 
 This process creates a file on the worker machine and then moves it to the working directory.
+
+---
 
 ### `TEST_CREATE_EMPTY_FILE`
 
 This process creates an empty file on the worker machine and then moves it to the working directory.
 
+---
+
 ### `TEST_CREATE_FOLDER`
 
 This process creates a folder in the working directory.
+
+---
 
 ### `TEST_INPUT`
 
 This process retrieves a file from the working directory and reads its contents on the worker machine.
 
+---
+
 ### `TEST_BIN_SCRIPT`
 
 Tests a shell script in the `bin/` directory that creates a single file.
+
+---
 
 ### `TEST_STAGE_REMOTE`
 
@@ -101,37 +113,55 @@ nextflow run seqeralabs/nf-canary --remoteFile 'https://raw.githubusercontent.co
 
 Use this parameter to specify a file to access during runtime.
 
+---
+
 ### `TEST_PASS_FILE`
 
 This process stages a file from the working directory to the worker node, copies it, and stages it back to the working directory.
+
+---
 
 ### `TEST_PASS_FOLDER`
 
 This process stages a folder from the working directory to the worker node, copies it, and stages it back to the working directory.
 
+---
+
 ### `TEST_PUBLISH_FILE`
 
 This process creates a file on the worker machine and writes it to the publishDir directory. By default, this is written to a subfolder called `output` in the working directory, but it can be overridden using the `--outdir` parameter. Use this to demonstrate the ability to publish to the relevant output directory.
+
+---
 
 ### `TEST_PUBLISH_FOLDER`
 
 This process creates a folder on the worker machine and writes it to the publishDir directory. By default, this is written to a subfolder called `output` in the working directory, but it can be overridden using the `--outdir` parameter. Use this to demonstrate the ability to publish to the relevant output directory.
 
+---
+
 ### `TEST_IGNORED_FAIL`
 
 This process should fail immediately but be ignored using the default configuration.
+
+---
 
 ### `TEST_MV_FILE`
 
 Tests moving a file within the working directory.
 
+---
+
 ### `TEST_MV_FOLDER_CONTENTS`
 
 Tests moving the contents of a folder to a new folder within the working directory.
 
+---
+
 ### `TEST_VAL_INPUT`
 
 Test a process can accept a value as input.
+
+---
 
 ### `TEST_GPU`
 
@@ -139,29 +169,71 @@ _Note: Enabled only if the parameter `--gpu` is specified._
 
 This process tests the ability to use a GPU. It uses the `pytorch` conda environment to test CUDA is available and working. This is disabled by default as it requires a GPU to be available which may not be true.
 
+---
+
 ### `TEST_FUSION_DOCTOR`
 
 _Note: Enabled only if the parameter `--fusion` is specified (or set to `true` by a profile)._
 
-This process runs `fusion doctor` to validate the Fusion filesystem configuration. It checks system requirements (kernel version, memory, and disk space), FUSE device availability, and cloud bucket accessibility. The process produces a JSON diagnostic report published to `${outdir}/fusion/`.
-
-This test requires the `fusion` binary to be available in the task environment and will fail if it is not found.
+This process runs the `fusion doctor` diagnostics tool to validate the Fusion filesystem configuration. It checks system requirements (e.g. kernel version, memory, disk space, etc.), FUSE device availability, and cloud bucket accessibility among others. The process produces a JSON diagnostic report published to `${outdir}/fusion/`.
 
 #### Fusion Profiles
 
-Use a built-in profile to enable Fusion validation with recommended thresholds:
+Use a built-in profile to enable Fusion validation with predefined thresholds:
 
 ```bash
 nextflow run seqeralabs/nf-canary -profile fusion_aws_recommended
 ```
 
-Available profiles:
+> [!TIP]
+>
+> **If in doubt, start with the `recommended` tier:**
+>
+> 1. Choose `low` for small workloads or quick smoke tests, and `high` for large-scale production with big datasets.
+> 2. Choose `recommended` to match Seqera's documented minimum requirements for production workloads with Fusion.
+> 3. Choose `high` (or a custom threshold of 400 GB+ storage) if your pipeline processes files larger than 100 GB.
 
-| Profile                     | Description                               |
-| --------------------------- | ----------------------------------------- |
-| `fusion_aws_recommended`    | AWS Batch recommended thresholds          |
-| `fusion_google_recommended` | Google Cloud Batch recommended thresholds |
-| `fusion_azure_recommended`  | Azure Batch recommended thresholds        |
+##### AWS
+
+> [!NOTE]
+>
+> Seqera Platform auto-selects NVMe-based instance families when Fusion is enabled (e.g. `m6id`, `c6id`, `r6id`). Fusion can also work without NVMe instances, but in this case the EBS disk shall be bumped to 100 GB (`gp3`, 325 MB/s); this is what the `low` profile validates.
+
+| Profile                  | Disk   | Memory | Kernel | Based on            |
+| ------------------------ | ------ | ------ | ------ | ------------------- |
+| `fusion_aws_low`         | 100 GB | 4 GB   | 5.10+  | EBS gp3 (no NVMe)   |
+| `fusion_aws_recommended` | 200 GB | 8 GB   | 5.10+  | Seqera docs minimum |
+| `fusion_aws_high`        | 474 GB | 16 GB  | 5.10+  | m6id.2xlarge NVMe   |
+
+**Google Cloud**
+
+> [!NOTE]
+>
+> Seqera Platform auto-selects families supporting local SSDs (e.g. `n2`, `c2`, `n2d`) and provisions a 375 GB NVMe SSD per job.
+
+| Profile                     | Disk   | Memory | Kernel | Based on            |
+| --------------------------- | ------ | ------ | ------ | ------------------- |
+| `fusion_google_low`         | 50 GB  | 4 GB   | 5.15+  | GCP persistent disk |
+| `fusion_google_recommended` | 375 GB | 8 GB   | 5.15+  | 1x local NVMe SSD   |
+| `fusion_google_high`        | 750 GB | 16 GB  | 5.15+  | 2x local NVMe SSDs  |
+
+##### Azure
+
+> [!note]
+>
+> Unlike AWS and Google Cloud, there is no auto-selection: the user must pick the VM size. Seqera recommends E-series with a `d` suffix (e.g. `Standard_E8d_v5`, `Standard_E16d_v5`).
+
+| Profile                    | Disk   | Memory | Kernel | Based on                     |
+| -------------------------- | ------ | ------ | ------ | ---------------------------- |
+| `fusion_azure_low`         | 75 GB  | 4 GB   | 5.15+  | `Standard_E2d_v5` temp disk  |
+| `fusion_azure_recommended` | 300 GB | 8 GB   | 5.15+  | `Standard_E8d_v5` temp disk  |
+| `fusion_azure_high`        | 600 GB | 16 GB  | 5.15+  | `Standard_E16d_v5` temp disk |
+
+#### Caveats
+
+In AWS Batch, the Seqera Platform UI allows selecting instance families (e.g. `m6id`) but not specific sizes. Small instances in an otherwise valid family may not meet the `recommended` disk threshold. For example, on AWS the `m6id` family NVMe ranges from 118 GB (`.large`) to 1,900 GB (`.8xlarge`), with only `.xlarge` and above meeting the 200 GB threshold.
+
+If `fusion doctor` reports a disk requirement failure, request more CPUs/memory to get a larger instance, or use the `low` profile for small tasks.
 
 #### Custom Requirements
 
