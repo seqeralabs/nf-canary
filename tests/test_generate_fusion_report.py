@@ -435,5 +435,104 @@ class TestIntegration:
             assert len(html) > 1000  # Should be substantial HTML
 
 
+class TestRealFusionDoctorFormat:
+    """Tests for the real fusion doctor output format (list-based checks, check_summary)."""
+
+    def test_render_with_list_checks(self):
+        """Test rendering when checks is a list (real fusion doctor format)."""
+        combined_report = {
+            "timestamp": "2026-03-04T10:00:00Z",
+            "overall_status": "pass",
+            "reports": {
+                "doctor": {
+                    "fusion_version": "2.6-develop-1f517df",
+                    "check_summary": {
+                        "overall": "pass",
+                        "passed": 2,
+                        "failed": 0,
+                        "skipped": 0,
+                    },
+                    "checks": [
+                        {
+                            "check": "fuse_device",
+                            "category": "critical",
+                            "status": "pass",
+                            "message": "/dev/fuse is available",
+                            "details": {"path": "/dev/fuse"},
+                            "duration_ms": 0,
+                        },
+                        {
+                            "check": "disk_space",
+                            "category": "warning",
+                            "status": "warn",
+                            "message": "Low disk space on /tmp",
+                            "duration_ms": 5,
+                        },
+                    ],
+                },
+                "bench": {},
+                "objbench": {},
+            },
+        }
+
+        html = render_html(combined_report)
+        assert "2.6-develop-1f517df" in html
+        assert "Fuse Device" in html
+        assert "Disk Space" in html
+        assert "/dev/fuse" in html
+        assert "critical" in html
+        assert "2 passed" in html
+
+    def test_merge_with_check_summary(self):
+        """Test that merge_reports reads status from check_summary.overall."""
+        doctor_data = {
+            "check_summary": {"overall": "warn", "passed": 3, "failed": 0},
+            "checks": [],
+        }
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            doctor_path = Path(tmpdir) / "doctor.json"
+            doctor_path.write_text(json.dumps(doctor_data))
+
+            result = merge_reports(str(doctor_path), None, None)
+            assert result["overall_status"] == "warn"
+
+    def test_full_workflow_real_format(self):
+        """Test complete workflow with real fusion doctor format."""
+        doctor_data = {
+            "schema_version": "1.1",
+            "fusion_version": "2.6.0",
+            "timestamp": "2026-03-04T10:00:00Z",
+            "checks": [
+                {
+                    "check": "fuse_device",
+                    "category": "critical",
+                    "status": "pass",
+                    "message": "/dev/fuse is available and accessible",
+                    "details": {"path": "/dev/fuse", "permissions": "Dcrw-rw-rw-"},
+                    "duration_ms": 0,
+                },
+            ],
+            "check_summary": {
+                "overall": "pass",
+                "passed": 1,
+                "failed": 0,
+                "skipped": 0,
+            },
+        }
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            doctor_path = Path(tmpdir) / "doctor.json"
+            doctor_path.write_text(json.dumps(doctor_data))
+
+            combined = merge_reports(str(doctor_path), None, None)
+            assert combined["overall_status"] == "pass"
+
+            html = render_html(combined)
+            assert "2.6.0" in html
+            assert "Fuse Device" in html
+            assert "Dcrw-rw-rw-" in html
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

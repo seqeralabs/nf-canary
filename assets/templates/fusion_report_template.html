@@ -332,33 +332,44 @@
                     <span class="toggle-icon">▼</span>
                 </div>
                 <div class="section-content">
-                    {% if doctor_report.summary %}
+                    {% if doctor_report.check_summary or doctor_report.summary %} {% set summary =
+                    doctor_report.check_summary or doctor_report.summary %} {% set summary_status = summary.overall or
+                    summary.status or 'unknown' %}
                     <div class="summary-grid">
                         <div class="summary-card">
                             <div class="summary-card-label">Overall Status</div>
                             <div class="summary-card-value">
-                                <span class="status-badge status-{{ doctor_report.summary.status }}"
-                                    >{{ doctor_report.summary.status }}</span
-                                >
+                                <span class="status-badge status-{{ summary_status }}">{{ summary_status }}</span>
                             </div>
                         </div>
-                        {% if doctor_report.version %}
+                        {% if doctor_report.fusion_version or doctor_report.version %}
                         <div class="summary-card">
                             <div class="summary-card-label">Fusion Version</div>
-                            <div class="summary-card-value">{{ doctor_report.version }}</div>
+                            <div class="summary-card-value">
+                                {{ doctor_report.fusion_version or doctor_report.version }}
+                            </div>
+                        </div>
+                        {% endif %} {% if summary.passed is defined or summary.failed is defined %}
+                        <div class="summary-card">
+                            <div class="summary-card-label">Checks</div>
+                            <div class="summary-card-value">
+                                {{ summary.passed|default(0) }} passed, {{ summary.failed|default(0) }} failed{% if
+                                summary.skipped %}, {{ summary.skipped }} skipped{% endif %}
+                            </div>
                         </div>
                         {% endif %}
                     </div>
                     {% endif %} {% if doctor_report.checks %}
                     <h3>Checks</h3>
-                    {% for check_name, check_data in doctor_report.checks.items() %}
+                    {% if doctor_report.checks is mapping %} {% for check_name, check_data in
+                    doctor_report.checks.items() %}
                     <div class="check-item {{ check_data.status }}">
                         <div class="check-name">
                             <span class="status-icon">
                                 {% if check_data.status == 'pass' %}✓{% elif check_data.status == 'warn' %}⚠{% else
                                 %}✗{% endif %}
                             </span>
-                            {{ check_name|title }}
+                            {{ check_name|replace('_', ' ')|title }}
                         </div>
                         <div class="check-message">{{ check_data.message }}</div>
                         {% if check_data.details %}
@@ -370,7 +381,31 @@
                         <div class="check-details"><strong>Remediation:</strong> {{ check_data.remediation }}</div>
                         {% endif %}
                     </div>
-                    {% endfor %} {% endif %}
+                    {% endfor %} {% else %} {% for check_data in doctor_report.checks %}
+                    <div class="check-item {{ check_data.status }}">
+                        <div class="check-name">
+                            <span class="status-icon">
+                                {% if check_data.status == 'pass' %}✓{% elif check_data.status == 'warn' %}⚠{% else
+                                %}✗{% endif %}
+                            </span>
+                            {{ (check_data.check or check_data.name or 'Unknown')|replace('_', ' ')|title }} {% if
+                            check_data.category %}
+                            <span style="font-size: 0.75em; color: #606770; font-weight: 400"
+                                >({{ check_data.category }})</span
+                            >
+                            {% endif %}
+                        </div>
+                        <div class="check-message">{{ check_data.message }}</div>
+                        {% if check_data.details %}
+                        <div class="check-details">
+                            <strong>Details:</strong>
+                            <pre>{{ check_data.details|tojson(indent=2) }}</pre>
+                        </div>
+                        {% endif %} {% if check_data.remediation %}
+                        <div class="check-details"><strong>Remediation:</strong> {{ check_data.remediation }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %} {% endif %} {% endif %}
                 </div>
             </section>
             {% endif %}

@@ -66,12 +66,14 @@ def merge_reports(
     }
 
     # Compute overall status (fail > warn > pass)
+    # Supports both legacy "summary.status" and real fusion "check_summary.overall"
     statuses = []
     for report in combined["reports"].values():
         if report and "error" not in report:
-            if "summary" in report:
+            if "check_summary" in report:
+                statuses.append(report["check_summary"].get("overall", "unknown"))
+            elif "summary" in report:
                 statuses.append(report["summary"].get("status", "unknown"))
-            # Note: Reports without "summary" are silently ignored in status aggregation
 
     if "fail" in statuses:
         combined["overall_status"] = "fail"
