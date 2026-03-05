@@ -344,6 +344,18 @@
                 font-weight: 600;
                 color: var(--neutral-10);
             }
+            .check-row {
+                cursor: pointer;
+            }
+            .check-row:hover td {
+                background: var(--neutral-1);
+            }
+            .check-row.warn td {
+                background: #fef6ee;
+            }
+            .check-row.fail td {
+                background: #fef2f2;
+            }
             .check-detail-row td {
                 padding-top: 0;
                 border-bottom: 1px solid var(--neutral-2);
@@ -359,11 +371,11 @@
                 font-size: 0.7rem;
                 padding: 0.25rem;
                 border-radius: var(--radius);
-                transition: color 0.15s, background 0.15s;
+                transition: transform 0.2s ease;
+                pointer-events: none;
             }
-            .expand-btn:hover {
-                color: var(--neutral-8);
-                background: var(--neutral-1);
+            .check-row.expanded .expand-btn {
+                transform: rotate(180deg);
             }
             .check-category {
                 font-size: 0.75em;
@@ -582,7 +594,6 @@
                         </div>
                     </div>
                 </div>
-                <span class="badge badge-{{ overall_status }}">{{ overall_status }}</span>
             </div>
 
             <!-- Summary metrics -->
@@ -637,7 +648,7 @@
                             <tr>
                                 <th style="width: 2rem"></th>
                                 <th>Check</th>
-                                <th>Category</th>
+                                <th>Severity</th>
                                 <th>Message</th>
                                 <th style="width: 2rem"></th>
                             </tr>
@@ -650,7 +661,7 @@
                                 <td class="check-cell-name">{{ check_name|humanize_check }}</td>
                                 <td>{{ check_data.category|default('')|smart_title }}</td>
                                 <td>{{ check_data.message }}</td>
-                                <td>{% if check_data.details or check_data.remediation %}<button class="expand-btn" aria-label="Toggle details" onclick="this.closest('tr').nextElementSibling.classList.toggle('hidden')">&#9660;</button>{% endif %}</td>
+                                <td>{% if check_data.details or check_data.remediation %}<button class="expand-btn" aria-label="Toggle details" aria-hidden="true">&#9660;</button>{% endif %}</td>
                             </tr>
                             {% if check_data.details or check_data.remediation %}
                             <tr class="check-detail-row hidden">
@@ -683,7 +694,7 @@
                                 </td>
                                 <td>{{ check_data.category|default('')|smart_title }}</td>
                                 <td>{{ check_data.message }}</td>
-                                <td>{% if check_data.details or check_data.sub_checks or check_data.remediation %}<button class="expand-btn" aria-label="Toggle details" onclick="this.closest('tr').nextElementSibling.classList.toggle('hidden')">&#9660;</button>{% endif %}</td>
+                                <td>{% if check_data.details or check_data.sub_checks or check_data.remediation %}<button class="expand-btn" aria-label="Toggle details" aria-hidden="true">&#9660;</button>{% endif %}</td>
                             </tr>
                             {% set has_details = check_data.details or (check_data.sub_checks and check_data.status != 'pass') or check_data.remediation %}
                             {% if has_details %}
@@ -1065,6 +1076,17 @@
         </div>
 
         <script>
+            // Make check rows clickable to toggle details
+            document.querySelectorAll(".check-row").forEach(function (row) {
+                var detailRow = row.nextElementSibling;
+                if (detailRow && detailRow.classList.contains("check-detail-row")) {
+                    row.addEventListener("click", function () {
+                        detailRow.classList.toggle("hidden");
+                        row.classList.toggle("expanded");
+                    });
+                }
+            });
+
             // Localize timestamps
             document.querySelectorAll("time.local-time").forEach(function (el) {
                 try {
