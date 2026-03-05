@@ -20,12 +20,10 @@ nextflow_pipeline{
                 { assert workflow.trace.failed().size()    == 1 },
                 // Check fusion reports exist but don't snapshot their content (contains workDir paths)
                 { assert path(params.outdir).resolve("fusion-doctor-report.json").exists() },
-                { assert path(params.outdir).resolve("fusion_report.json").exists() },
-                { assert path(params.outdir).resolve("fusion_report.html").exists() },
-                { assert snapshot(workflow, path(params.outdir).list().findAll { 
-                    !it.toString().contains("fusion-doctor-report.json") && 
-                    !it.toString().contains("fusion_report.json") && 
-                    !it.toString().contains("fusion_report.html") 
+                { assert path(params.outdir).resolve("fusion/fusion-report.json").exists() },
+                { assert path(params.outdir).resolve("fusion/fusion-report.html").exists() },
+                { assert snapshot(workflow, path(params.outdir).list().findAll {
+                    !it.toString().contains("fusion")
                 }).match() }
             )
         }
@@ -50,12 +48,10 @@ nextflow_pipeline{
                 { assert workflow.trace.failed().size()    == 1 },
                 // Check fusion reports exist but don't snapshot their content (contains workDir paths)
                 { assert path(params.outdir).resolve("fusion-doctor-report.json").exists() },
-                { assert path(params.outdir).resolve("fusion_report.json").exists() },
-                { assert path(params.outdir).resolve("fusion_report.html").exists() },
-                { assert snapshot(workflow, path(params.outdir).list().findAll { 
-                    !it.toString().contains("fusion-doctor-report.json") && 
-                    !it.toString().contains("fusion_report.json") && 
-                    !it.toString().contains("fusion_report.html") 
+                { assert path(params.outdir).resolve("fusion/fusion-report.json").exists() },
+                { assert path(params.outdir).resolve("fusion/fusion-report.html").exists() },
+                { assert snapshot(workflow, path(params.outdir).list().findAll {
+                    !it.toString().contains("fusion")
                 }).match() }
             )
         }
@@ -102,12 +98,10 @@ nextflow_pipeline{
                 { assert workflow.trace.failed().size()    == 1 },
                 // Check fusion reports exist but don't snapshot their content (contains workDir paths)
                 { assert path("${launchDir}/output").resolve("fusion-doctor-report.json").exists() },
-                { assert path("${launchDir}/output").resolve("fusion_report.json").exists() },
-                { assert path("${launchDir}/output").resolve("fusion_report.html").exists() },
-                { assert snapshot(workflow, path("${launchDir}/output").list().findAll { 
-                    !it.toString().contains("fusion-doctor-report.json") && 
-                    !it.toString().contains("fusion_report.json") && 
-                    !it.toString().contains("fusion_report.html") 
+                { assert path("${launchDir}/output").resolve("fusion/fusion-report.json").exists() },
+                { assert path("${launchDir}/output").resolve("fusion/fusion-report.html").exists() },
+                { assert snapshot(workflow, path("${launchDir}/output").list().findAll {
+                    !it.toString().contains("fusion")
                 }).match() }
             )
         }

@@ -42,8 +42,8 @@ nextflow_pipeline {
                 { assert workflow.trace.tasks().size() == 2 },
                 { assert workflow.trace.succeeded().size() == 2 },
                 // Check that report files exist in outputs
-                { assert path("${launchDir}/output/fusion_report.html").exists() },
-                { assert path("${launchDir}/output/fusion_report.json").exists() },
+                { assert path("${launchDir}/output/fusion/fusion-report.html").exists() },
+                { assert path("${launchDir}/output/fusion/fusion-report.json").exists() },
                 { assert path("${launchDir}/output/fusion-doctor-report.json").exists() }
             )
         }
