@@ -221,6 +221,7 @@
             .metric {
                 text-align: center;
                 padding: 0.75rem;
+                border-radius: var(--radius);
             }
             .metric-value {
                 font-size: 1.5rem;
@@ -238,6 +239,21 @@
                 font-size: 0.8rem;
                 color: var(--neutral-6);
                 margin-top: 0.15rem;
+            }
+            .metric-pass {
+                background: #edf7f0;
+            }
+            .metric-pass .metric-value {
+                color: var(--clr-pass);
+            }
+            .metric-fail {
+                background: #fef2f2;
+            }
+            .metric-fail .metric-value {
+                color: var(--clr-fail);
+            }
+            .metric-status .metric-value {
+                font-size: 1.1rem;
             }
 
             /* --- Key-value pairs --- */
@@ -563,6 +579,12 @@
             <div class="card">
                 <div class="card-title">Overview</div>
                 <div class="grid-4">
+                    <div class="metric metric-status">
+                        <div class="metric-value">
+                            <span class="badge badge-{{ overall_status }}">{{ overall_status }}</span>
+                        </div>
+                        <div class="metric-label">Status</div>
+                    </div>
                     <div class="metric">
                         <div class="metric-value">
                             {{ (summary.passed|default(0)) + (summary.failed|default(0)) + (summary.skipped|default(0))
@@ -571,12 +593,12 @@
                         <div class="metric-label">Total Checks</div>
                     </div>
                     {% if summary.passed is defined %}
-                    <div class="metric">
+                    <div class="metric metric-pass">
                         <div class="metric-value">{{ summary.passed|default(0) }}</div>
                         <div class="metric-label">Passed</div>
                     </div>
                     {% endif %} {% if summary.failed is defined %}
-                    <div class="metric">
+                    <div class="metric{% if summary.failed|default(0) > 0 %} metric-fail{% endif %}">
                         <div class="metric-value">{{ summary.failed|default(0) }}</div>
                         <div class="metric-label">Failed</div>
                     </div>
