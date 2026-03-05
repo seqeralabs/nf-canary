@@ -516,6 +516,9 @@ workflow NF_CANARY {
         if (params.fusion_kernel_version_min) yaml_lines.add("kernel_version_min: \"${params.fusion_kernel_version_min}\"")
         if (params.fusion_memory_gb_min) yaml_lines.add("memory_gb_min: ${params.fusion_memory_gb_min}")
         if (params.fusion_disk_gb_min) yaml_lines.add("disk_gb_min: ${params.fusion_disk_gb_min}")
+        if (params.fusion_nvme_required != null) yaml_lines.add("nvme_required: ${params.fusion_nvme_required}")
+        if (params.fusion_cpu_cores_min) yaml_lines.add("cpu_cores_min: ${params.fusion_cpu_cores_min}")
+        if (params.fusion_open_files_min) yaml_lines.add("open_files_min: ${params.fusion_open_files_min}")
         reference_profile_ch = channel.of(yaml_lines.join('\n'))
             .collectFile(name: 'fusion-reference-profile.yaml', newLine: true)
 
