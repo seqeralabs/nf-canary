@@ -112,8 +112,12 @@ def render_html(combined_report: Dict[str, Any], template_str: Optional[str] = N
         "fuse_device": "FUSE Device",
         "bucket_access_rw": "Bucket Access (read/write)",
         "bucket_access_ro": "Bucket Access (read-only)",
+        "nvme": "NVMe",
+        "cpu_cores": "CPU Cores",
+        "open_files": "Open Files",
+        "kernel_version": "Kernel Version",
     }
-    _ACRONYMS = {"uri", "id", "cpu", "gpu", "io", "os", "ip", "dns", "http", "https", "ssh", "ssl", "tls", "nfs", "api"}
+    _ACRONYMS = {"uri", "id", "cpu", "gpu", "io", "os", "ip", "dns", "http", "https", "ssh", "ssl", "tls", "nfs", "api", "nvme"}
 
     def humanize_check(name):
         if name in _CHECK_LABELS:
