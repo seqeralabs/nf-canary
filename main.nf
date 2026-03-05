@@ -378,6 +378,7 @@ process TEST_FUSION_DOCTOR {
     environment.
     */
 
+    errorStrategy { task.exitStatus in [0,1,3] ? 'ignore' : 'terminate' }
     publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs/fusion").toUriString() }, mode: 'copy'
 
     input:
