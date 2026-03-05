@@ -104,8 +104,43 @@ def render_html(combined_report: Dict[str, Any], template_str: Optional[str] = N
     if template_str is None:
         template_str = load_template(template_path)
 
-    env = Environment()
+    env = Environment(trim_blocks=True, lstrip_blocks=True)
     env.filters['intcomma'] = lambda v: f"{int(v):,}" if isinstance(v, (int, float)) else str(v)
+
+    # Humanize check names: snake_case identifiers → readable labels
+    _CHECK_LABELS = {
+        "fuse_device": "FUSE Device",
+        "bucket_access_rw": "Bucket Access (read/write)",
+        "bucket_access_ro": "Bucket Access (read-only)",
+    }
+    _ACRONYMS = {"uri", "id", "cpu", "gpu", "io", "os", "ip", "dns", "http", "https", "ssh", "ssl", "tls", "nfs", "api"}
+
+    def humanize_check(name):
+        if name in _CHECK_LABELS:
+            return _CHECK_LABELS[name]
+        words = name.replace('_', ' ').split()
+        return ' '.join(w.upper() if w.lower() in _ACRONYMS else w.capitalize() for w in words)
+
+    env.filters['humanize_check'] = humanize_check
+
+    # Title-case that respects acronyms
+    def smart_title(text):
+        words = text.replace('_', ' ').split()
+        return ' '.join(w.upper() if w.lower() in _ACRONYMS else w.capitalize() for w in words)
+
+    env.filters['smart_title'] = smart_title
+
+    # Strip redundant prefixes from sub-check messages
+    # e.g. "check bucket exists: ok" → "ok", "list objects: ok" → "ok"
+    # but keep meaningful parts: "access denied (HTTP 403)" stays
+    def trim_sub_msg(msg):
+        if not msg or ':' not in msg:
+            return msg or ''
+        _, _, after = msg.partition(':')
+        return after.strip()
+
+    env.filters['trim_sub_msg'] = trim_sub_msg
+
     template = env.from_string(template_str)
 
     doctor_report = combined_report.get("reports", {}).get("doctor", {})

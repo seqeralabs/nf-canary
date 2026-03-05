@@ -3,472 +3,528 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Fusion Diagnostic Report</title>
+        <title>Fusion Filesystem Diagnostics</title>
         <style>
+            /* === Seqera Platform design tokens === */
+            :root {
+                --brand: #160f26;
+                --primary: #4256e7;
+                --accent: #ffa500;
+                --warn: #dc3545;
+                --green: #28ae61;
+                --orange: #e68642;
+                --purple: #8f4199;
+                --teal: #087f87;
+
+                /* Purple-tinted neutrals */
+                --neutral-1: #f3f3f4;
+                --neutral-2: #e8e7e9;
+                --neutral-3: #d0cfd4;
+                --neutral-4: #b9b7be;
+                --neutral-5: #a29fa8;
+                --neutral-6: #8a8792;
+                --neutral-7: #736f7d;
+                --neutral-8: #5c5767;
+                --neutral-9: #453f51;
+                --neutral-10: #2d273c;
+
+                /* Functional */
+                --body-bg: #f8f9fa;
+                --card-bg: #fff;
+                --border: #dee2e6;
+                --radius: 4px;
+
+                /* Status */
+                --clr-pass: #28ae61;
+                --clr-fail: #e7363e;
+                --clr-warn: #e68642;
+                --clr-unknown: #a29fa8;
+
+                /* Mono font */
+                --font-mono: SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+            }
+
             * {
+                box-sizing: border-box;
                 margin: 0;
                 padding: 0;
-                box-sizing: border-box;
             }
 
             body {
+                background: var(--body-bg);
                 font-family:
                     system-ui,
                     -apple-system,
-                    "Segoe UI",
-                    Roboto,
-                    "Helvetica Neue",
-                    Arial,
                     sans-serif;
-                line-height: 1.65;
-                color: #1c1e21;
-                background: #fff;
+                font-size: 0.9rem;
+                color: var(--neutral-10);
+                line-height: 1.5;
+                padding: 2rem;
             }
 
             .container {
-                max-width: 740px;
+                max-width: 1200px;
                 margin: 0 auto;
-                padding: 2rem 1rem;
-                min-height: 100vh;
             }
 
-            header {
-                border-bottom: 1px solid #dadde1;
-                padding-bottom: 1.5rem;
-                margin-bottom: 2rem;
-            }
-
-            h1 {
-                font-size: 2rem;
-                font-weight: 700;
-                color: #1c1e21;
-                margin-bottom: 0.5rem;
-            }
-
-            .metadata {
+            /* --- Header --- */
+            .header {
                 display: flex;
-                gap: 2rem;
-                flex-wrap: wrap;
-                font-size: 0.95rem;
-                color: #606770;
-                margin-top: 1rem;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 1.5rem;
+                padding-bottom: 1rem;
+                border-bottom: 1px solid var(--border);
             }
-
-            .metadata > div {
+            .header-left {
                 display: flex;
-                flex-direction: column;
-                gap: 0.25rem;
+                align-items: center;
+                gap: 1rem;
+            }
+            .header-icon {
+                display: inline-flex;
+                align-items: center;
+            }
+            .header-icon svg {
+                width: 22px;
+                height: 22px;
+                fill: var(--neutral-10);
+            }
+            .header-title {
+                font-size: 1.1rem;
+                font-weight: 600;
+                color: var(--neutral-9);
+            }
+            .header-meta {
+                font-size: 0.8rem;
+                color: var(--neutral-6);
+                display: flex;
+                gap: 0.5rem;
+                align-items: center;
             }
 
-            .metadata strong {
-                font-weight: 500;
-                color: #1c1e21;
-            }
-
-            .status-badge {
+            /* --- Status badge --- */
+            .badge {
                 display: inline-block;
-                padding: 0.25rem 0.75rem;
-                border-radius: 0.25rem;
-                font-weight: 500;
-                text-transform: uppercase;
+                padding: 2px 10px;
+                border-radius: var(--radius);
                 font-size: 0.75rem;
-                letter-spacing: 0.02em;
+                font-weight: 600;
+                color: #fff;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            .badge-pass {
+                background: var(--clr-pass);
+            }
+            .badge-fail {
+                background: var(--clr-fail);
+            }
+            .badge-warn {
+                background: var(--clr-warn);
+            }
+            .badge-unknown {
+                background: var(--neutral-5);
             }
 
-            .status-pass {
-                background: #e6ffe6;
-                color: #00a400;
+            /* --- Cards --- */
+            .card {
+                background: var(--card-bg);
+                border-radius: var(--radius);
+                padding: 1.25rem;
+                margin-bottom: 1rem;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+            }
+            .card-title {
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: var(--neutral-7);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 1rem;
             }
 
-            .status-warn {
-                background: #fff8e6;
-                color: #b38200;
+            /* --- Collapsible card using <details>/<summary> --- */
+            details.card {
+                padding: 0;
             }
-
-            .status-fail {
-                background: #ffe6e6;
-                color: #c41e1e;
-            }
-
-            /* Collapsible sections using native <details>/<summary> */
-            .section {
-                margin-bottom: 2rem;
-                border: 1px solid #dadde1;
-                border-radius: 0.4rem;
-                overflow: hidden;
-                background: #fff;
-            }
-
-            .section > summary {
-                background: #f5f6f7;
-                padding: 1rem;
-                border-bottom: 1px solid #dadde1;
+            details.card > summary {
+                padding: 1rem 1.25rem;
                 cursor: pointer;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                transition: background-color 0.15s;
                 user-select: none;
                 list-style: none;
             }
-
-            .section > summary::-webkit-details-marker {
+            details.card > summary::-webkit-details-marker {
                 display: none;
             }
-
-            .section > summary::marker {
+            details.card > summary::marker {
                 display: none;
                 content: "";
             }
-
-            .section > summary:hover {
-                background: #ebedf0;
+            details.card > summary:hover {
+                background: var(--neutral-1);
+                border-radius: var(--radius);
             }
-
-            .section > summary h2 {
-                font-size: 1.15rem;
-                font-weight: 600;
-                color: #1c1e21;
-                margin: 0;
+            details.card > summary .card-title {
+                margin-bottom: 0;
             }
-
-            .section > summary .toggle-icon {
+            details.card > summary .toggle-icon {
                 display: inline-block;
                 width: 20px;
                 height: 20px;
                 text-align: center;
                 line-height: 20px;
-                color: #606770;
-                font-weight: 700;
-                font-size: 0.9rem;
+                color: var(--neutral-5);
+                font-size: 0.8rem;
                 transition: transform 0.2s ease;
                 transform: rotate(-90deg);
             }
-
-            .section[open] > summary .toggle-icon {
+            details.card[open] > summary .toggle-icon {
                 transform: rotate(0deg);
             }
-
-            .section-content {
-                padding: 1.5rem;
+            details.card[open] > summary {
+                border-bottom: 1px solid var(--border);
+            }
+            details.card > .card-body {
+                padding: 1.25rem;
             }
 
+            /* --- Grid layouts --- */
+            .grid-2 {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+            }
+            .grid-3 {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 1rem;
+            }
+            .grid-4 {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 1rem;
+            }
+
+            @media (max-width: 768px) {
+                .grid-2,
+                .grid-3,
+                .grid-4 {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            /* --- Metric tiles --- */
+            .metric {
+                text-align: center;
+                padding: 0.75rem;
+            }
+            .metric-value {
+                font-size: 1.5rem;
+                font-weight: 600;
+                color: var(--neutral-10);
+            }
+            .metric-label {
+                font-size: 0.75rem;
+                color: var(--neutral-6);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-top: 0.25rem;
+            }
+            .metric-sub {
+                font-size: 0.8rem;
+                color: var(--neutral-6);
+                margin-top: 0.15rem;
+            }
+
+            /* --- Key-value pairs --- */
+            .kv-grid {
+                display: grid;
+                grid-template-columns: 160px 1fr;
+                gap: 0.5rem 1rem;
+            }
+            .kv-label {
+                font-size: 0.8rem;
+                color: var(--neutral-6);
+                font-weight: 600;
+            }
+            .kv-value {
+                font-size: 0.85rem;
+                color: var(--neutral-10);
+                word-break: break-all;
+            }
+            .kv-value code {
+                font-family: var(--font-mono);
+                font-size: 0.8rem;
+                background: var(--neutral-1);
+                padding: 1px 6px;
+                border-radius: 3px;
+            }
+
+            /* --- Tables --- */
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            th {
+                text-align: left;
+                padding: 0.6rem 0.75rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+                color: var(--neutral-7);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                background: var(--neutral-1);
+                border-bottom: 2px solid var(--border);
+            }
+            td {
+                padding: 0.5rem 0.75rem;
+                border-bottom: 1px solid var(--neutral-2);
+                font-size: 0.85rem;
+            }
+            tr:last-child td {
+                border-bottom: none;
+            }
+            td.num {
+                text-align: right;
+                font-variant-numeric: tabular-nums;
+            }
+            td.mono,
+            .mono {
+                font-family: var(--font-mono);
+                font-size: 0.8rem;
+            }
+
+            /* --- Check items --- */
             .check-item {
-                margin-bottom: 1rem;
-                padding: 1rem;
-                background: #f5f6f7;
-                border-left: 4px solid #ccd0d5;
-                border-radius: 0.25rem;
+                margin-bottom: 0.75rem;
+                padding: 0.85rem 1rem;
+                background: var(--neutral-1);
+                border-left: 4px solid var(--neutral-3);
+                border-radius: var(--radius);
             }
-
             .check-item.pass {
-                background: #e6ffe6;
-                border-left-color: #00a400;
+                background: #edf7f0;
+                border-left-color: var(--clr-pass);
             }
-
             .check-item.warn {
-                background: #fff8e6;
-                border-left-color: #ffba00;
+                background: #fef6ee;
+                border-left-color: var(--clr-warn);
             }
-
             .check-item.fail {
-                background: #ffe6e6;
-                border-left-color: #fa383e;
+                background: #fef2f2;
+                border-left-color: var(--clr-fail);
             }
 
             .check-name {
                 font-weight: 600;
-                color: #1c1e21;
+                color: var(--neutral-10);
                 display: flex;
                 align-items: center;
                 gap: 0.5rem;
-                margin-bottom: 0.25rem;
-                font-size: 1rem;
+                font-size: 0.9rem;
             }
-
             .check-name .status-icon {
-                font-size: 1.1em;
-                width: 20px;
+                width: 18px;
                 display: flex;
                 justify-content: center;
             }
-
             .check-category {
                 font-size: 0.75em;
-                color: #606770;
+                color: var(--neutral-6);
                 font-weight: 400;
             }
-
             .check-message {
-                color: #525860;
-                margin-bottom: 0.5rem;
-                font-size: 0.95rem;
-            }
-
-            .check-details {
-                font-size: 0.9rem;
-                color: #606770;
-                margin-top: 0.75rem;
-                padding: 0.75rem;
-                background: rgba(0, 0, 0, 0.03);
-                border-radius: 0.25rem;
-                border-left: 2px solid #ccd0d5;
-            }
-
-            .check-details pre {
-                overflow-x: auto;
-                font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-                margin: 0;
-                font-size: 0.85em;
-            }
-
-            .summary-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 1rem;
-                margin-bottom: 1.5rem;
-            }
-
-            .summary-card {
-                padding: 1rem;
-                background: #f5f6f7;
-                border: 1px solid #dadde1;
-                border-radius: 0.4rem;
-            }
-
-            .summary-card-label {
-                font-size: 0.75rem;
-                color: #606770;
-                margin-bottom: 0.5rem;
-                font-weight: 500;
-                text-transform: uppercase;
-                letter-spacing: 0.02em;
-            }
-
-            .summary-card-value {
-                font-size: 1.25rem;
-                font-weight: 700;
-                color: #1c1e21;
-            }
-
-            .summary-card-value.sm {
-                font-size: 1rem;
-            }
-
-            .summary-card-sub {
+                color: var(--neutral-8);
                 font-size: 0.85rem;
-                color: #606770;
                 margin-top: 0.25rem;
             }
 
-            h3 {
-                font-size: 1.1rem;
-                font-weight: 600;
-                color: #1c1e21;
-                margin: 1.5rem 0 1rem 0;
-            }
-
-            h3:first-child,
-            h3.mt-0 {
-                margin-top: 0;
-            }
-
-            .info-table {
-                width: 100%;
-                border-collapse: collapse;
-                font-size: 0.95rem;
-                margin-bottom: 1rem;
-            }
-
-            .info-table caption {
-                text-align: left;
-                font-weight: 600;
-                font-size: 1.1rem;
-                color: #1c1e21;
-                padding-bottom: 0.5rem;
-            }
-
-            .info-table th {
-                text-align: left;
-                padding: 0.5rem 0.75rem;
-                background: #f5f6f7;
-                border-bottom: 1px solid #dadde1;
-                font-weight: 500;
-                color: #606770;
-                font-size: 0.8rem;
-                text-transform: uppercase;
-                letter-spacing: 0.02em;
-            }
-
-            .info-table td {
-                padding: 0.5rem 0.75rem;
-                border-bottom: 1px solid #ebedf0;
-                color: #1c1e21;
-            }
-
-            .info-table tr:last-child td {
-                border-bottom: none;
-            }
-
-            .info-table .label {
-                color: #606770;
-                font-weight: 500;
-                width: 40%;
-            }
-
-            .mono {
-                font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-                font-size: 0.9em;
-            }
-
-            .usage-bar {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-            }
-
-            .usage-bar-track {
-                flex: 1;
-                height: 8px;
-                background: #ebedf0;
-                border-radius: 4px;
-                overflow: hidden;
-                max-width: 120px;
-            }
-
-            .usage-bar-fill {
-                height: 100%;
-                border-radius: 4px;
-                background: #00a400;
-            }
-
-            .usage-bar-fill.warn {
-                background: #ffba00;
-            }
-
-            .usage-bar-fill.critical {
-                background: #fa383e;
-            }
-
-            .usage-pct {
+            .check-details {
                 font-size: 0.85rem;
-                min-width: 3em;
+                color: var(--neutral-7);
+                margin-top: 0.5rem;
+                padding: 0.6rem 0.75rem;
+                background: rgba(0, 0, 0, 0.025);
+                border-radius: var(--radius);
+                border-left: 2px solid var(--neutral-3);
             }
-
-            .text-muted {
-                font-size: 0.85rem;
-                color: #606770;
-            }
-
-            .inline-warn {
-                display: inline-block;
+            .check-details pre {
+                overflow-x: auto;
+                font-family: var(--font-mono);
+                margin: 0;
                 font-size: 0.8rem;
-                color: #b38200;
-                background: #fff8e6;
-                padding: 0.1rem 0.4rem;
-                border-radius: 0.2rem;
-                margin-left: 0.5rem;
-                font-weight: 500;
-            }
-
-            .inline-critical {
-                display: inline-block;
-                font-size: 0.8rem;
-                color: #c41e1e;
-                background: #ffe6e6;
-                padding: 0.1rem 0.4rem;
-                border-radius: 0.2rem;
-                margin-left: 0.5rem;
-                font-weight: 500;
             }
 
             .detail-kv {
                 display: flex;
                 gap: 0.5rem;
-                padding: 0.2rem 0;
-                font-size: 0.9rem;
+                padding: 0.15rem 0;
+                font-size: 0.85rem;
             }
-
             .detail-kv .dk-key {
-                color: #606770;
+                color: var(--neutral-6);
                 font-weight: 500;
                 min-width: 8em;
             }
-
             .detail-kv .dk-val {
-                color: #1c1e21;
-                font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+                color: var(--neutral-10);
+                font-family: var(--font-mono);
+                font-size: 0.8rem;
+            }
+
+            /* --- Sub-checks (nested bucket operations) --- */
+            .sub-checks {
+                margin-top: 0.5rem;
+                padding-left: 1.25rem;
+            }
+            .sub-check {
+                display: flex;
+                align-items: baseline;
+                gap: 0.4rem;
+                font-size: 0.8rem;
+                padding: 0.2rem 0;
+                color: var(--neutral-8);
+            }
+            .sub-check .status-icon {
+                width: 14px;
                 font-size: 0.85em;
+                flex-shrink: 0;
+            }
+            .sub-check .sub-name {
+                font-weight: 500;
+                min-width: 5em;
+            }
+            .sub-check .sub-msg {
+                color: var(--neutral-6);
+            }
+            .sub-check.pass .status-icon {
+                color: var(--clr-pass);
+            }
+            .sub-check.fail .status-icon {
+                color: var(--clr-fail);
+            }
+            .sub-check.skip {
+                color: var(--neutral-5);
             }
 
-            .copy-btn {
-                display: inline-flex;
+            /* --- Usage bar --- */
+            .usage-bar {
+                display: flex;
                 align-items: center;
-                gap: 0.25rem;
-                background: none;
-                border: 1px solid #dadde1;
-                border-radius: 0.25rem;
-                padding: 0.15rem 0.4rem;
-                font-size: 0.75rem;
-                color: #606770;
-                cursor: pointer;
-                margin-left: 0.5rem;
-                vertical-align: middle;
-                transition: background 0.15s, color 0.15s;
+                gap: 0.5rem;
+            }
+            .usage-bar-track {
+                flex: 1;
+                height: 6px;
+                background: var(--neutral-2);
+                border-radius: 3px;
+                overflow: hidden;
+                max-width: 120px;
+            }
+            .usage-bar-fill {
+                height: 100%;
+                border-radius: 3px;
+                background: var(--clr-pass);
+            }
+            .usage-bar-fill.warn {
+                background: var(--clr-warn);
+            }
+            .usage-bar-fill.critical {
+                background: var(--clr-fail);
+            }
+            .usage-pct {
+                font-size: 0.8rem;
+                min-width: 3em;
+                color: var(--neutral-8);
+                font-variant-numeric: tabular-nums;
             }
 
-            .copy-btn:hover {
-                background: #ebedf0;
-                color: #1c1e21;
+            /* --- Inline badges --- */
+            .tag-warn {
+                display: inline-block;
+                font-size: 0.7rem;
+                color: var(--clr-warn);
+                background: #fef6ee;
+                padding: 1px 6px;
+                border-radius: 3px;
+                margin-left: 0.4rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.3px;
+            }
+            .tag-critical {
+                display: inline-block;
+                font-size: 0.7rem;
+                color: var(--clr-fail);
+                background: #fef2f2;
+                padding: 1px 6px;
+                border-radius: 3px;
+                margin-left: 0.4rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.3px;
             }
 
-            .copy-btn.copied {
-                color: #00a400;
-                border-color: #00a400;
+            /* --- Text helpers --- */
+            .text-muted {
+                font-size: 0.8rem;
+                color: var(--neutral-6);
             }
 
-            footer {
+            /* --- Footer --- */
+            .footer {
                 text-align: center;
                 padding-top: 1.5rem;
-                border-top: 1px solid #dadde1;
-                color: #8d949e;
-                font-size: 0.85rem;
-                margin-top: 2rem;
+                margin-top: 1rem;
+                border-top: 1px solid var(--border);
+                font-size: 0.75rem;
+                color: var(--neutral-5);
             }
 
+            /* --- Print --- */
             @media print {
                 body {
                     background: white;
+                    padding: 0;
                 }
                 .container {
                     max-width: none;
-                    padding: 0;
                 }
-                .section {
+                .card {
+                    box-shadow: none;
+                    border: 1px solid var(--border);
+                }
+                details.card {
                     break-inside: avoid;
                 }
-                .section > summary .toggle-icon {
+                details.card > summary .toggle-icon {
                     display: none;
                 }
-                details.section {
-                    display: block;
-                }
-                details.section > summary ~ * {
-                    display: block;
+                details.card[open] > .card-body,
+                details.card > .card-body {
+                    display: block !important;
                 }
             }
 
             @media (max-width: 600px) {
-                h1 {
-                    font-size: 1.5rem;
-                }
-                .container {
+                body {
                     padding: 1rem;
                 }
-                .metadata {
-                    gap: 1rem;
+                .header {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 0.75rem;
                 }
-                .summary-grid {
+                .grid-2,
+                .grid-3,
+                .grid-4 {
+                    grid-template-columns: 1fr;
+                }
+                .kv-grid {
                     grid-template-columns: 1fr;
                 }
             }
@@ -476,100 +532,91 @@
     </head>
     <body>
         <div class="container">
-            <header>
-                <h1>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 576 512"
-                        aria-hidden="true"
-                        style="
-                            width: 1.4em;
-                            height: 1.4em;
-                            margin-right: 0.5rem;
-                            vertical-align: -0.125em;
-                            display: inline-block;
-                        "
-                    >
-                        <path
-                            fill="#1c1e21"
-                            d="M142.4 21.9c5.6 16.8-3.5 34.9-20.2 40.5L96 71.1 96 192c0 53 43 96 96 96s96-43 96-96l0-120.9-26.1-8.7c-16.8-5.6-25.8-23.7-20.2-40.5s23.7-25.8 40.5-20.2l26.1 8.7C334.4 19.1 352 43.5 352 71.1L352 192c0 77.2-54.6 141.6-127.3 156.7C231 404.6 278.4 448 336 448c61.9 0 112-50.1 112-112l0-70.7c-28.3-12.3-48-40.5-48-73.3c0-44.2 35.8-80 80-80s80 35.8 80 80c0 32.8-19.7 61-48 73.3l0 70.7c0 97.2-78.8 176-176 176c-92.9 0-168.9-71.9-175.5-163.1C87.2 334.2 32 269.6 32 192L32 71.1c0-27.5 17.6-52 43.8-60.7l26.1-8.7c16.8-5.6 34.9 3.5 40.5 20.2zM480 224a32 32 0 1 0 0-64 32 32 0 1 0 0 64z"
-                        />
-                    </svg>
-                    Fusion Diagnostic Report
-                </h1>
-                <div class="metadata">
-                    <div>
-                        <strong>Generated</strong>
-                        <time datetime="{{ timestamp }}" class="local-time">{{ timestamp }}</time>
+            <!-- Header -->
+            <div class="header">
+                <div class="header-left">
+                    <div class="header-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" aria-hidden="true">
+                            <path
+                                fill="currentColor"
+                                d="M142.4 21.9c5.6 16.8-3.5 34.9-20.2 40.5L96 71.1 96 192c0 53 43 96 96 96s96-43 96-96l0-120.9-26.1-8.7c-16.8-5.6-25.8-23.7-20.2-40.5s23.7-25.8 40.5-20.2l26.1 8.7C334.4 19.1 352 43.5 352 71.1L352 192c0 77.2-54.6 141.6-127.3 156.7C231 404.6 278.4 448 336 448c61.9 0 112-50.1 112-112l0-70.7c-28.3-12.3-48-40.5-48-73.3c0-44.2 35.8-80 80-80s80 35.8 80 80c0 32.8-19.7 61-48 73.3l0 70.7c0 97.2-78.8 176-176 176c-92.9 0-168.9-71.9-175.5-163.1C87.2 334.2 32 269.6 32 192L32 71.1c0-27.5 17.6-52 43.8-60.7l26.1-8.7c16.8-5.6 34.9 3.5 40.5 20.2zM480 224a32 32 0 1 0 0-64 32 32 0 1 0 0 64z"
+                            />
+                        </svg>
                     </div>
-                    {% if doctor_report.fusion_version or doctor_report.version %}
-                    {% set version = doctor_report.fusion_version or doctor_report.version %}
                     <div>
-                        <strong>Fusion Version</strong>
-                        <span>{{ version }}<button class="copy-btn" data-copy="{{ version }}">Copy</button></span>
-                    </div>
-                    {% endif %}
-                    <div>
-                        <strong>Status</strong>
-                        <span class="status-badge status-{{ overall_status }}">{{ overall_status }}</span>
+                        <div class="header-title">Fusion Filesystem Diagnostics</div>
+                        <div class="header-meta">
+                            <time datetime="{{ timestamp }}" class="local-time">{{ timestamp }}</time>
+                            {%- if doctor_report.fusion_version or doctor_report.version %} {%- set version =
+                            doctor_report.fusion_version or doctor_report.version %} &middot; {{ version }} {%- endif %}
+                        </div>
                     </div>
                 </div>
-            </header>
+                <span class="badge badge-{{ overall_status }}">{{ overall_status }}</span>
+            </div>
 
-            <!-- Validation Checks section (first — the most important info) -->
-            {% if doctor_report %}
-            <details id="validation-checks" class="section" open>
-                <summary>
-                    <h2>Validation Checks</h2>
-                    <span class="toggle-icon">▼</span>
-                </summary>
-                <div class="section-content">
-                    {% if doctor_report.check_summary or doctor_report.summary %} {% set summary =
-                    doctor_report.check_summary or doctor_report.summary %} {% set summary_status = summary.overall or
-                    summary.status or 'unknown' %}
-                    <div class="summary-grid">
-                        <div class="summary-card">
-                            <div class="summary-card-label">Overall Status</div>
-                            <div class="summary-card-value">
-                                <span class="status-badge status-{{ summary_status }}">{{ summary_status }}</span>
-                            </div>
+            <!-- Summary metrics -->
+            {% if doctor_report.check_summary or doctor_report.summary %} {% set summary = doctor_report.check_summary
+            or doctor_report.summary %}
+            <div class="card">
+                <div class="card-title">Overview</div>
+                <div class="grid-4">
+                    <div class="metric">
+                        <div class="metric-value">
+                            {{ (summary.passed|default(0)) + (summary.failed|default(0)) + (summary.skipped|default(0))
+                            }}
                         </div>
-                        {% if summary.passed is defined or summary.failed is defined %}
-                        <div class="summary-card">
-                            <div class="summary-card-label">Checks</div>
-                            <div class="summary-card-value">
-                                {{ summary.passed|default(0) }} passed, {{ summary.failed|default(0) }} failed{% if
-                                summary.skipped %}, {{ summary.skipped }} skipped{% endif %}
-                            </div>
-                        </div>
-                        {% endif %}
+                        <div class="metric-label">Total Checks</div>
                     </div>
-                    {% endif %} {% if doctor_report.checks %}
-                    <h3>Checks</h3>
+                    {% if summary.passed is defined %}
+                    <div class="metric">
+                        <div class="metric-value">{{ summary.passed|default(0) }}</div>
+                        <div class="metric-label">Passed</div>
+                    </div>
+                    {% endif %} {% if summary.failed is defined %}
+                    <div class="metric">
+                        <div class="metric-value">{{ summary.failed|default(0) }}</div>
+                        <div class="metric-label">Failed</div>
+                    </div>
+                    {% endif %} {% if summary.skipped %}
+                    <div class="metric">
+                        <div class="metric-value">{{ summary.skipped }}</div>
+                        <div class="metric-label">Skipped</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Validation Checks -->
+            {% if doctor_report.checks %}
+            <details id="validation-checks" class="card" open>
+                <summary>
+                    <span class="card-title">Validation Checks</span>
+                    <span class="toggle-icon">&#9660;</span>
+                </summary>
+                <div class="card-body">
                     {% if doctor_report.checks is mapping %} {% for check_name, check_data in
                     doctor_report.checks.items() %}
                     <div class="check-item {{ check_data.status }}">
                         <div class="check-name">
-                            <span class="status-icon">
-                                {% if check_data.status == 'pass' %}✓{% elif check_data.status == 'warn' %}⚠{% else
-                                %}✗{% endif %}
-                            </span>
-                            {{ check_name|replace('_', ' ')|title }}
+                            <span class="status-icon"
+                                >{% if check_data.status == 'pass' %}&#10003;{% elif check_data.status == 'warn'
+                                %}&#9888;{% else %}&#10007;{% endif %}</span
+                            >
+                            {{ check_name|humanize_check }}
                         </div>
                         <div class="check-message">{{ check_data.message }}</div>
                         {% if check_data.details %}
                         <div class="check-details">
-                            {% if check_data.details is mapping %}
-                            {% for key, val in check_data.details.items() %}
+                            {% if check_data.details is mapping %} {% for key, val in check_data.details.items() %}
                             <div class="detail-kv">
-                                <span class="dk-key">{{ key|replace('_', ' ')|title }}</span>
+                                <span class="dk-key">{{ key|smart_title }}</span>
                                 <span class="dk-val">{{ val }}</span>
                             </div>
-                            {% endfor %}
-                            {% else %}
+                            {% endfor %} {% else %}
                             <pre>{{ check_data.details|tojson(indent=2) }}</pre>
                             {% endif %}
-                            <button class="copy-btn" data-copy="{{ check_data.details|tojson }}">Copy</button>
                         </div>
                         {% endif %} {% if check_data.remediation %}
                         <div class="check-details"><strong>Remediation:</strong> {{ check_data.remediation }}</div>
@@ -578,162 +625,188 @@
                     {% endfor %} {% else %} {% for check_data in doctor_report.checks %}
                     <div class="check-item {{ check_data.status }}">
                         <div class="check-name">
-                            <span class="status-icon">
-                                {% if check_data.status == 'pass' %}✓{% elif check_data.status == 'warn' %}⚠{% else
-                                %}✗{% endif %}
-                            </span>
-                            {{ (check_data.check or check_data.name or 'Unknown')|replace('_', ' ')|title }} {% if
-                            check_data.category %}
-                            <span class="check-category">({{ check_data.category }})</span>
-                            {% endif %}
+                            <span class="status-icon"
+                                >{% if check_data.status == 'pass' %}&#10003;{% elif check_data.status == 'warn'
+                                %}&#9888;{% else %}&#10007;{% endif %}</span
+                            >
+                            {{ (check_data.check or check_data.name or 'Unknown')|humanize_check }} {%- if
+                            check_data.details and check_data.details.uri %} &mdash; {{ check_data.details.uri }}{%
+                            endif %}
                         </div>
                         <div class="check-message">{{ check_data.message }}</div>
-                        {% if check_data.details %}
+                        {% if check_data.details %} {% set uri_in_title = check_data.details is mapping and
+                        check_data.details.uri %} {% set detail_keys = check_data.details.keys()|list if
+                        check_data.details is mapping else [] %} {% set non_uri_keys = detail_keys|reject('equalto',
+                        'uri')|list if uri_in_title else detail_keys %} {% if non_uri_keys or not uri_in_title %}
                         <div class="check-details">
-                            {% if check_data.details is mapping %}
-                            {% for key, val in check_data.details.items() %}
+                            {% if check_data.details is mapping %} {% for key in non_uri_keys %}
                             <div class="detail-kv">
-                                <span class="dk-key">{{ key|replace('_', ' ')|title }}</span>
-                                <span class="dk-val">{{ val }}</span>
+                                <span class="dk-key">{{ key|smart_title }}</span>
+                                <span class="dk-val">{{ check_data.details[key] }}</span>
                             </div>
-                            {% endfor %}
-                            {% else %}
+                            {% endfor %} {% else %}
                             <pre>{{ check_data.details|tojson(indent=2) }}</pre>
                             {% endif %}
-                            <button class="copy-btn" data-copy="{{ check_data.details|tojson }}">Copy</button>
+                        </div>
+                        {% endif %} {% endif %} {% if check_data.sub_checks and check_data.status != 'pass' %}
+                        <div class="sub-checks">
+                            {% for sc in check_data.sub_checks %} {% if sc.message %}
+                            <div class="sub-check {{ sc.status }}">
+                                <span class="status-icon"
+                                    >{% if sc.status == 'pass' %}&#10003;{% elif sc.status == 'fail' %}&#10007;{% elif
+                                    sc.status == 'skip' %}&ndash;{% else %}&#9888;{% endif %}</span
+                                >
+                                <span class="sub-name">{{ (sc.check or sc.name or '')|humanize_check }}</span>
+                                <span class="sub-msg">{{ sc.message|trim_sub_msg }}</span>
+                            </div>
+                            {% endif %} {% endfor %}
                         </div>
                         {% endif %} {% if check_data.remediation %}
                         <div class="check-details"><strong>Remediation:</strong> {{ check_data.remediation }}</div>
                         {% endif %}
                     </div>
-                    {% endfor %} {% endif %} {% endif %}
+                    {% endfor %} {% endif %}
                 </div>
             </details>
             {% endif %}
 
-            <!-- System Environment section -->
-            {% if doctor_report.system %}
-            <details id="system-environment" class="section"{% if overall_status != 'pass' %} open{% endif %}>
-                <summary>
-                    <h2>System Environment</h2>
-                    <span class="toggle-icon">▼</span>
-                </summary>
-                <div class="section-content">
-                    {% set sys = doctor_report.system %}
-                    <div class="summary-grid">
+            <!-- Instance + System + Memory -->
+            {% if doctor_report.system %} {% set sys = doctor_report.system %} {% set cloud = doctor_report.cloud or {}
+            %}
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-title">Instance</div>
+                    <div class="kv-grid">
+                        <span class="kv-label">Provider</span>
+                        <span class="kv-value">{{ cloud.provider|default('N/A')|upper }}</span>
+
+                        <span class="kv-label">ID</span>
+                        <span class="kv-value">{{ cloud.instance_id|default('N/A') }}</span>
+
+                        <span class="kv-label">Type</span>
+                        <span class="kv-value">{{ cloud.instance_type|default('N/A') }}</span>
+
+                        <span class="kv-label">Region</span>
+                        <span class="kv-value">{{ cloud.region|default('N/A') }}</span>
+
+                        <span class="kv-label">Zone</span>
+                        <span class="kv-value">{{ cloud.zone|default('N/A') }}</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">System</div>
+                    <div class="kv-grid">
                         {% if sys.os %}
-                        <div class="summary-card">
-                            <div class="summary-card-label">Operating System</div>
-                            <div class="summary-card-value sm">
-                                {{ sys.os.name|default('Unknown')|title }} {{ sys.os.version|default('') }}
-                            </div>
-                            <div class="summary-card-sub">
-                                Kernel {{ sys.os.kernel|default('N/A') }} &middot; {{ sys.os.architecture|default('N/A') }}
-                            </div>
-                        </div>
-                        {% endif %}
-                        {% if sys.cpu %}
-                        <div class="summary-card">
-                            <div class="summary-card-label">CPU</div>
-                            <div class="summary-card-value sm">
-                                {{ sys.cpu.cores|default('?') }} cores / {{ sys.cpu.threads|default('?') }} threads
-                            </div>
-                            <div class="summary-card-sub">
-                                {{ sys.cpu.model|default('Unknown') }}
-                            </div>
-                        </div>
-                        {% endif %}
-                        {% if sys.memory %}
-                        {% set mem_total_gb = (sys.memory.total_bytes / 1073741824)|round(1) %}
-                        {% set mem_used_gb = ((sys.memory.total_bytes - sys.memory.available_bytes) / 1073741824)|round(1) %}
-                        {% set mem_avail_gb = (sys.memory.available_bytes / 1073741824)|round(1) %}
-                        {% set mem_used_pct = (((sys.memory.total_bytes - sys.memory.available_bytes) / sys.memory.total_bytes) * 100)|round(0)|int %}
-                        <div class="summary-card">
-                            <div class="summary-card-label">Memory</div>
-                            <div class="summary-card-value sm">
-                                {{ mem_used_gb }} GB used of {{ mem_total_gb }} GB
-                            </div>
-                            <div class="usage-bar" style="margin-top: 0.4rem">
-                                <div class="usage-bar-track">
-                                    <div class="usage-bar-fill {% if mem_used_pct >= 90 %}critical{% elif mem_used_pct >= 75 %}warn{% endif %}" style="width: {{ mem_used_pct }}%"></div>
-                                </div>
-                                <span class="usage-pct">{{ mem_used_pct }}%</span>
-                                <span class="text-muted">({{ mem_avail_gb }} GB available)</span>
-                            </div>
-                            {% if sys.memory.swap_total_bytes and sys.memory.swap_total_bytes > 0 %}
-                            {% set swap_total_bytes = sys.memory.swap_total_bytes %}
-                            {% set swap_free_bytes = sys.memory.swap_free_bytes %}
-                            {% set swap_used_pct = (((swap_total_bytes - swap_free_bytes) / swap_total_bytes) * 100)|round(0)|int %}
-                            {% set swap_total_gb = (swap_total_bytes / 1073741824)|round(1) %}
-                            <div class="summary-card-sub" style="margin-top: 0.35rem">
-                                Swap:
-                                {% if swap_free_bytes < 1073741824 %}
-                                {{ (swap_free_bytes / 1048576)|round(0)|int }} MB free
-                                {% else %}
-                                {{ (swap_free_bytes / 1073741824)|round(1) }} GB free
-                                {% endif %}
-                                of {{ swap_total_gb }} GB
-                                {% if swap_used_pct >= 95 %}
-                                <span class="inline-critical">{{ swap_used_pct }}% used</span>
-                                {% elif swap_used_pct >= 80 %}
-                                <span class="inline-warn">{{ swap_used_pct }}% used</span>
-                                {% endif %}
-                            </div>
-                            {% endif %}
-                        </div>
+                        <span class="kv-label">OS</span>
+                        <span class="kv-value"
+                            >{{ sys.os.name|default('Unknown')|title }} {{ sys.os.version|default('') }}</span
+                        >
+
+                        <span class="kv-label">Kernel</span>
+                        <span class="kv-value">{{ sys.os.kernel|default('N/A') }}</span>
+
+                        <span class="kv-label">Architecture</span>
+                        <span class="kv-value">{{ sys.os.architecture|default('N/A') }}</span>
+                        {% endif %} {% if sys.cpu %}
+                        <span class="kv-label">CPU</span>
+                        <span class="kv-value">{{ sys.cpu.model|default('Unknown') }}</span>
+
+                        <span class="kv-label">Cores / Threads</span>
+                        <span class="kv-value"
+                            >{{ sys.cpu.cores|default('?') }} / {{ sys.cpu.threads|default('?') }}</span
+                        >
                         {% endif %}
                     </div>
                 </div>
-            </details>
+
+                <div class="card">
+                    <div class="card-title">Memory</div>
+                    {% if sys.memory %} {% set mem_total_gb = (sys.memory.total_bytes / 1073741824)|round(1) %} {% set
+                    mem_used_gb = ((sys.memory.total_bytes - sys.memory.available_bytes) / 1073741824)|round(1) %} {%
+                    set mem_avail_gb = (sys.memory.available_bytes / 1073741824)|round(1) %} {% set mem_used_pct =
+                    (((sys.memory.total_bytes - sys.memory.available_bytes) / sys.memory.total_bytes) *
+                    100)|round(0)|int %}
+                    <div class="kv-grid">
+                        <span class="kv-label">Used</span>
+                        <span class="kv-value">
+                            {{ mem_used_gb }} / {{ mem_total_gb }} GB
+                            <div class="usage-bar" style="margin-top: 0.25rem">
+                                <div class="usage-bar-track">
+                                    <div
+                                        class="usage-bar-fill {% if mem_used_pct >= 90 %}critical{% elif mem_used_pct >= 75 %}warn{% endif %}"
+                                        style="width: {{ mem_used_pct }}%"
+                                    ></div>
+                                </div>
+                                <span class="usage-pct">{{ mem_used_pct }}%</span>
+                            </div>
+                        </span>
+
+                        {% if sys.memory.swap_total_bytes and sys.memory.swap_total_bytes > 0 %} {% set swap_total_bytes
+                        = sys.memory.swap_total_bytes %} {% set swap_free_bytes = sys.memory.swap_free_bytes %} {% set
+                        swap_used_pct = (((swap_total_bytes - swap_free_bytes) / swap_total_bytes) * 100)|round(0)|int
+                        %} {% set swap_total_gb = (swap_total_bytes / 1073741824)|round(1) %}
+                        <span class="kv-label">Swap</span>
+                        <span class="kv-value">
+                            {% if swap_free_bytes < 1073741824 %}{{ (swap_free_bytes / 1048576)|round(0)|int }} MB{%
+                            else %}{{ (swap_free_bytes / 1073741824)|round(1) }} GB{% endif %} free of {{ swap_total_gb
+                            }} GB {% if swap_used_pct >= 95 %}<span class="tag-critical">{{ swap_used_pct }}% used</span
+                            >{% elif swap_used_pct >= 80 %}<span class="tag-warn">{{ swap_used_pct }}% used</span>{%
+                            endif %}
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No memory data available</p>
+                    {% endif %}
+                </div>
+            </div>
             {% endif %}
 
-            <!-- Storage section -->
-            {% if doctor_report.storage %}
-            <details id="storage" class="section">
+            <!-- Storage -->
+            {% if doctor_report.storage and (doctor_report.storage.filesystems or doctor_report.storage.nvme_devices) %}
+            <details id="storage" class="card">
                 <summary>
-                    <h2>Storage</h2>
-                    <span class="toggle-icon">▼</span>
+                    <span class="card-title">Storage</span>
+                    <span class="toggle-icon">&#9660;</span>
                 </summary>
-                <div class="section-content">
+                <div class="card-body">
                     {% if doctor_report.storage.nvme_devices %}
-                    <table class="info-table">
-                        <caption>NVMe Devices</caption>
+                    <table>
                         <thead>
                             <tr>
-                                <th>Device</th>
+                                <th>NVMe Device</th>
                                 <th>Model</th>
-                                <th>Size</th>
+                                <th style="text-align: right">Size</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for dev in doctor_report.storage.nvme_devices %}
                             <tr>
-                                <td>{{ dev.name }}</td>
+                                <td class="mono">{{ dev.name }}</td>
                                 <td>{{ dev.model }}</td>
-                                <td>{{ (dev.size_bytes / 1073741824)|round(0)|int }} GB</td>
+                                <td class="num">{{ (dev.size_bytes / 1073741824)|round(0)|int }} GB</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
-                    {% endif %}
-
                     {% if doctor_report.storage.filesystems %}
-                    <table class="info-table">
-                        <caption>Filesystems</caption>
+                    <div style="margin-top: 1rem"></div>
+                    {% endif %} {% endif %} {% if doctor_report.storage.filesystems %}
+                    <table>
                         <thead>
                             <tr>
                                 <th>Mount</th>
                                 <th>Device</th>
                                 <th>Type</th>
-                                <th>Usage</th>
+                                <th style="width: 240px">Usage</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for fs in doctor_report.storage.filesystems %}
-                            {% if fs.total_bytes and fs.total_bytes > 0 %}
-                            {% set fs_total_gb = (fs.total_bytes / 1073741824)|round(1) %}
-                            {% set fs_avail_gb = (fs.available_bytes / 1073741824)|round(1) %}
-                            {% set fs_used_pct = (((fs.total_bytes - fs.available_bytes) / fs.total_bytes) * 100)|round(0)|int %}
+                            {% for fs in doctor_report.storage.filesystems %} {% if fs.total_bytes and fs.total_bytes >
+                            0 %} {% set fs_total_gb = (fs.total_bytes / 1073741824)|round(1) %} {% set fs_used_gb =
+                            ((fs.total_bytes - fs.available_bytes) / 1073741824)|round(1) %} {% set fs_used_pct =
+                            (((fs.total_bytes - fs.available_bytes) / fs.total_bytes) * 100)|round(0)|int %}
                             <tr>
                                 <td class="mono">{{ fs.mount_point }}</td>
                                 <td class="mono">{{ fs.device }}</td>
@@ -741,15 +814,17 @@
                                 <td>
                                     <div class="usage-bar">
                                         <div class="usage-bar-track">
-                                            <div class="usage-bar-fill {% if fs_used_pct >= 90 %}critical{% elif fs_used_pct >= 75 %}warn{% endif %}" style="width: {{ fs_used_pct }}%"></div>
+                                            <div
+                                                class="usage-bar-fill {% if fs_used_pct >= 90 %}critical{% elif fs_used_pct >= 75 %}warn{% endif %}"
+                                                style="width: {{ fs_used_pct }}%"
+                                            ></div>
                                         </div>
                                         <span class="usage-pct">{{ fs_used_pct }}%</span>
-                                        <span class="text-muted">{{ fs_avail_gb }} / {{ fs_total_gb }} GB free</span>
+                                        <span class="text-muted">{{ fs_used_gb }} / {{ fs_total_gb }} GB</span>
                                     </div>
                                 </td>
                             </tr>
-                            {% endif %}
-                            {% endfor %}
+                            {% endif %} {% endfor %}
                         </tbody>
                     </table>
                     {% endif %}
@@ -757,17 +832,16 @@
             </details>
             {% endif %}
 
-            <!-- Resource Limits section -->
+            <!-- Resource Limits -->
             {% if doctor_report.resources %}
-            <details id="resource-limits" class="section">
+            <details id="resource-limits" class="card">
                 <summary>
-                    <h2>Resource Limits</h2>
-                    <span class="toggle-icon">▼</span>
+                    <span class="card-title">Resource Limits</span>
+                    <span class="toggle-icon">&#9660;</span>
                 </summary>
-                <div class="section-content">
-                    {% set res = doctor_report.resources %}
-                    {% set unlimited = 18446744073709551615 %}
-                    <table class="info-table">
+                <div class="card-body">
+                    {% set res = doctor_report.resources %} {% set unlimited = 18446744073709551615 %}
+                    <table>
                         <thead>
                             <tr>
                                 <th>Resource</th>
@@ -778,44 +852,68 @@
                         <tbody>
                             {% if res.open_files %}
                             <tr>
-                                <td class="label">Open Files</td>
-                                <td>{{ res.open_files.soft|intcomma if res.open_files.soft != unlimited else 'unlimited' }}{% if res.open_files.soft != unlimited and res.open_files.soft < 65536 %} <span class="inline-warn">Low</span>{% endif %}</td>
-                                <td>{{ res.open_files.hard|intcomma if res.open_files.hard != unlimited else 'unlimited' }}</td>
+                                <td>Open Files</td>
+                                <td>
+                                    {{ res.open_files.soft|intcomma if res.open_files.soft != unlimited else 'unlimited'
+                                    }}{% if res.open_files.soft != unlimited and res.open_files.soft < 65536 %}
+                                    <span class="tag-warn">Low</span>{% endif %}
+                                </td>
+                                <td>
+                                    {{ res.open_files.hard|intcomma if res.open_files.hard != unlimited else 'unlimited'
+                                    }}
+                                </td>
                             </tr>
-                            {% endif %}
-                            {% if res.max_procs %}
+                            {% endif %} {% if res.max_procs %}
                             <tr>
-                                <td class="label">Max Processes</td>
-                                <td>{{ res.max_procs.soft|intcomma if res.max_procs.soft != unlimited else 'unlimited' }}</td>
-                                <td>{{ res.max_procs.hard|intcomma if res.max_procs.hard != unlimited else 'unlimited' }}</td>
+                                <td>Max Processes</td>
+                                <td>
+                                    {{ res.max_procs.soft|intcomma if res.max_procs.soft != unlimited else 'unlimited'
+                                    }}
+                                </td>
+                                <td>
+                                    {{ res.max_procs.hard|intcomma if res.max_procs.hard != unlimited else 'unlimited'
+                                    }}
+                                </td>
                             </tr>
-                            {% endif %}
-                            {% if res.mem_lock %}
+                            {% endif %} {% if res.mem_lock %}
                             <tr>
-                                <td class="label">Memory Lock</td>
-                                <td>{% if res.mem_lock.soft == unlimited %}unlimited{% else %}{{ (res.mem_lock.soft / 1073741824)|round(1) }} GB{% endif %}</td>
-                                <td>{% if res.mem_lock.hard == unlimited %}unlimited{% else %}{{ (res.mem_lock.hard / 1073741824)|round(1) }} GB{% endif %}</td>
+                                <td>Memory Lock</td>
+                                <td>
+                                    {% if res.mem_lock.soft == unlimited %}unlimited{% else %}{{ (res.mem_lock.soft /
+                                    1073741824)|round(1) }} GB{% endif %}
+                                </td>
+                                <td>
+                                    {% if res.mem_lock.hard == unlimited %}unlimited{% else %}{{ (res.mem_lock.hard /
+                                    1073741824)|round(1) }} GB{% endif %}
+                                </td>
                             </tr>
-                            {% endif %}
-                            {% if res.stack_size %}
+                            {% endif %} {% if res.stack_size %}
                             <tr>
-                                <td class="label">Stack Size</td>
-                                <td>{% if res.stack_size.soft == unlimited %}unlimited{% else %}{{ (res.stack_size.soft / 1048576)|round(1) }} MB{% endif %}</td>
-                                <td>{% if res.stack_size.hard == unlimited %}unlimited{% else %}{{ (res.stack_size.hard / 1048576)|round(1) }} MB{% endif %}</td>
+                                <td>Stack Size</td>
+                                <td>
+                                    {% if res.stack_size.soft == unlimited %}unlimited{% else %}{{ (res.stack_size.soft
+                                    / 1048576)|round(1) }} MB{% endif %}
+                                </td>
+                                <td>
+                                    {% if res.stack_size.hard == unlimited %}unlimited{% else %}{{ (res.stack_size.hard
+                                    / 1048576)|round(1) }} MB{% endif %}
+                                </td>
                             </tr>
-                            {% endif %}
-                            {% if res.file_size %}
+                            {% endif %} {% if res.file_size %}
                             <tr>
-                                <td class="label">Max File Size</td>
+                                <td>Max File Size</td>
                                 <td>{{ 'unlimited' if res.file_size.soft == unlimited else res.file_size.soft }}</td>
                                 <td>{{ 'unlimited' if res.file_size.hard == unlimited else res.file_size.hard }}</td>
                             </tr>
-                            {% endif %}
-                            {% if res.address_space %}
+                            {% endif %} {% if res.address_space %}
                             <tr>
-                                <td class="label">Address Space</td>
-                                <td>{{ 'unlimited' if res.address_space.soft == unlimited else res.address_space.soft }}</td>
-                                <td>{{ 'unlimited' if res.address_space.hard == unlimited else res.address_space.hard }}</td>
+                                <td>Address Space</td>
+                                <td>
+                                    {{ 'unlimited' if res.address_space.soft == unlimited else res.address_space.soft }}
+                                </td>
+                                <td>
+                                    {{ 'unlimited' if res.address_space.hard == unlimited else res.address_space.hard }}
+                                </td>
                             </tr>
                             {% endif %}
                         </tbody>
@@ -824,31 +922,33 @@
             </details>
             {% endif %}
 
-            <!-- Benchmark section -->
+            <!-- Benchmark -->
             {% if bench_report and bench_report.keys()|length > 0 and 'error' not in bench_report %}
-            <details id="benchmark" class="section" open>
+            <details id="benchmark" class="card" open>
                 <summary>
-                    <h2>Filesystem Benchmark</h2>
-                    <span class="toggle-icon">▼</span>
+                    <span class="card-title">Filesystem Benchmark</span>
+                    <span class="toggle-icon">&#9660;</span>
                 </summary>
-                <div class="section-content">
+                <div class="card-body">
                     {% if bench_report.summary %}
-                    <div class="summary-grid">
-                        <div class="summary-card">
-                            <div class="summary-card-label">Status</div>
-                            <div class="summary-card-value">
-                                <span class="status-badge status-{{ bench_report.summary.status }}"
-                                    >{{ bench_report.summary.status }}</span
-                                >
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %} {% if bench_report.results %}
-                    <div style="overflow-x: auto">
-                        <pre style="background: #f5f6f7; padding: 1rem; border-radius: 0.4rem; font-size: 0.85rem">
-{{ bench_report.results|tojson(indent=2) }}</pre
+                    <p>
+                        <span class="badge badge-{{ bench_report.summary.status }}"
+                            >{{ bench_report.summary.status }}</span
                         >
-                    </div>
+                    </p>
+                    {% endif %} {% if bench_report.results %}
+                    <pre
+                        class="mono"
+                        style="
+                            background: var(--neutral-1);
+                            padding: 1rem;
+                            border-radius: var(--radius);
+                            margin-top: 0.75rem;
+                            overflow-x: auto;
+                        "
+                    >
+{{ bench_report.results|tojson(indent=2) }}</pre
+                    >
                     {% elif bench_report.error %}
                     <div class="check-item fail">
                         <div class="check-message">Error: {{ bench_report.error }}</div>
@@ -860,31 +960,33 @@
             </details>
             {% endif %}
 
-            <!-- Object Storage Benchmark section -->
+            <!-- Object Storage Benchmark -->
             {% if objbench_report and objbench_report.keys()|length > 0 and 'error' not in objbench_report %}
-            <details id="objbench" class="section" open>
+            <details id="objbench" class="card" open>
                 <summary>
-                    <h2>Object Storage Benchmark</h2>
-                    <span class="toggle-icon">▼</span>
+                    <span class="card-title">Object Storage Benchmark</span>
+                    <span class="toggle-icon">&#9660;</span>
                 </summary>
-                <div class="section-content">
+                <div class="card-body">
                     {% if objbench_report.summary %}
-                    <div class="summary-grid">
-                        <div class="summary-card">
-                            <div class="summary-card-label">Status</div>
-                            <div class="summary-card-value">
-                                <span class="status-badge status-{{ objbench_report.summary.status }}"
-                                    >{{ objbench_report.summary.status }}</span
-                                >
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %} {% if objbench_report.results %}
-                    <div style="overflow-x: auto">
-                        <pre style="background: #f5f6f7; padding: 1rem; border-radius: 0.4rem; font-size: 0.85rem">
-{{ objbench_report.results|tojson(indent=2) }}</pre
+                    <p>
+                        <span class="badge badge-{{ objbench_report.summary.status }}"
+                            >{{ objbench_report.summary.status }}</span
                         >
-                    </div>
+                    </p>
+                    {% endif %} {% if objbench_report.results %}
+                    <pre
+                        class="mono"
+                        style="
+                            background: var(--neutral-1);
+                            padding: 1rem;
+                            border-radius: var(--radius);
+                            margin-top: 0.75rem;
+                            overflow-x: auto;
+                        "
+                    >
+{{ objbench_report.results|tojson(indent=2) }}</pre
+                    >
                     {% elif objbench_report.error %}
                     <div class="check-item fail">
                         <div class="check-message">Error: {{ objbench_report.error }}</div>
@@ -896,39 +998,30 @@
             </details>
             {% endif %}
 
-            <footer>Fusion Diagnostic Report &bull; Generated on <time datetime="{{ timestamp }}" class="local-time">{{ timestamp }}</time></footer>
+            <!-- Footer -->
+            <div class="footer">
+                Generated on <time datetime="{{ timestamp }}" class="local-time">{{ timestamp }}</time> &middot; Fusion
+                Filesystem Diagnostics
+            </div>
         </div>
 
         <script>
-            // Copy-to-clipboard
-            document.querySelectorAll(".copy-btn").forEach(function (btn) {
-                btn.addEventListener("click", function (e) {
-                    e.stopPropagation();
-                    var text = btn.getAttribute("data-copy") ||
-                        btn.parentElement.querySelector("pre, .dk-val")?.textContent || "";
-                    navigator.clipboard.writeText(text.trim()).then(function () {
-                        btn.textContent = "Copied";
-                        btn.classList.add("copied");
-                        setTimeout(function () {
-                            btn.textContent = "Copy";
-                            btn.classList.remove("copied");
-                        }, 1500);
-                    });
-                });
-            });
-
-            // Localize timestamps to viewer's timezone
+            // Localize timestamps
             document.querySelectorAll("time.local-time").forEach(function (el) {
                 try {
                     var d = new Date(el.getAttribute("datetime"));
                     if (!isNaN(d)) {
                         el.textContent = d.toLocaleString(undefined, {
-                            year: "numeric", month: "short", day: "numeric",
-                            hour: "2-digit", minute: "2-digit", second: "2-digit",
-                            timeZoneName: "short"
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit",
+                            timeZoneName: "short",
                         });
                     }
-                } catch (e) { /* keep original ISO string on failure */ }
+                } catch (e) {}
             });
         </script>
     </body>

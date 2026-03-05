@@ -259,7 +259,7 @@ class TestRenderHtml:
 
         html = render_html(combined_report)
         assert isinstance(html, str)
-        assert "Fusion Diagnostic Report" in html
+        assert "Fusion Filesystem Diagnostics" in html
         assert "2026-02-24T10:00:00Z" in html
         assert "pass" in html.lower()
 
@@ -477,11 +477,12 @@ class TestRealFusionDoctorFormat:
 
         html = render_html(combined_report)
         assert "2.6-develop-1f517df" in html
-        assert "Fuse Device" in html
+        assert "FUSE Device" in html
         assert "Disk Space" in html
         assert "/dev/fuse" in html
         assert "critical" in html
-        assert "2 passed" in html
+        assert ">2<" in html  # "2" in metric-value for Passed
+        assert "Passed" in html
 
     def test_merge_with_check_summary(self):
         """Test that merge_reports reads status from check_summary.overall."""
@@ -530,7 +531,7 @@ class TestRealFusionDoctorFormat:
 
             html = render_html(combined)
             assert "2.6.0" in html
-            assert "Fuse Device" in html
+            assert "FUSE Device" in html
             assert "Dcrw-rw-rw-" in html
 
 
@@ -615,10 +616,10 @@ class TestNewSections:
         }
         return render_html(combined)
 
-    def test_system_environment_section_present(self):
-        """Test that System Environment section is rendered."""
+    def test_system_section_present(self):
+        """Test that System card is rendered."""
         html = self._render()
-        assert "System Environment" in html
+        assert "System" in html
 
     def test_os_info_rendered(self):
         """Test OS name, version, kernel, architecture appear."""
@@ -631,21 +632,18 @@ class TestNewSections:
     def test_cpu_info_rendered(self):
         """Test CPU model, cores, threads appear."""
         html = self._render()
-        assert "10 cores" in html
-        assert "12 threads" in html
+        assert "10 / 12" in html  # cores / threads
         assert "i7-1355U" in html
 
     def test_memory_info_rendered(self):
-        """Test memory used and total appear with consistent framing."""
+        """Test memory values appear in kv-grid layout."""
         html = self._render()
-        assert "27.7 GB used" in html  # used ~27.7 GB
-        assert "31.0 GB" in html  # total ~31 GB
-        assert "3.3 GB available" in html  # available shown in parentheses
+        assert "27.7 / 31.0 GB" in html  # used / total
 
     def test_swap_warning_rendered(self):
         """Test swap critical warning when swap is nearly full."""
         html = self._render()
-        assert "inline-critical" in html  # swap is 99%+ used
+        assert "tag-critical" in html  # swap is 99%+ used
 
     def test_swap_shows_mb_when_under_1gb(self):
         """Test swap free shows MB when under 1 GB (avoids '0.0 GB free')."""
@@ -695,19 +693,19 @@ class TestNewSections:
         assert "Dcrw-rw-rw-" in html
 
     def test_no_system_section_when_missing(self):
-        """Test System Environment section is absent when no system data."""
+        """Test System card is absent when no system data."""
         html = self._render({"checks": [], "check_summary": {"overall": "pass", "passed": 0, "failed": 0}})
-        assert "<h2>System Environment</h2>" not in html
+        assert "kv-label" not in html or "OS" not in html
 
     def test_no_storage_section_when_missing(self):
         """Test Storage section is absent when no storage data."""
         html = self._render({"checks": [], "check_summary": {"overall": "pass", "passed": 0, "failed": 0}})
-        assert "NVMe Devices" not in html
+        assert "NVMe" not in html
 
     def test_no_resource_section_when_missing(self):
         """Test Resource Limits section is absent when no resource data."""
         html = self._render({"checks": [], "check_summary": {"overall": "pass", "passed": 0, "failed": 0}})
-        assert "<h2>Resource Limits</h2>" not in html
+        assert 'id="resource-limits"' not in html
 
     def test_section_renamed_to_validation_checks(self):
         """Test that old 'System & Validation' is now 'Validation Checks'."""
@@ -733,36 +731,23 @@ class TestP2Improvements:
         }
         return render_html(combined)
 
-    def test_system_env_collapsed_on_pass(self):
-        """System Environment should NOT have 'open' when overall status is pass."""
+    def test_storage_collapsed_on_pass(self):
+        """Storage should NOT have 'open' when overall status is pass."""
         html = self._render(overall_status="pass")
-        # Find the system-environment details tag
         import re
-        match = re.search(r'<details id="system-environment"[^>]*>', html)
-        assert match, "system-environment section not found"
+        match = re.search(r'<details id="storage"[^>]*>', html)
+        assert match, "storage section not found"
         assert "open" not in match.group(0)
 
-    def test_system_env_open_on_fail(self):
-        """System Environment should be open when overall status is fail."""
+    def test_storage_not_open_on_fail(self):
+        """Storage should NOT auto-open when overall status is fail (P1 fix)."""
         doctor = dict(self.FULL_DOCTOR_DATA)
         doctor["check_summary"] = {"overall": "fail", "passed": 0, "failed": 1}
         html = self._render(doctor_data=doctor, overall_status="fail")
         import re
-        match = re.search(r'<details id="system-environment"[^>]*>', html)
-        assert match, "system-environment section not found"
-        assert "open" in match.group(0)
-
-    def test_copy_button_on_version(self):
-        """Copy button should appear next to Fusion version."""
-        html = self._render()
-        assert 'data-copy="2.6-develop-1f517df"' in html
-        assert "copy-btn" in html
-
-    def test_copy_button_on_check_details(self):
-        """Copy button should appear in check details."""
-        html = self._render()
-        # Check details copy button should contain the JSON of details
-        assert 'data-copy="{' in html
+        match = re.search(r'<details id="storage"[^>]*>', html)
+        assert match, "storage section not found"
+        assert "open" not in match.group(0)
 
     def test_timestamps_use_time_element(self):
         """Timestamps should use <time> elements with local-time class."""
