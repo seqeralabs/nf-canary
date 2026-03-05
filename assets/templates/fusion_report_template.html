@@ -314,49 +314,61 @@
                 font-size: 0.8rem;
             }
 
-            /* --- Check items --- */
-            .check-item {
-                margin-bottom: 0.75rem;
-                padding: 0.85rem 1rem;
+            /* --- Checks table --- */
+            .checks-table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            .checks-table th {
+                text-align: left;
+                padding: 0.6rem 0.75rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+                color: var(--neutral-7);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
                 background: var(--neutral-1);
-                border-left: 4px solid var(--neutral-3);
-                border-radius: var(--radius);
+                border-bottom: 2px solid var(--border);
             }
-            .check-item.pass {
-                background: #edf7f0;
-                border-left-color: var(--clr-pass);
+            .checks-table td {
+                padding: 0.5rem 0.75rem;
+                border-bottom: 1px solid var(--neutral-2);
+                font-size: 0.85rem;
+                vertical-align: top;
             }
-            .check-item.warn {
-                background: #fef6ee;
-                border-left-color: var(--clr-warn);
+            .check-status-icon {
+                text-align: center;
+                font-size: 1rem;
             }
-            .check-item.fail {
-                background: #fef2f2;
-                border-left-color: var(--clr-fail);
-            }
-
-            .check-name {
+            .check-cell-name {
                 font-weight: 600;
                 color: var(--neutral-10);
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                font-size: 0.9rem;
             }
-            .check-name .status-icon {
-                width: 18px;
-                display: flex;
-                justify-content: center;
+            .check-detail-row td {
+                padding-top: 0;
+                border-bottom: 1px solid var(--neutral-2);
+            }
+            .check-detail-row.hidden {
+                display: none;
+            }
+            .expand-btn {
+                background: none;
+                border: none;
+                cursor: pointer;
+                color: var(--neutral-5);
+                font-size: 0.7rem;
+                padding: 0.25rem;
+                border-radius: var(--radius);
+                transition: color 0.15s, background 0.15s;
+            }
+            .expand-btn:hover {
+                color: var(--neutral-8);
+                background: var(--neutral-1);
             }
             .check-category {
                 font-size: 0.75em;
                 color: var(--neutral-6);
                 font-weight: 400;
-            }
-            .check-message {
-                color: var(--neutral-8);
-                font-size: 0.85rem;
-                margin-top: 0.25rem;
             }
 
             .check-details {
@@ -620,76 +632,99 @@
                     <span class="toggle-icon">&#9660;</span>
                 </summary>
                 <div class="card-body">
+                    <table class="checks-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 2rem"></th>
+                                <th>Check</th>
+                                <th>Category</th>
+                                <th>Message</th>
+                                <th style="width: 2rem"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
                     {% if doctor_report.checks is mapping %} {% for check_name, check_data in
                     doctor_report.checks.items() %}
-                    <div class="check-item {{ check_data.status }}">
-                        <div class="check-name">
-                            <span class="status-icon"
-                                >{% if check_data.status == 'pass' %}&#10003;{% elif check_data.status == 'warn'
-                                %}&#9888;{% else %}&#10007;{% endif %}</span
-                            >
-                            {{ check_name|humanize_check }}
-                        </div>
-                        <div class="check-message">{{ check_data.message }}</div>
-                        {% if check_data.details %}
-                        <div class="check-details">
-                            {% if check_data.details is mapping %} {% for key, val in check_data.details.items() %}
-                            <div class="detail-kv">
-                                <span class="dk-key">{{ key|smart_title }}</span>
-                                <span class="dk-val">{{ val }}</span>
-                            </div>
-                            {% endfor %} {% else %}
-                            <pre>{{ check_data.details|tojson(indent=2) }}</pre>
+                            <tr class="check-row {{ check_data.status }}">
+                                <td class="check-status-icon">{% if check_data.status == 'pass' %}<span style="color: var(--clr-pass)">&#10003;</span>{% elif check_data.status == 'warn' %}<span style="color: var(--clr-warn)">&#9888;</span>{% else %}<span style="color: var(--clr-fail)">&#10007;</span>{% endif %}</td>
+                                <td class="check-cell-name">{{ check_name|humanize_check }}</td>
+                                <td>{{ check_data.category|default('')|smart_title }}</td>
+                                <td>{{ check_data.message }}</td>
+                                <td>{% if check_data.details or check_data.remediation %}<button class="expand-btn" aria-label="Toggle details" onclick="this.closest('tr').nextElementSibling.classList.toggle('hidden')">&#9660;</button>{% endif %}</td>
+                            </tr>
+                            {% if check_data.details or check_data.remediation %}
+                            <tr class="check-detail-row hidden">
+                                <td></td>
+                                <td colspan="4">
+                                    {% if check_data.details %}
+                                    <div class="check-details">
+                                        {% if check_data.details is mapping %} {% for key, val in check_data.details.items() %}
+                                        <div class="detail-kv">
+                                            <span class="dk-key">{{ key|smart_title }}</span>
+                                            <span class="dk-val">{{ val }}</span>
+                                        </div>
+                                        {% endfor %} {% else %}
+                                        <pre>{{ check_data.details|tojson(indent=2) }}</pre>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                    {% if check_data.remediation %}
+                                    <div class="check-details" style="margin-top: 0.5rem"><strong>Remediation:</strong> {{ check_data.remediation }}</div>
+                                    {% endif %}
+                                </td>
+                            </tr>
                             {% endif %}
-                        </div>
-                        {% endif %} {% if check_data.remediation %}
-                        <div class="check-details"><strong>Remediation:</strong> {{ check_data.remediation }}</div>
-                        {% endif %}
-                    </div>
                     {% endfor %} {% else %} {% for check_data in doctor_report.checks %}
-                    <div class="check-item {{ check_data.status }}">
-                        <div class="check-name">
-                            <span class="status-icon"
-                                >{% if check_data.status == 'pass' %}&#10003;{% elif check_data.status == 'warn'
-                                %}&#9888;{% else %}&#10007;{% endif %}</span
-                            >
-                            {{ (check_data.check or check_data.name or 'Unknown')|humanize_check }} {%- if
-                            check_data.details and check_data.details.uri %} &mdash; {{ check_data.details.uri }}{%
-                            endif %}
-                        </div>
-                        <div class="check-message">{{ check_data.message }}</div>
-                        {% if check_data.details %} {% set uri_in_title = check_data.details is mapping and
-                        check_data.details.uri %} {% set detail_keys = check_data.details.keys()|list if
-                        check_data.details is mapping else [] %} {% set non_uri_keys = detail_keys|reject('equalto',
-                        'uri')|list if uri_in_title else detail_keys %} {% if non_uri_keys or not uri_in_title %}
-                        <div class="check-details">
-                            {% if check_data.details is mapping %} {% for key in non_uri_keys %}
-                            <div class="detail-kv">
-                                <span class="dk-key">{{ key|smart_title }}</span>
-                                <span class="dk-val">{{ check_data.details[key] }}</span>
-                            </div>
-                            {% endfor %} {% else %}
-                            <pre>{{ check_data.details|tojson(indent=2) }}</pre>
+                            <tr class="check-row {{ check_data.status }}">
+                                <td class="check-status-icon">{% if check_data.status == 'pass' %}<span style="color: var(--clr-pass)">&#10003;</span>{% elif check_data.status == 'warn' %}<span style="color: var(--clr-warn)">&#9888;</span>{% else %}<span style="color: var(--clr-fail)">&#10007;</span>{% endif %}</td>
+                                <td class="check-cell-name">
+                                    {{ (check_data.check or check_data.name or 'Unknown')|humanize_check }}
+                                    {%- if check_data.details and check_data.details.uri %} &mdash; <span class="mono" style="font-size: 0.8rem">{{ check_data.details.uri }}</span>{% endif %}
+                                </td>
+                                <td>{{ check_data.category|default('')|smart_title }}</td>
+                                <td>{{ check_data.message }}</td>
+                                <td>{% if check_data.details or check_data.sub_checks or check_data.remediation %}<button class="expand-btn" aria-label="Toggle details" onclick="this.closest('tr').nextElementSibling.classList.toggle('hidden')">&#9660;</button>{% endif %}</td>
+                            </tr>
+                            {% set has_details = check_data.details or (check_data.sub_checks and check_data.status != 'pass') or check_data.remediation %}
+                            {% if has_details %}
+                            {% set uri_in_title = check_data.details is mapping and check_data.details.uri if check_data.details else false %}
+                            {% set detail_keys = check_data.details.keys()|list if check_data.details is mapping else [] %}
+                            {% set non_uri_keys = detail_keys|reject('equalto', 'uri')|list if uri_in_title else detail_keys %}
+                            <tr class="check-detail-row hidden">
+                                <td></td>
+                                <td colspan="4">
+                                    {% if check_data.details and (non_uri_keys or not uri_in_title) %}
+                                    <div class="check-details">
+                                        {% if check_data.details is mapping %} {% for key in non_uri_keys %}
+                                        <div class="detail-kv">
+                                            <span class="dk-key">{{ key|smart_title }}</span>
+                                            <span class="dk-val">{{ check_data.details[key] }}</span>
+                                        </div>
+                                        {% endfor %} {% else %}
+                                        <pre>{{ check_data.details|tojson(indent=2) }}</pre>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                    {% if check_data.sub_checks and check_data.status != 'pass' %}
+                                    <div class="sub-checks">
+                                        {% for sc in check_data.sub_checks %} {% if sc.message %}
+                                        <div class="sub-check {{ sc.status }}">
+                                            <span class="status-icon">{% if sc.status == 'pass' %}&#10003;{% elif sc.status == 'fail' %}&#10007;{% elif sc.status == 'skip' %}&ndash;{% else %}&#9888;{% endif %}</span>
+                                            <span class="sub-name">{{ (sc.check or sc.name or '')|humanize_check }}</span>
+                                            <span class="sub-msg">{{ sc.message|trim_sub_msg }}</span>
+                                        </div>
+                                        {% endif %} {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                    {% if check_data.remediation %}
+                                    <div class="check-details" style="margin-top: 0.5rem"><strong>Remediation:</strong> {{ check_data.remediation }}</div>
+                                    {% endif %}
+                                </td>
+                            </tr>
                             {% endif %}
-                        </div>
-                        {% endif %} {% endif %} {% if check_data.sub_checks and check_data.status != 'pass' %}
-                        <div class="sub-checks">
-                            {% for sc in check_data.sub_checks %} {% if sc.message %}
-                            <div class="sub-check {{ sc.status }}">
-                                <span class="status-icon"
-                                    >{% if sc.status == 'pass' %}&#10003;{% elif sc.status == 'fail' %}&#10007;{% elif
-                                    sc.status == 'skip' %}&ndash;{% else %}&#9888;{% endif %}</span
-                                >
-                                <span class="sub-name">{{ (sc.check or sc.name or '')|humanize_check }}</span>
-                                <span class="sub-msg">{{ sc.message|trim_sub_msg }}</span>
-                            </div>
-                            {% endif %} {% endfor %}
-                        </div>
-                        {% endif %} {% if check_data.remediation %}
-                        <div class="check-details"><strong>Remediation:</strong> {{ check_data.remediation }}</div>
-                        {% endif %}
-                    </div>
                     {% endfor %} {% endif %}
+                        </tbody>
+                    </table>
                 </div>
             </details>
             {% endif %}
