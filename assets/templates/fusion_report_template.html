@@ -162,9 +162,17 @@
                 text-transform: uppercase;
                 letter-spacing: 0.3px;
                 vertical-align: middle;
-                margin-right: 0.35rem;
                 min-width: 5rem;
                 text-align: center;
+            }
+            .col-access {
+                width: 5.5rem;
+            }
+            .col-access-width {
+                width: 5.5rem;
+            }
+            .access-short {
+                display: none;
             }
 
             /* --- Cards --- */
@@ -368,12 +376,12 @@
                 vertical-align: middle;
             }
             .col-name {
-                width: 40%;
+                width: 50%;
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
             .col-value {
-                width: 45%;
+                width: 35%;
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
@@ -702,6 +710,28 @@
                 .col-hide-mobile {
                     display: none;
                 }
+                .access-full {
+                    display: none;
+                }
+                .access-short {
+                    display: inline;
+                }
+                .col-access {
+                    width: auto;
+                }
+                .access-tag {
+                    min-width: 0;
+                    padding: 1px 3px;
+                    font-size: 0.55rem;
+                }
+                td.col-access {
+                    padding: 0.3rem 0.2rem 0.3rem 0.75rem;
+                    width: 1%;
+                    white-space: nowrap;
+                }
+                .col-access-width {
+                    width: auto;
+                }
                 .badge::before {
                     display: none;
                 }
@@ -718,8 +748,11 @@
                 .checks-table {
                     table-layout: auto;
                 }
-                .col-name, .col-value, .col-status {
+                .col-name, .col-value {
                     width: auto;
+                }
+                .col-status {
+                    width: 3.5rem;
                 }
                 .col-expand,
                 .check-row > td:last-child {
@@ -755,7 +788,7 @@
                             {% set actual_val = actual or ('Detected' if check_data.status == 'pass' else '—') %}
                             <tr class="check-row {{ 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status }}{% if check_data.category %} sev-{{ check_data.category }}{% endif %}">
                                 <td class="check-cell-name">{{ check_name|humanize_check }}</td>
-                                <td class="mono" title="{{ actual_val }}">{{ actual_val }}</td>
+                                <td class="mono col-hide-mobile" title="{{ actual_val }}">{{ actual_val }}</td>
                                 <td class="col-status">{% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}<span class="badge badge-{{ display_status }}">{{ display_status }}</span></td>
                                 <td>{% if check_data.details or check_data.remediation %}<span class="expand-btn" aria-hidden="true">&#9658;</span>{% endif %}</td>
                             </tr>
@@ -872,7 +905,7 @@
                         <thead>
                             <tr>
                                 <th class="col-name">Check</th>
-                                <th class="col-value">Result</th>
+                                <th class="col-value col-hide-mobile">Result</th>
                                 <th class="col-status">Status</th>
                                 <th class="col-expand"><span class="sr-only">Details</span></th>
                             </tr>
@@ -942,10 +975,17 @@
                 </summary>
                 <div class="card-body">
                     <table class="checks-table">
+                        <colgroup>
+                            <col class="col-access-width">
+                            <col>
+                            <col class="col-hide-mobile">
+                            <col>
+                            <col>
+                        </colgroup>
                         <thead>
                             <tr>
-                                <th>Bucket</th>
-                                <th class="col-value">Result</th>
+                                <th colspan="2">URI</th>
+                                <th class="col-value col-hide-mobile">Result</th>
                                 <th class="col-status">Status</th>
                                 <th class="col-expand"><span class="sr-only">Details</span></th>
                             </tr>
@@ -954,15 +994,16 @@
                     {% for check_data in bucket_checks %}
                             {% set has_expandable = (check_data.sub_checks and check_data.status != 'pass') or check_data.remediation %}
                             <tr class="check-row {{ 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status }} sev-{{ check_data.category|default('critical') }}{% if has_expandable %} has-details{% endif %}">
+                                <td class="col-access"><span class="access-tag"><span class="access-full">{% if check_data.check == 'bucket_access_ro' %}read-only{% else %}read-write{% endif %}</span><span class="access-short">{% if check_data.check == 'bucket_access_ro' %}ro{% else %}rw{% endif %}</span></span></td>
                                 {% set uri_val = check_data.details.uri if check_data.details else '—' %}
-                                <td class="mono" title="{{ uri_val }}"><span class="access-tag">{% if check_data.check == 'bucket_access_ro' %}read-only{% else %}read-write{% endif %}</span>{{ uri_val }}</td>
-                                <td>{% if check_data.sub_checks %}{% set sc_passed = check_data.sub_checks|selectattr('status', 'equalto', 'pass')|list|length %}{{ sc_passed }}/{{ check_data.sub_checks|length }} checks passed{% else %}—{% endif %}</td>
+                                <td class="mono" title="{{ uri_val }}">{{ uri_val }}</td>
+                                <td class="col-hide-mobile">{% if check_data.sub_checks %}{% set sc_passed = check_data.sub_checks|selectattr('status', 'equalto', 'pass')|list|length %}{{ sc_passed }}/{{ check_data.sub_checks|length }} checks passed{% else %}—{% endif %}</td>
                                 <td class="col-status"><span class="badge badge-{{ check_data.status }}">{{ check_data.status }}</span></td>
                                 <td>{% if has_expandable %}<span class="expand-btn" aria-hidden="true">&#9658;</span>{% endif %}</td>
                             </tr>
                             {% if has_expandable %}
                             <tr class="check-detail-row hidden">
-                                <td colspan="4">
+                                <td colspan="5">
                                     {% if check_data.sub_checks and check_data.status != 'pass' %}
                                     <div class="sub-checks">
                                         {% for sc in check_data.sub_checks %} {% if sc.message %}
