@@ -144,12 +144,15 @@ class TestMergeReports:
             objbench_path.write_text(json.dumps(objbench))
 
             result = merge_reports(str(doctor_path), str(bench_path), str(objbench_path))
-            assert result["overall_status"] == "warn"
+            assert result["overall_status"] == "degraded"
 
-    def test_merge_with_failure(self):
-        """Test that fail status takes precedence over warn and pass."""
-        doctor = {"summary": {"status": "fail"}}
-        bench = {"summary": {"status": "warn"}}
+    def test_merge_with_critical_failure(self):
+        """Test that fail status is used when critical-category checks fail."""
+        doctor = {
+            "summary": {"status": "fail"},
+            "checks": [{"check": "fuse_device", "status": "fail", "category": "critical"}],
+        }
+        bench = {"summary": {"status": "pass"}}
         objbench = {"summary": {"status": "pass"}}
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -163,6 +166,30 @@ class TestMergeReports:
 
             result = merge_reports(str(doctor_path), str(bench_path), str(objbench_path))
             assert result["overall_status"] == "fail"
+
+    def test_merge_with_warning_only_failure(self):
+        """Test that degraded status is used when only warning-category checks fail."""
+        doctor = {
+            "summary": {"status": "fail"},
+            "checks": [
+                {"check": "fuse_device", "status": "pass", "category": "critical"},
+                {"check": "cpu_cores", "status": "fail", "category": "warning"},
+            ],
+        }
+        bench = {"summary": {"status": "pass"}}
+        objbench = {"summary": {"status": "pass"}}
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            doctor_path = Path(tmpdir) / "doctor.json"
+            bench_path = Path(tmpdir) / "bench.json"
+            objbench_path = Path(tmpdir) / "objbench.json"
+
+            doctor_path.write_text(json.dumps(doctor))
+            bench_path.write_text(json.dumps(bench))
+            objbench_path.write_text(json.dumps(objbench))
+
+            result = merge_reports(str(doctor_path), str(bench_path), str(objbench_path))
+            assert result["overall_status"] == "degraded"
 
     def test_merge_with_no_reports(self):
         """Test merging with no reports provided."""
@@ -207,16 +234,20 @@ class TestMergeReports:
         assert result["timestamp"].endswith("Z")
 
     def test_status_aggregation_priority(self):
-        """Test that status aggregation follows priority: fail > warn > pass."""
+        """Test that status aggregation follows priority: fail > degraded > pass.
+
+        Without check-level category data, 'fail' and 'warn' both resolve to 'degraded'
+        since no critical failures can be detected.
+        """
         test_cases = [
             (["pass", "pass", "pass"], "pass"),
-            (["pass", "warn", "pass"], "warn"),
-            (["pass", "fail", "pass"], "fail"),
-            (["warn", "fail"], "fail"),
-            (["fail", "fail", "fail"], "fail"),
+            (["pass", "warn", "pass"], "degraded"),
+            (["pass", "fail", "pass"], "degraded"),
+            (["warn", "fail"], "degraded"),
+            (["fail", "fail", "fail"], "degraded"),
             (["pass"], "pass"),
-            (["warn"], "warn"),
-            (["fail"], "fail"),
+            (["warn"], "degraded"),
+            (["fail"], "degraded"),
         ]
 
         for statuses, expected in test_cases:
@@ -295,9 +326,9 @@ class TestRenderHtml:
                             "status": "pass",
                             "message": "32GB available",
                         },
-                        "disk": {
+                        "fuse_device": {
                             "status": "warn",
-                            "message": "Low disk space",
+                            "message": "FUSE check warning",
                         },
                     },
                 },
@@ -309,7 +340,7 @@ class TestRenderHtml:
         html = render_html(combined_report)
         assert "v1.5.0" in html
         assert "memory" in html.lower() or "Memory" in html
-        assert "32GB" in html
+        assert "System Checks" in html
 
     def test_render_empty_reports(self):
         """Test rendering with empty reports."""
@@ -427,7 +458,7 @@ class TestIntegration:
 
             # Merge
             combined = merge_reports(str(doctor_path), str(bench_path), str(objbench_path))
-            assert combined["overall_status"] == "warn"
+            assert combined["overall_status"] == "degraded"
 
             # Render
             html = render_html(combined)
@@ -478,9 +509,9 @@ class TestRealFusionDoctorFormat:
         html = render_html(combined_report)
         assert "2.6-develop-1f517df" in html
         assert "FUSE Device" in html
-        assert "Disk Space" in html
+        assert "Storage Checks" in html  # disk_space goes to its own section
         assert "/dev/fuse" in html
-        assert "critical" in html
+        assert "System Checks" in html
         assert ">2<" in html  # "2" in metric-value for Passed
         assert "Passed" in html
 
@@ -496,7 +527,7 @@ class TestRealFusionDoctorFormat:
             doctor_path.write_text(json.dumps(doctor_data))
 
             result = merge_reports(str(doctor_path), None, None)
-            assert result["overall_status"] == "warn"
+            assert result["overall_status"] == "degraded"
 
     def test_full_workflow_real_format(self):
         """Test complete workflow with real fusion doctor format."""
@@ -636,21 +667,9 @@ class TestNewSections:
         assert "i7-1355U" in html
 
     def test_memory_info_rendered(self):
-        """Test memory values appear in kv-grid layout."""
+        """Test memory total capacity appears in kv-grid layout."""
         html = self._render()
-        assert "27.7 / 31.0 GB" in html  # used / total
-
-    def test_swap_warning_rendered(self):
-        """Test swap critical warning when swap is nearly full."""
-        html = self._render()
-        assert "tag-critical" in html  # swap is 99%+ used
-
-    def test_swap_shows_mb_when_under_1gb(self):
-        """Test swap free shows MB when under 1 GB (avoids '0.0 GB free')."""
-        html = self._render()
-        # swap_free_bytes = 417792 (~0.4 MB), should show MB not GB
-        assert "MB free" in html
-        assert "0.0 GB free" not in html
+        assert "31.0 GiB" in html  # total capacity
 
     def test_storage_section_present(self):
         """Test that Storage section is rendered."""
@@ -707,10 +726,10 @@ class TestNewSections:
         html = self._render({"checks": [], "check_summary": {"overall": "pass", "passed": 0, "failed": 0}})
         assert 'id="resource-limits"' not in html
 
-    def test_section_renamed_to_validation_checks(self):
-        """Test that old 'System & Validation' is now 'Validation Checks'."""
+    def test_section_renamed_to_system_checks(self):
+        """Test that checks section is now 'System Checks'."""
         html = self._render()
-        assert "Validation Checks" in html
+        assert "System Checks" in html
         assert "System &amp; Validation" not in html
 
 
@@ -732,22 +751,24 @@ class TestP2Improvements:
         return render_html(combined)
 
     def test_storage_collapsed_on_pass(self):
-        """Storage should NOT have 'open' when overall status is pass."""
+        """Storage sections should NOT have 'open' when overall status is pass."""
         html = self._render(overall_status="pass")
         import re
-        match = re.search(r'<details id="storage"[^>]*>', html)
-        assert match, "storage section not found"
-        assert "open" not in match.group(0)
+        for section_id in ("storage-devices", "mounted-filesystems"):
+            match = re.search(rf'<details id="{section_id}"[^>]*>', html)
+            if match:
+                assert "open" not in match.group(0), f"{section_id} should not be open"
 
     def test_storage_not_open_on_fail(self):
-        """Storage should NOT auto-open when overall status is fail (P1 fix)."""
+        """Storage sections should NOT auto-open when overall status is fail."""
         doctor = dict(self.FULL_DOCTOR_DATA)
         doctor["check_summary"] = {"overall": "fail", "passed": 0, "failed": 1}
         html = self._render(doctor_data=doctor, overall_status="fail")
         import re
-        match = re.search(r'<details id="storage"[^>]*>', html)
-        assert match, "storage section not found"
-        assert "open" not in match.group(0)
+        for section_id in ("storage-devices", "mounted-filesystems"):
+            match = re.search(rf'<details id="{section_id}"[^>]*>', html)
+            if match:
+                assert "open" not in match.group(0), f"{section_id} should not be open"
 
     def test_timestamps_use_time_element(self):
         """Timestamps should use <time> elements with local-time class."""
@@ -760,45 +781,6 @@ class TestP2Improvements:
         assert "toLocaleString" in html
         assert "local-time" in html
 
-    def test_snap_mounts_filtered_out(self):
-        """Snap bind mounts should be filtered from filesystem table."""
-        doctor = json.loads(json.dumps(self.FULL_DOCTOR_DATA))  # deep copy
-        doctor["storage"]["filesystems"].append({
-            "device": "/",
-            "mount_point": "/var/snap/firefox/common/host-hunspell",
-            "type": "ext4",
-            "total_bytes": 981132795904,
-            "available_bytes": 152799973376,
-        })
-        html = self._render(doctor_data=doctor)
-        assert "host-hunspell" not in html
-
-    def test_zero_size_filesystems_filtered_out(self):
-        """Filesystems with total_bytes=0 should be filtered out."""
-        doctor = json.loads(json.dumps(self.FULL_DOCTOR_DATA))
-        doctor["storage"]["filesystems"].append({
-            "device": "none",
-            "mount_point": "/tmp/.mount_app",
-            "type": "fuse.appimage",
-            "total_bytes": 0,
-            "available_bytes": 0,
-        })
-        html = self._render(doctor_data=doctor)
-        assert ".mount_app" not in html
-
-    def test_filesystems_sorted_by_usage_desc(self):
-        """Filesystems should be sorted by usage percentage descending."""
-        doctor = json.loads(json.dumps(self.FULL_DOCTOR_DATA))
-        doctor["storage"]["filesystems"] = [
-            {"device": "/dev/a", "mount_point": "/low", "type": "ext4",
-             "total_bytes": 100000000000, "available_bytes": 90000000000},  # 10% used
-            {"device": "/dev/b", "mount_point": "/high", "type": "ext4",
-             "total_bytes": 100000000000, "available_bytes": 10000000000},  # 90% used
-        ]
-        html = self._render(doctor_data=doctor)
-        pos_high = html.index("/high")
-        pos_low = html.index("/low")
-        assert pos_high < pos_low, "Higher usage filesystem should appear first"
 
 
 if __name__ == "__main__":

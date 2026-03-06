@@ -4,6 +4,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Fusion Filesystem Diagnostics</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
         <style>
             /* === Seqera Platform design tokens === */
             :root {
@@ -39,6 +40,7 @@
                 --clr-fail: #e7363e;
                 --clr-warn: #e68642;
                 --clr-unknown: #a29fa8;
+                --clr-primary-tint: #eef0fb;
 
                 /* Mono font */
                 --font-mono: SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
@@ -85,10 +87,9 @@
                 display: inline-flex;
                 align-items: center;
             }
-            .header-icon svg {
-                width: 22px;
-                height: 22px;
-                fill: #fff;
+            .header-icon i {
+                font-size: 1.2rem;
+                color: #fff;
             }
             .header-title {
                 font-size: 1.1rem;
@@ -113,6 +114,8 @@
                 color: #fff;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
+                min-width: 3.5rem;
+                text-align: center;
             }
             .badge-pass {
                 background: var(--clr-pass);
@@ -120,11 +123,28 @@
             .badge-fail {
                 background: var(--clr-fail);
             }
-            .badge-warn {
+            .badge-warn,
+            .badge-degraded {
                 background: var(--clr-warn);
             }
             .badge-unknown {
                 background: var(--neutral-5);
+            }
+
+            .access-tag {
+                display: inline-block;
+                font-size: 0.65rem;
+                font-weight: 600;
+                color: var(--neutral-7);
+                background: var(--neutral-2);
+                border-radius: var(--radius);
+                padding: 1px 5px;
+                text-transform: uppercase;
+                letter-spacing: 0.3px;
+                vertical-align: middle;
+                margin-right: 0.35rem;
+                min-width: 5rem;
+                text-align: center;
             }
 
             /* --- Cards --- */
@@ -142,6 +162,11 @@
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
                 margin-bottom: 1rem;
+            }
+            .card-title i {
+                margin-right: 0.4rem;
+                width: 1.1em;
+                text-align: center;
             }
 
             /* --- Collapsible card using <details>/<summary> --- */
@@ -170,6 +195,7 @@
             }
             details.card > summary .card-title {
                 margin-bottom: 0;
+                flex: 1;
             }
             details.card > summary .toggle-icon {
                 display: inline-block;
@@ -191,6 +217,7 @@
             details.card > .card-body {
                 padding: 1.25rem;
             }
+
 
             /* --- Grid layouts --- */
             .grid-2 {
@@ -222,6 +249,9 @@
                 text-align: center;
                 padding: 0.75rem;
                 border-radius: var(--radius);
+                background: var(--card-bg);
+                border: 1px solid var(--neutral-2);
+                border-top: 3px solid var(--neutral-3);
             }
             .metric-value {
                 font-size: 1.5rem;
@@ -235,27 +265,15 @@
                 letter-spacing: 0.5px;
                 margin-top: 0.25rem;
             }
-            .metric-sub {
-                font-size: 0.8rem;
-                color: var(--neutral-6);
-                margin-top: 0.15rem;
-            }
             .metric-pass {
-                background: #edf7f0;
-            }
-            .metric-pass .metric-value {
-                color: var(--clr-pass);
+                border-top-color: var(--clr-pass);
             }
             .metric-fail {
-                background: #fef2f2;
+                border-top-color: var(--clr-fail);
             }
-            .metric-fail .metric-value {
-                color: var(--clr-fail);
+            .metric-warn {
+                border-top-color: var(--clr-warn);
             }
-            .metric-status .metric-value {
-                font-size: 1.1rem;
-            }
-
             /* --- Key-value pairs --- */
             .kv-grid {
                 display: grid;
@@ -272,7 +290,9 @@
                 color: var(--neutral-10);
                 word-break: break-all;
             }
-            .kv-value code {
+            .kv-value code,
+            .rec-text code,
+            .remediation-callout code {
                 font-family: var(--font-mono);
                 font-size: 0.8rem;
                 background: var(--neutral-1);
@@ -308,16 +328,19 @@
                 text-align: right;
                 font-variant-numeric: tabular-nums;
             }
+            #resource-limits td {
+                font-variant-numeric: tabular-nums;
+            }
             td.mono,
             .mono {
                 font-family: var(--font-mono);
                 font-size: 0.8rem;
             }
-
             /* --- Checks table --- */
             .checks-table {
                 width: 100%;
                 border-collapse: collapse;
+                table-layout: fixed;
             }
             .checks-table th {
                 text-align: left;
@@ -334,59 +357,82 @@
                 padding: 0.5rem 0.75rem;
                 border-bottom: 1px solid var(--neutral-2);
                 font-size: 0.85rem;
-                vertical-align: top;
+                vertical-align: middle;
             }
-            .check-status-icon {
+            .col-name {
+                width: 40%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .col-value {
+                width: 45%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .col-status {
+                width: 10%;
                 text-align: center;
-                font-size: 1rem;
+            }
+            .checks-table td.col-status {
+                text-align: center;
+            }
+            .col-expand {
+                width: 5%;
             }
             .check-cell-name {
                 font-weight: 600;
                 color: var(--neutral-10);
             }
-            .check-row {
+            .card-summary-meta {
+                font-size: 0.8rem;
+                color: var(--neutral-6);
+            }
+            .check-row.has-details {
                 cursor: pointer;
             }
-            .check-row:hover td {
+            .check-row.has-details:hover td {
                 background: var(--neutral-1);
             }
-            .check-row.warn td {
+            .check-row.warn td,
+            .check-row.warn.sev-warning td {
                 background: #fef6ee;
             }
-            .check-row.fail td {
+            .check-row.warn.has-details:hover td,
+            .check-row.warn.sev-warning.has-details:hover td {
+                background: #fdebd8;
+            }
+            .check-row.fail.sev-critical td {
                 background: #fef2f2;
             }
+            .check-row.fail.sev-critical.has-details:hover td {
+                background: #fde5e5;
+            }
             .check-detail-row td {
-                padding-top: 0;
+                padding: 0 0.75rem 0.6rem 2rem;
                 border-bottom: 1px solid var(--neutral-2);
+                background: var(--neutral-1);
             }
             .check-detail-row.hidden {
                 display: none;
             }
             .expand-btn {
-                background: none;
-                border: none;
-                cursor: pointer;
+                display: inline-block;
                 color: var(--neutral-5);
                 font-size: 0.7rem;
-                padding: 0.25rem;
-                border-radius: var(--radius);
-                transition: transform 0.2s ease;
+                transition: transform 0.15s ease;
                 pointer-events: none;
             }
-            .check-row.expanded .expand-btn {
-                transform: rotate(180deg);
+            .check-row.expanded td {
+                border-bottom: none;
             }
-            .check-category {
-                font-size: 0.75em;
-                color: var(--neutral-6);
-                font-weight: 400;
+            .check-row.expanded .expand-btn {
+                transform: rotate(90deg);
             }
 
             .check-details {
                 font-size: 0.85rem;
                 color: var(--neutral-7);
-                margin-top: 0.5rem;
+                margin-top: 0.25rem;
                 padding: 0.6rem 0.75rem;
                 background: rgba(0, 0, 0, 0.025);
                 border-radius: var(--radius);
@@ -399,21 +445,69 @@
                 font-size: 0.8rem;
             }
 
-            .detail-kv {
-                display: flex;
-                gap: 0.5rem;
-                padding: 0.15rem 0;
+            .check-details-grid {
+                display: grid;
+                grid-template-columns: auto 1fr;
+                gap: 0.15rem 1rem;
                 font-size: 0.85rem;
             }
-            .detail-kv .dk-key {
+            .dk-key {
                 color: var(--neutral-6);
                 font-weight: 500;
-                min-width: 8em;
+                white-space: nowrap;
             }
-            .detail-kv .dk-val {
+            .dk-val {
                 color: var(--neutral-10);
                 font-family: var(--font-mono);
                 font-size: 0.8rem;
+            }
+
+            .remediation-callout {
+                margin-top: 0.5rem;
+                padding: 0.5rem 0.75rem;
+                border-left: 3px solid var(--primary);
+                background: var(--clr-primary-tint);
+                border-radius: var(--radius);
+                font-size: 0.83rem;
+                color: var(--neutral-10);
+            }
+
+            /* --- Recommendations --- */
+            .recommendations-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+            .rec-item {
+                display: flex;
+                gap: 0.75rem;
+                align-items: center;
+                padding: 0.5rem 0;
+                border-bottom: 1px solid var(--neutral-2);
+                font-size: 0.85rem;
+            }
+            .rec-item:last-child {
+                border-bottom: none;
+            }
+            .rec-badge {
+                padding: 2px 6px;
+                text-align: center;
+                flex-shrink: 0;
+                min-width: 4.8rem;
+            }
+            .rec-text {
+                color: var(--neutral-10);
+            }
+            .rec-all-clear {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: var(--clr-pass);
+                font-size: 0.9rem;
+                padding: 0.25rem 0;
+            }
+            .rec-all-clear-icon {
+                font-size: 1.1rem;
             }
 
             /* --- Sub-checks (nested bucket operations) --- */
@@ -440,6 +534,7 @@
             }
             .sub-check .sub-msg {
                 color: var(--neutral-6);
+                word-break: break-all;
             }
             .sub-check.pass .status-icon {
                 color: var(--clr-pass);
@@ -450,6 +545,33 @@
             .sub-check.skip {
                 color: var(--neutral-5);
             }
+            .error-detail {
+                display: inline;
+                margin-left: 0.25rem;
+            }
+            .error-detail summary {
+                display: inline;
+                cursor: pointer;
+                color: var(--primary);
+                font-size: 0.75rem;
+                text-decoration: underline;
+                text-decoration-style: dotted;
+            }
+            .error-detail summary:hover { color: var(--brand); }
+            .error-full {
+                display: block;
+                margin: 0.35rem 0 0.15rem;
+                padding: 0.4rem 0.6rem;
+                background: var(--neutral-1);
+                border: 1px solid var(--neutral-2);
+                border-radius: var(--radius);
+                font-family: var(--font-mono);
+                font-size: 0.75rem;
+                color: var(--neutral-8);
+                white-space: pre-wrap;
+                word-break: break-all;
+                line-height: 1.4;
+            }
 
             /* --- Usage bar --- */
             .usage-bar {
@@ -458,12 +580,11 @@
                 gap: 0.5rem;
             }
             .usage-bar-track {
-                flex: 1;
-                height: 6px;
+                flex: 0 0 80px;
+                height: 8px;
                 background: var(--neutral-2);
-                border-radius: 3px;
+                border-radius: 4px;
                 overflow: hidden;
-                max-width: 120px;
             }
             .usage-bar-fill {
                 height: 100%;
@@ -483,24 +604,12 @@
                 font-variant-numeric: tabular-nums;
             }
 
-            /* --- Inline badges --- */
+/* --- Inline badges --- */
             .tag-warn {
                 display: inline-block;
                 font-size: 0.7rem;
                 color: var(--clr-warn);
                 background: #fef6ee;
-                padding: 1px 6px;
-                border-radius: 3px;
-                margin-left: 0.4rem;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.3px;
-            }
-            .tag-critical {
-                display: inline-block;
-                font-size: 0.7rem;
-                color: var(--clr-fail);
-                background: #fef2f2;
                 padding: 1px 6px;
                 border-radius: 3px;
                 margin-left: 0.4rem;
@@ -515,14 +624,24 @@
                 color: var(--neutral-6);
             }
 
-            /* --- Footer --- */
-            .footer {
-                text-align: center;
-                padding-top: 1.5rem;
-                margin-top: 1rem;
-                border-top: 1px solid var(--border);
-                font-size: 0.75rem;
+            /* --- Section divider --- */
+            .section-divider {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                margin: 1.5rem 0 1rem;
                 color: var(--neutral-5);
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            .section-divider::before,
+            .section-divider::after {
+                content: '';
+                flex: 1;
+                height: 1px;
+                background: var(--neutral-3);
             }
 
             /* --- Print --- */
@@ -578,12 +697,7 @@
             <div class="header">
                 <div class="header-left">
                     <div class="header-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" aria-hidden="true">
-                            <path
-                                fill="currentColor"
-                                d="M142.4 21.9c5.6 16.8-3.5 34.9-20.2 40.5L96 71.1 96 192c0 53 43 96 96 96s96-43 96-96l0-120.9-26.1-8.7c-16.8-5.6-25.8-23.7-20.2-40.5s23.7-25.8 40.5-20.2l26.1 8.7C334.4 19.1 352 43.5 352 71.1L352 192c0 77.2-54.6 141.6-127.3 156.7C231 404.6 278.4 448 336 448c61.9 0 112-50.1 112-112l0-70.7c-28.3-12.3-48-40.5-48-73.3c0-44.2 35.8-80 80-80s80 35.8 80 80c0 32.8-19.7 61-48 73.3l0 70.7c0 97.2-78.8 176-176 176c-92.9 0-168.9-71.9-175.5-163.1C87.2 334.2 32 269.6 32 192L32 71.1c0-27.5 17.6-52 43.8-60.7l26.1-8.7c16.8-5.6 34.9 3.5 40.5 20.2zM480 224a32 32 0 1 0 0-64 32 32 0 1 0 0 64z"
-                            />
-                        </svg>
+                        <i class="fa-solid fa-stethoscope"></i>
                     </div>
                     <div>
                         <div class="header-title">Fusion Filesystem Diagnostics</div>
@@ -594,20 +708,15 @@
                         </div>
                     </div>
                 </div>
+                <span class="badge badge-{{ overall_status }}" style="font-size: 0.85rem; padding: 0.3rem 1rem;">{{ overall_status }}</span>
             </div>
 
             <!-- Summary metrics -->
             {% if doctor_report.check_summary or doctor_report.summary %} {% set summary = doctor_report.check_summary
             or doctor_report.summary %}
             <div class="card">
-                <div class="card-title">Overview</div>
+                <div class="card-title"><i class="fa-solid fa-chart-simple"></i>Overview</div>
                 <div class="grid-4">
-                    <div class="metric metric-status">
-                        <div class="metric-value">
-                            <span class="badge badge-{{ overall_status }}">{{ overall_status }}</span>
-                        </div>
-                        <div class="metric-label">Status</div>
-                    </div>
                     <div class="metric">
                         <div class="metric-value">
                             {{ (summary.passed|default(0)) + (summary.failed|default(0)) + (summary.skipped|default(0))
@@ -620,115 +729,120 @@
                         <div class="metric-value">{{ summary.passed|default(0) }}</div>
                         <div class="metric-label">Passed</div>
                     </div>
-                    {% endif %} {% if summary.failed is defined %}
-                    <div class="metric{% if summary.failed|default(0) > 0 %} metric-fail{% endif %}">
-                        <div class="metric-value">{{ summary.failed|default(0) }}</div>
-                        <div class="metric-label">Failed</div>
+                    {% endif %}
+                    <div class="metric{% if warnings_count|default(0) > 0 %} metric-warn{% endif %}">
+                        <div class="metric-value">{{ warnings_count|default(0) }}</div>
+                        <div class="metric-label">Warnings</div>
                     </div>
-                    {% endif %} {% if summary.skipped %}
-                    <div class="metric">
-                        <div class="metric-value">{{ summary.skipped }}</div>
-                        <div class="metric-label">Skipped</div>
+                    {% if summary.failed is defined %}
+                    <div class="metric{% if (summary.failed|default(0) - warnings_count|default(0)) > 0 %} metric-fail{% endif %}">
+                        <div class="metric-value">{{ summary.failed|default(0) - warnings_count|default(0) }}</div>
+                        <div class="metric-label">Critical</div>
                     </div>
                     {% endif %}
                 </div>
             </div>
             {% endif %}
 
-            <!-- Validation Checks -->
-            {% if doctor_report.checks %}
-            <details id="validation-checks" class="card" open>
+            <!-- Recommendations -->
+            <details class="card" open>
                 <summary>
-                    <span class="card-title">Validation Checks</span>
+                    <span class="card-title"><i class="fa-solid fa-lightbulb"></i>Recommendations</span>
+                    <span class="card-summary-meta">{{ recommendations|length }} item{{ 's' if recommendations|length != 1 }}</span>
+                    <span class="toggle-icon">&#9660;</span>
+                </summary>
+                <div class="card-body">
+                    {% if recommendations %}
+                    <ul class="recommendations-list">
+                        {% for rec in recommendations %}
+                        <li class="rec-item rec-{{ rec.category }}">
+                            <span class="badge badge-{% if rec.category == 'critical' %}fail{% else %}warn{% endif %} rec-badge">{{ rec.category }}</span>
+                            <span class="rec-text">{{ rec.remediation|inline_code }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="rec-all-clear">
+                        <span class="rec-all-clear-icon">&#10003;</span>
+                        All checks passed — no recommendations.
+                    </div>
+                    {% endif %}
+                </div>
+            </details>
+
+            <!-- System Checks -->
+            {% if system_checks %}
+            {% set sys_pass = system_checks|selectattr('status', 'equalto', 'pass')|list|length if system_checks is iterable and system_checks is not mapping else 0 %}
+            {% set sys_total = system_checks|length if system_checks is not mapping else system_checks|list|length %}
+            <details id="system-checks" class="card" open>
+                <summary>
+                    <span class="card-title"><i class="fa-solid fa-shield-halved"></i>System Checks</span>
+                    <span class="card-summary-meta">{{ sys_pass }}/{{ sys_total }} passed</span>
                     <span class="toggle-icon">&#9660;</span>
                 </summary>
                 <div class="card-body">
                     <table class="checks-table">
                         <thead>
                             <tr>
-                                <th style="width: 2rem"></th>
-                                <th>Check</th>
-                                <th>Severity</th>
-                                <th>Message</th>
-                                <th style="width: 2rem"></th>
+                                <th class="col-name">Check</th>
+                                <th class="col-value">Result</th>
+                                <th class="col-status">Status</th>
+                                <th class="col-expand"></th>
                             </tr>
                         </thead>
                         <tbody>
-                    {% if doctor_report.checks is mapping %} {% for check_name, check_data in
-                    doctor_report.checks.items() %}
-                            <tr class="check-row {{ check_data.status }}">
-                                <td class="check-status-icon">{% if check_data.status == 'pass' %}<span style="color: var(--clr-pass)">&#10003;</span>{% elif check_data.status == 'warn' %}<span style="color: var(--clr-warn)">&#9888;</span>{% else %}<span style="color: var(--clr-fail)">&#10007;</span>{% endif %}</td>
+                    {% if system_checks is mapping %} {% for check_name, check_data in system_checks.items() %}
+                            {% set actual = check_data.details|extract_actual %}
+                            {% set ref = check_data.details|extract_reference %}
+                            <tr class="check-row {{ 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status }}{% if check_data.category %} sev-{{ check_data.category }}{% endif %}">
                                 <td class="check-cell-name">{{ check_name|humanize_check }}</td>
-                                <td>{{ check_data.category|default('')|smart_title }}</td>
-                                <td>{{ check_data.message }}</td>
-                                <td>{% if check_data.details or check_data.remediation %}<button class="expand-btn" aria-label="Toggle details" aria-hidden="true">&#9660;</button>{% endif %}</td>
+                                <td class="mono">{{ actual or ('Detected' if check_data.status == 'pass' else '—') }}</td>
+                                <td class="col-status">{% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}<span class="badge badge-{{ display_status }}">{{ display_status }}</span></td>
+                                <td>{% if check_data.details or check_data.remediation %}<span class="expand-btn" aria-hidden="true">&#9658;</span>{% endif %}</td>
                             </tr>
                             {% if check_data.details or check_data.remediation %}
                             <tr class="check-detail-row hidden">
-                                <td></td>
                                 <td colspan="4">
                                     {% if check_data.details %}
-                                    <div class="check-details">
+                                    <div class="check-details check-details-grid">
                                         {% if check_data.details is mapping %} {% for key, val in check_data.details.items() %}
-                                        <div class="detail-kv">
-                                            <span class="dk-key">{{ key|smart_title }}</span>
-                                            <span class="dk-val">{{ val }}</span>
-                                        </div>
+                                            <span class="dk-key">{{ detail_label(key, check_data.category|default('')) }}</span>
+                                            <span class="dk-val">{{ format_detail_value(val, key) }}</span>
                                         {% endfor %} {% else %}
-                                        <pre>{{ check_data.details|tojson(indent=2) }}</pre>
+                                        <pre style="grid-column: 1 / -1">{{ check_data.details|tojson(indent=2) }}</pre>
                                         {% endif %}
                                     </div>
                                     {% endif %}
                                     {% if check_data.remediation %}
-                                    <div class="check-details" style="margin-top: 0.5rem"><strong>Remediation:</strong> {{ check_data.remediation }}</div>
+                                    <div class="remediation-callout"><i class="fa-solid fa-wrench"></i> {{ check_data.remediation|inline_code }}</div>
                                     {% endif %}
                                 </td>
                             </tr>
                             {% endif %}
-                    {% endfor %} {% else %} {% for check_data in doctor_report.checks %}
-                            <tr class="check-row {{ check_data.status }}">
-                                <td class="check-status-icon">{% if check_data.status == 'pass' %}<span style="color: var(--clr-pass)">&#10003;</span>{% elif check_data.status == 'warn' %}<span style="color: var(--clr-warn)">&#9888;</span>{% else %}<span style="color: var(--clr-fail)">&#10007;</span>{% endif %}</td>
-                                <td class="check-cell-name">
-                                    {{ (check_data.check or check_data.name or 'Unknown')|humanize_check }}
-                                    {%- if check_data.details and check_data.details.uri %} &mdash; <span class="mono" style="font-size: 0.8rem">{{ check_data.details.uri }}</span>{% endif %}
-                                </td>
-                                <td>{{ check_data.category|default('')|smart_title }}</td>
-                                <td>{{ check_data.message }}</td>
-                                <td>{% if check_data.details or check_data.sub_checks or check_data.remediation %}<button class="expand-btn" aria-label="Toggle details" aria-hidden="true">&#9660;</button>{% endif %}</td>
+                    {% endfor %} {% else %} {% for check_data in system_checks %}
+                            {% set actual = check_data.details|extract_actual %}
+                            {% set ref = check_data.details|extract_reference %}
+                            <tr class="check-row {{ 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status }}{% if check_data.category %} sev-{{ check_data.category }}{% endif %}">
+                                <td class="check-cell-name">{{ (check_data.check or check_data.name or 'Unknown')|humanize_check }}</td>
+                                <td class="mono">{{ actual or ('Detected' if check_data.status == 'pass' else '—') }}</td>
+                                <td class="col-status">{% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}<span class="badge badge-{{ display_status }}">{{ display_status }}</span></td>
+                                <td>{% if check_data.details or check_data.remediation %}<span class="expand-btn" aria-hidden="true">&#9658;</span>{% endif %}</td>
                             </tr>
-                            {% set has_details = check_data.details or (check_data.sub_checks and check_data.status != 'pass') or check_data.remediation %}
-                            {% if has_details %}
-                            {% set uri_in_title = check_data.details is mapping and check_data.details.uri if check_data.details else false %}
-                            {% set detail_keys = check_data.details.keys()|list if check_data.details is mapping else [] %}
-                            {% set non_uri_keys = detail_keys|reject('equalto', 'uri')|list if uri_in_title else detail_keys %}
+                            {% if check_data.details or check_data.remediation %}
                             <tr class="check-detail-row hidden">
-                                <td></td>
                                 <td colspan="4">
-                                    {% if check_data.details and (non_uri_keys or not uri_in_title) %}
-                                    <div class="check-details">
-                                        {% if check_data.details is mapping %} {% for key in non_uri_keys %}
-                                        <div class="detail-kv">
-                                            <span class="dk-key">{{ key|smart_title }}</span>
-                                            <span class="dk-val">{{ check_data.details[key] }}</span>
-                                        </div>
+                                    {% if check_data.details %}
+                                    <div class="check-details check-details-grid">
+                                        {% if check_data.details is mapping %} {% for key, val in check_data.details.items() %}
+                                            <span class="dk-key">{{ detail_label(key, check_data.category|default('')) }}</span>
+                                            <span class="dk-val">{{ format_detail_value(val, key) }}</span>
                                         {% endfor %} {% else %}
-                                        <pre>{{ check_data.details|tojson(indent=2) }}</pre>
+                                        <pre style="grid-column: 1 / -1">{{ check_data.details|tojson(indent=2) }}</pre>
                                         {% endif %}
                                     </div>
                                     {% endif %}
-                                    {% if check_data.sub_checks and check_data.status != 'pass' %}
-                                    <div class="sub-checks">
-                                        {% for sc in check_data.sub_checks %} {% if sc.message %}
-                                        <div class="sub-check {{ sc.status }}">
-                                            <span class="status-icon">{% if sc.status == 'pass' %}&#10003;{% elif sc.status == 'fail' %}&#10007;{% elif sc.status == 'skip' %}&ndash;{% else %}&#9888;{% endif %}</span>
-                                            <span class="sub-name">{{ (sc.check or sc.name or '')|humanize_check }}</span>
-                                            <span class="sub-msg">{{ sc.message|trim_sub_msg }}</span>
-                                        </div>
-                                        {% endif %} {% endfor %}
-                                    </div>
-                                    {% endif %}
                                     {% if check_data.remediation %}
-                                    <div class="check-details" style="margin-top: 0.5rem"><strong>Remediation:</strong> {{ check_data.remediation }}</div>
+                                    <div class="remediation-callout"><i class="fa-solid fa-wrench"></i> {{ check_data.remediation|inline_code }}</div>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -740,12 +854,112 @@
             </details>
             {% endif %}
 
-            <!-- Instance + System + Memory -->
+            <!-- Storage Checks -->
+            {% if disk_checks %}
+            {% set disk_pass = disk_checks|selectattr('status', 'equalto', 'pass')|list|length %}
+            <details id="disk-checks" class="card"{% if disk_pass < disk_checks|length %} open{% endif %}>
+                <summary>
+                    <span class="card-title"><i class="fa-solid fa-hard-drive"></i>Storage Checks</span>
+                    <span class="card-summary-meta">{{ disk_pass }}/{{ disk_checks|length }} passed</span>
+                    <span class="toggle-icon">&#9660;</span>
+                </summary>
+                <div class="card-body">
+                    <table class="checks-table">
+                        <thead>
+                            <tr>
+                                <th class="col-name">Path</th>
+                                <th class="col-value">Total Capacity</th>
+                                <th class="col-status">Status</th>
+                                <th class="col-expand"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                    {% for check_data in disk_checks %}
+                            <tr class="check-row {{ 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status }}{% if check_data.category %} sev-{{ check_data.category }}{% endif %}">
+                                {% set actual = check_data.details|extract_actual %}
+                                {% set ref = check_data.details|extract_reference %}
+                                <td class="mono">{{ check_data.details.path|default(check_data.details.mount_point|default('—')) if check_data.details else '—' }}</td>
+                                <td class="mono">{{ actual or ('Detected' if check_data.status == 'pass' else '—') }}</td>
+                                <td class="col-status">{% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}<span class="badge badge-{{ display_status }}">{{ display_status }}</span></td>
+                                <td></td>
+                            </tr>
+                    {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </details>
+            {% endif %}
+
+            <!-- Bucket Access -->
+            {% if bucket_checks %}
+            {% set bucket_pass = bucket_checks|selectattr('status', 'equalto', 'pass')|list|length %}
+            <details id="bucket-checks" class="card"{% if bucket_pass < bucket_checks|length %} open{% endif %}>
+                <summary>
+                    <span class="card-title"><i class="fa-solid fa-bucket"></i>Object Storage Checks</span>
+                    <span class="card-summary-meta">{{ bucket_pass }}/{{ bucket_checks|length }} passed</span>
+                    <span class="toggle-icon">&#9660;</span>
+                </summary>
+                <div class="card-body">
+                    <table class="checks-table">
+                        <thead>
+                            <tr>
+                                <th>Bucket</th>
+                                <th class="col-value">Result</th>
+                                <th class="col-status">Status</th>
+                                <th class="col-expand"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                    {% for check_data in bucket_checks %}
+                            {% set has_expandable = (check_data.sub_checks and check_data.status != 'pass') or check_data.remediation %}
+                            <tr class="check-row {{ 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status }} sev-{{ check_data.category|default('critical') }}{% if has_expandable %} has-details{% endif %}">
+                                <td class="mono"><span class="access-tag">{% if check_data.check == 'bucket_access_ro' %}read-only{% else %}read-write{% endif %}</span>{{ check_data.details.uri if check_data.details else '—' }}</td>
+                                <td>{% if check_data.sub_checks %}{% set sc_passed = check_data.sub_checks|selectattr('status', 'equalto', 'pass')|list|length %}{{ sc_passed }}/{{ check_data.sub_checks|length }} checks passed{% else %}—{% endif %}</td>
+                                <td class="col-status"><span class="badge badge-{{ check_data.status }}">{{ check_data.status }}</span></td>
+                                <td>{% if has_expandable %}<span class="expand-btn" aria-hidden="true">&#9658;</span>{% endif %}</td>
+                            </tr>
+                            {% if has_expandable %}
+                            <tr class="check-detail-row hidden">
+                                <td colspan="4">
+                                    {% if check_data.sub_checks and check_data.status != 'pass' %}
+                                    <div class="sub-checks">
+                                        {% for sc in check_data.sub_checks %} {% if sc.message %}
+                                        <div class="sub-check {{ sc.status }}">
+                                            <span class="status-icon">{% if sc.status == 'pass' %}&#10003;{% elif sc.status == 'fail' %}&#10007;{% elif sc.status == 'skip' %}&ndash;{% else %}&#9888;{% endif %}</span>
+                                            <span class="sub-name">{{ (sc.check or sc.name or '')|humanize_check }}</span>
+                                            {% set trimmed = sc.message|trim_sub_msg %}
+                                            {% if trimmed|length > 80 %}
+                                            <span class="sub-msg">{{ trimmed|truncate_error }}
+                                                <details class="error-detail"><summary>full error</summary><pre class="error-full">{{ trimmed }}</pre></details>
+                                            </span>
+                                            {% else %}
+                                            <span class="sub-msg">{{ trimmed }}</span>
+                                            {% endif %}
+                                        </div>
+                                        {% endif %} {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                    {% if check_data.remediation %}
+                                    <div class="remediation-callout"><i class="fa-solid fa-wrench"></i> {{ check_data.remediation|inline_code }}</div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endif %}
+                    {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </details>
+            {% endif %}
+
+            <div class="section-divider"><i class="fa-solid fa-server"></i> Environment</div>
+
+            <!-- Instance + System -->
             {% if doctor_report.system %} {% set sys = doctor_report.system %} {% set cloud = doctor_report.cloud or {}
             %}
-            <div class="grid-3">
+            <div class="grid-2">
                 <div class="card">
-                    <div class="card-title">Instance</div>
+                    <div class="card-title"><i class="fa-solid fa-cloud"></i>Instance</div>
                     <div class="kv-grid">
                         <span class="kv-label">Provider</span>
                         <span class="kv-value">{{ cloud.provider|default('N/A')|upper }}</span>
@@ -765,7 +979,7 @@
                 </div>
 
                 <div class="card">
-                    <div class="card-title">System</div>
+                    <div class="card-title"><i class="fa-solid fa-microchip"></i>System</div>
                     <div class="kv-grid">
                         {% if sys.os %}
                         <span class="kv-label">OS</span>
@@ -786,62 +1000,29 @@
                         <span class="kv-value"
                             >{{ sys.cpu.cores|default('?') }} / {{ sys.cpu.threads|default('?') }}</span
                         >
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">Memory</div>
-                    {% if sys.memory %} {% set mem_total_gb = (sys.memory.total_bytes / 1073741824)|round(1) %} {% set
-                    mem_used_gb = ((sys.memory.total_bytes - sys.memory.available_bytes) / 1073741824)|round(1) %} {%
-                    set mem_avail_gb = (sys.memory.available_bytes / 1073741824)|round(1) %} {% set mem_used_pct =
-                    (((sys.memory.total_bytes - sys.memory.available_bytes) / sys.memory.total_bytes) *
-                    100)|round(0)|int %}
-                    <div class="kv-grid">
-                        <span class="kv-label">Used</span>
-                        <span class="kv-value">
-                            {{ mem_used_gb }} / {{ mem_total_gb }} GB
-                            <div class="usage-bar" style="margin-top: 0.25rem">
-                                <div class="usage-bar-track">
-                                    <div
-                                        class="usage-bar-fill {% if mem_used_pct >= 90 %}critical{% elif mem_used_pct >= 75 %}warn{% endif %}"
-                                        style="width: {{ mem_used_pct }}%"
-                                    ></div>
-                                </div>
-                                <span class="usage-pct">{{ mem_used_pct }}%</span>
-                            </div>
-                        </span>
-
-                        {% if sys.memory.swap_total_bytes and sys.memory.swap_total_bytes > 0 %} {% set swap_total_bytes
-                        = sys.memory.swap_total_bytes %} {% set swap_free_bytes = sys.memory.swap_free_bytes %} {% set
-                        swap_used_pct = (((swap_total_bytes - swap_free_bytes) / swap_total_bytes) * 100)|round(0)|int
-                        %} {% set swap_total_gb = (swap_total_bytes / 1073741824)|round(1) %}
+                        {% endif %} {% if sys.memory %}
+                        {% set mem_total_gib = (sys.memory.total_bytes / 1073741824)|round(1) %}
+                        <span class="kv-label">Memory</span>
+                        <span class="kv-value">{{ mem_total_gib }} GiB</span>
+                        {% if sys.memory.swap_total_bytes and sys.memory.swap_total_bytes > 0 %}
+                        {% set swap_total_gib = (sys.memory.swap_total_bytes / 1073741824)|round(1) %}
                         <span class="kv-label">Swap</span>
-                        <span class="kv-value">
-                            {% if swap_free_bytes < 1073741824 %}{{ (swap_free_bytes / 1048576)|round(0)|int }} MB{%
-                            else %}{{ (swap_free_bytes / 1073741824)|round(1) }} GB{% endif %} free of {{ swap_total_gb
-                            }} GB {% if swap_used_pct >= 95 %}<span class="tag-critical">{{ swap_used_pct }}% used</span
-                            >{% elif swap_used_pct >= 80 %}<span class="tag-warn">{{ swap_used_pct }}% used</span>{%
-                            endif %}
-                        </span>
+                        <span class="kv-value">{{ swap_total_gib }} GiB</span>
+                        {% endif %}
                         {% endif %}
                     </div>
-                    {% else %}
-                    <p class="text-muted">No memory data available</p>
-                    {% endif %}
                 </div>
             </div>
             {% endif %}
 
-            <!-- Storage -->
-            {% if doctor_report.storage and (doctor_report.storage.filesystems or doctor_report.storage.nvme_devices) %}
-            <details id="storage" class="card">
+            <!-- Storage Devices -->
+            {% if doctor_report.storage and doctor_report.storage.nvme_devices %}
+            <details id="storage-devices" class="card"{% if system_checks is iterable and system_checks is not mapping and system_checks|selectattr('check', 'defined')|selectattr('check', 'equalto', 'nvme')|selectattr('status', 'ne', 'pass')|list|length > 0 %} open{% endif %}>
                 <summary>
-                    <span class="card-title">Storage</span>
+                    <span class="card-title"><i class="fa-solid fa-database"></i>Storage Devices</span>
                     <span class="toggle-icon">&#9660;</span>
                 </summary>
                 <div class="card-body">
-                    {% if doctor_report.storage.nvme_devices %}
                     <table>
                         <thead>
                             <tr>
@@ -855,26 +1036,35 @@
                             <tr>
                                 <td class="mono">{{ dev.name }}</td>
                                 <td>{{ dev.model }}</td>
-                                <td class="num">{{ (dev.size_bytes / 1073741824)|round(0)|int }} GB</td>
+                                <td class="num">{{ (dev.size_bytes / 1073741824)|round(0)|int }} GiB</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
-                    {% if doctor_report.storage.filesystems %}
-                    <div style="margin-top: 1rem"></div>
-                    {% endif %} {% endif %} {% if doctor_report.storage.filesystems %}
+                </div>
+            </details>
+            {% endif %}
+
+            <!-- Mounted Filesystems -->
+            {% if doctor_report.storage and doctor_report.storage.filesystems %}
+            <details id="mounted-filesystems" class="card"{% if disk_checks is defined and disk_checks|selectattr('check', 'defined')|selectattr('check', 'equalto', 'disk_space')|selectattr('status', 'ne', 'pass')|list|length > 0 %} open{% endif %}>
+                <summary>
+                    <span class="card-title"><i class="fa-solid fa-folder-tree"></i>Mounted Filesystems</span>
+                    <span class="toggle-icon">&#9660;</span>
+                </summary>
+                <div class="card-body">
                     <table>
                         <thead>
                             <tr>
                                 <th>Mount</th>
                                 <th>Device</th>
                                 <th>Type</th>
-                                <th style="width: 240px">Usage</th>
+                                <th style="width: 40%">Usage</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for fs in doctor_report.storage.filesystems %} {% if fs.total_bytes and fs.total_bytes >
-                            0 %} {% set fs_total_gb = (fs.total_bytes / 1073741824)|round(1) %} {% set fs_used_gb =
+                            0 %} {% set fs_total_gib = (fs.total_bytes / 1073741824)|round(1) %} {% set fs_used_gib =
                             ((fs.total_bytes - fs.available_bytes) / 1073741824)|round(1) %} {% set fs_used_pct =
                             (((fs.total_bytes - fs.available_bytes) / fs.total_bytes) * 100)|round(0)|int %}
                             <tr>
@@ -890,23 +1080,22 @@
                                             ></div>
                                         </div>
                                         <span class="usage-pct">{{ fs_used_pct }}%</span>
-                                        <span class="text-muted">{{ fs_used_gb }} / {{ fs_total_gb }} GB</span>
+                                        <span class="text-muted">{{ fs_used_gib }} / {{ fs_total_gib }} GiB</span>
                                     </div>
                                 </td>
                             </tr>
                             {% endif %} {% endfor %}
                         </tbody>
                     </table>
-                    {% endif %}
                 </div>
             </details>
             {% endif %}
 
             <!-- Resource Limits -->
             {% if doctor_report.resources %}
-            <details id="resource-limits" class="card">
+            <details id="resource-limits" class="card"{% if system_checks is iterable and system_checks is not mapping and system_checks|selectattr('check', 'defined')|selectattr('check', 'equalto', 'open_files')|selectattr('status', 'ne', 'pass')|list|length > 0 %} open{% endif %}>
                 <summary>
-                    <span class="card-title">Resource Limits</span>
+                    <span class="card-title"><i class="fa-solid fa-sliders"></i>Resource Limits</span>
                     <span class="toggle-icon">&#9660;</span>
                 </summary>
                 <div class="card-body">
@@ -950,11 +1139,11 @@
                                 <td>Memory Lock</td>
                                 <td>
                                     {% if res.mem_lock.soft == unlimited %}unlimited{% else %}{{ (res.mem_lock.soft /
-                                    1073741824)|round(1) }} GB{% endif %}
+                                    1073741824)|round(1) }} GiB{% endif %}
                                 </td>
                                 <td>
                                     {% if res.mem_lock.hard == unlimited %}unlimited{% else %}{{ (res.mem_lock.hard /
-                                    1073741824)|round(1) }} GB{% endif %}
+                                    1073741824)|round(1) }} GiB{% endif %}
                                 </td>
                             </tr>
                             {% endif %} {% if res.stack_size %}
@@ -996,7 +1185,7 @@
             {% if bench_report and bench_report.keys()|length > 0 and 'error' not in bench_report %}
             <details id="benchmark" class="card" open>
                 <summary>
-                    <span class="card-title">Filesystem Benchmark</span>
+                    <span class="card-title"><i class="fa-solid fa-gauge-high"></i>Filesystem Benchmark</span>
                     <span class="toggle-icon">&#9660;</span>
                 </summary>
                 <div class="card-body">
@@ -1034,7 +1223,7 @@
             {% if objbench_report and objbench_report.keys()|length > 0 and 'error' not in objbench_report %}
             <details id="objbench" class="card" open>
                 <summary>
-                    <span class="card-title">Object Storage Benchmark</span>
+                    <span class="card-title"><i class="fa-solid fa-gauge-high"></i>Object Storage Benchmark</span>
                     <span class="toggle-icon">&#9660;</span>
                 </summary>
                 <div class="card-body">
@@ -1068,11 +1257,6 @@
             </details>
             {% endif %}
 
-            <!-- Footer -->
-            <div class="footer">
-                Generated on <time datetime="{{ timestamp }}" class="local-time">{{ timestamp }}</time> &middot; Fusion
-                Filesystem Diagnostics
-            </div>
         </div>
 
         <script>
@@ -1080,6 +1264,7 @@
             document.querySelectorAll(".check-row").forEach(function (row) {
                 var detailRow = row.nextElementSibling;
                 if (detailRow && detailRow.classList.contains("check-detail-row")) {
+                    row.classList.add("has-details");
                     row.addEventListener("click", function () {
                         detailRow.classList.toggle("hidden");
                         row.classList.toggle("expanded");

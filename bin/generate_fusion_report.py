@@ -65,7 +65,8 @@ def merge_reports(
         },
     }
 
-    # Compute overall status (fail > warn > pass)
+    # Compute overall status (fail > degraded > warn > pass)
+    # "degraded" = all critical checks pass, but some warning-category checks fail
     # Supports both legacy "summary.status" and real fusion "check_summary.overall"
     statuses = []
     for report in combined["reports"].values():
@@ -76,9 +77,28 @@ def merge_reports(
                 statuses.append(report["summary"].get("status", "unknown"))
 
     if "fail" in statuses:
-        combined["overall_status"] = "fail"
+        # Check if failures are only in warning-category checks
+        has_critical_failure = False
+        for report in combined["reports"].values():
+            if not report or "error" in report:
+                continue
+            checks = report.get("checks", [])
+            if isinstance(checks, list):
+                for c in checks:
+                    if c.get("status") == "fail" and c.get("category") == "critical":
+                        has_critical_failure = True
+                        break
+            elif isinstance(checks, dict):
+                for c in checks.values():
+                    if c.get("status") == "fail" and c.get("category") == "critical":
+                        has_critical_failure = True
+                        break
+            if has_critical_failure:
+                break
+
+        combined["overall_status"] = "fail" if has_critical_failure else "degraded"
     elif "warn" in statuses:
-        combined["overall_status"] = "warn"
+        combined["overall_status"] = "degraded"
     else:
         combined["overall_status"] = "pass"
 
@@ -104,8 +124,20 @@ def render_html(combined_report: Dict[str, Any], template_str: Optional[str] = N
     if template_str is None:
         template_str = load_template(template_path)
 
+    import re
+
     env = Environment(trim_blocks=True, lstrip_blocks=True)
     env.filters['intcomma'] = lambda v: f"{int(v):,}" if isinstance(v, (int, float)) else str(v)
+
+    # Inline code: convert `text` to <code>text</code>
+    from markupsafe import Markup
+    def inline_code(text):
+        if not text:
+            return text
+        result = re.sub(r'`([^`]+)`', r'<code>\1</code>', str(text))
+        return Markup(result)
+
+    env.filters['inline_code'] = inline_code
 
     # Humanize check names: snake_case identifiers → readable labels
     _CHECK_LABELS = {
@@ -134,6 +166,18 @@ def render_html(combined_report: Dict[str, Any], template_str: Optional[str] = N
 
     env.filters['smart_title'] = smart_title
 
+    # Detail key labels that depend on check severity
+    _REQUIREMENT_KEYS = {'required_min', 'required_bytes', 'cores_required'}
+
+    def detail_label(key, category=''):
+        if key in _REQUIREMENT_KEYS:
+            if category == 'critical':
+                return 'Required (≥)'
+            return 'Recommended (≥)'
+        return smart_title(key)
+
+    env.globals['detail_label'] = detail_label
+
     # Strip redundant prefixes from sub-check messages
     # e.g. "check bucket exists: ok" → "ok", "list objects: ok" → "ok"
     # but keep meaningful parts: "access denied (HTTP 403)" stays
@@ -145,35 +189,148 @@ def render_html(combined_report: Dict[str, Any], template_str: Optional[str] = N
 
     env.filters['trim_sub_msg'] = trim_sub_msg
 
+    # Truncate long error messages to show only the actionable portion
+    def truncate_error(msg, limit=80):
+        if not msg or len(msg) <= limit:
+            return msg or ''
+        lower = msg.lower()
+        # Extract the meaningful suffix after "api error"
+        idx = lower.find('api error')
+        if idx != -1:
+            after = msg[idx + len('api error'):].lstrip(' :')
+            return after if after else msg[:limit] + '…'
+        # Extract HTTP status code as a short summary
+        import re as _re
+        sc_match = _re.search(r'StatusCode:\s*(\d+)', msg)
+        if sc_match:
+            return f"HTTP {sc_match.group(1)}"
+        # Generic truncation
+        return msg[:limit] + '…'
+
+    env.filters['truncate_error'] = truncate_error
+
+    # Extract actual/reference values from check details for the table columns
+    _ACTUAL_KEYS = ['kernel_version', 'cores_available', 'soft_limit', 'devices_found']
+    _REFERENCE_KEYS = ['required_min', 'required_bytes', 'cores_required']
+
+    def _humanize_bytes(b):
+        if b >= 1073741824:
+            return f"{b / 1073741824:.1f} GiB"
+        if b >= 1048576:
+            return f"{b / 1048576:.0f} MiB"
+        return str(b)
+
+    def _format_number(val):
+        if isinstance(val, int) and val >= 1000:
+            return f"{val:,}"
+        return str(val)
+
+    def extract_actual(details):
+        if not details or not isinstance(details, dict):
+            return ''
+        for key in _ACTUAL_KEYS:
+            if key in details:
+                return _format_number(details[key])
+        if 'total_bytes' in details:
+            return _humanize_bytes(details['total_bytes'])
+        return ''
+
+    def extract_reference(details):
+        if not details or not isinstance(details, dict):
+            return ''
+        for key in _REFERENCE_KEYS:
+            if key in details:
+                val = details[key]
+                if 'bytes' in key:
+                    return _humanize_bytes(val)
+                return str(val)
+        return ''
+
+    env.filters['extract_actual'] = extract_actual
+    env.filters['extract_reference'] = extract_reference
+
+    def format_detail_value(val, key=''):
+        """Format detail values: humanize bytes, add commas to large numbers."""
+        if isinstance(val, (int, float)) and 'bytes' in key.lower():
+            return f"{_humanize_bytes(int(val))} ({int(val):,})"
+        if isinstance(val, int) and val >= 1000:
+            return f"{val:,}"
+        return val
+
+    env.globals['format_detail_value'] = format_detail_value
+
     template = env.from_string(template_str)
 
     doctor_report = combined_report.get("reports", {}).get("doctor", {})
 
-    # Sort filesystems by usage% descending and filter out zero-size / noise mounts
+    # Compute usage% for each filesystem (for usage bar rendering)
     storage = doctor_report.get("storage", {})
     if storage.get("filesystems"):
-        noise_prefixes = ("/var/snap/", "/snap/")
-        noise_types = ("squashfs", "tmpfs")
-        filtered = []
         for fs in storage["filesystems"]:
             total = fs.get("total_bytes", 0)
-            if total <= 0:
-                continue
-            mount = fs.get("mount_point", "")
-            fs_type = fs.get("type", "")
-            if any(mount.startswith(p) for p in noise_prefixes):
-                continue
-            if fs_type in noise_types and mount != "/tmp":
-                continue
-            # Attach computed usage% for sorting
-            fs["_used_pct"] = ((total - fs.get("available_bytes", 0)) / total) * 100
-            filtered.append(fs)
-        storage["filesystems"] = sorted(filtered, key=lambda f: f["_used_pct"], reverse=True)
+            if total > 0:
+                fs["_used_pct"] = ((total - fs.get("available_bytes", 0)) / total) * 100
+            else:
+                fs["_used_pct"] = 0
+
+    # Split checks into groups: system, disk, bucket
+    _BUCKET_CHECKS = {'bucket_access_rw', 'bucket_access_ro'}
+    _DISK_CHECKS = {'disk_space'}
+    system_checks = []
+    disk_checks = []
+    bucket_checks = []
+
+    checks = doctor_report.get("checks", [])
+    if isinstance(checks, list):
+        for c in checks:
+            check_name = c.get("check", c.get("name", ""))
+            if check_name in _BUCKET_CHECKS:
+                bucket_checks.append(c)
+            elif check_name in _DISK_CHECKS:
+                disk_checks.append(c)
+            else:
+                system_checks.append(c)
+    elif isinstance(checks, dict):
+        # Legacy mapping format — all go to system checks
+        system_checks = checks
+
+    # Count warning-category failures and collect recommendations
+    warnings_count = 0
+    recommendations = []
+    all_checks = []
+    if isinstance(checks, list):
+        all_checks = checks
+    elif isinstance(checks, dict):
+        all_checks = checks.values()
+    seen_remediations = set()
+    for c in all_checks:
+        if c.get("status") == "fail" and c.get("category") == "warning":
+            warnings_count += 1
+        if c.get("status") != "pass" and c.get("remediation"):
+            rem = c["remediation"]
+            if rem not in seen_remediations:
+                seen_remediations.add(rem)
+                check_name = c.get("check", c.get("name", "Unknown"))
+                recommendations.append({
+                    "check": check_name,
+                    "category": c.get("category", ""),
+                    "status": c.get("status", ""),
+                    "remediation": rem,
+                })
+
+    # Sort recommendations: critical first, then warnings
+    _CATEGORY_ORDER = {"critical": 0, "warning": 1}
+    recommendations.sort(key=lambda r: _CATEGORY_ORDER.get(r["category"], 2))
 
     html = template.render(
         timestamp=combined_report.get("timestamp", ""),
         overall_status=combined_report.get("overall_status", "unknown"),
         doctor_report=doctor_report,
+        system_checks=system_checks,
+        disk_checks=disk_checks,
+        bucket_checks=bucket_checks,
+        warnings_count=warnings_count,
+        recommendations=recommendations,
         bench_report=combined_report.get("reports", {}).get("bench", {}),
         objbench_report=combined_report.get("reports", {}).get("objbench", {}),
     )
