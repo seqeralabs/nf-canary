@@ -14,10 +14,6 @@
                 --primary-light: #31C9AC;
                 --accent: #6e61ca;
                 --warn: #dc3545;
-                --green: #31C9AC;
-                --orange: #b06020;
-                --purple: #6e61ca;
-                --teal: #087f68;
 
                 /* Neutrals (brand-aligned) */
                 --neutral-1: #f7f7f7;
@@ -72,12 +68,12 @@
                 font-size: 0.9rem;
                 color: var(--neutral-10);
                 line-height: 1.5;
-                padding: 2rem;
             }
 
             .container {
                 max-width: 1200px;
                 margin: 0 auto;
+                padding: 2rem;
             }
 
             /* --- Header (dark, Seqera Platform style) --- */
@@ -85,7 +81,6 @@
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                margin: -2rem -2rem 1.5rem -2rem;
                 padding: 1rem 2rem;
                 background: var(--brand);
             }
@@ -360,6 +355,8 @@
             .mono {
                 font-family: var(--font-mono);
                 font-size: 0.8rem;
+                overflow-wrap: break-word;
+                word-break: break-word;
             }
             /* --- Checks table --- */
             .checks-table {
@@ -367,21 +364,7 @@
                 border-collapse: collapse;
                 table-layout: fixed;
             }
-            .checks-table th {
-                text-align: left;
-                padding: 0.6rem 0.75rem;
-                font-size: 0.75rem;
-                font-weight: 600;
-                color: var(--neutral-7);
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                background: var(--neutral-1);
-                border-bottom: 2px solid var(--border);
-            }
             .checks-table td {
-                padding: 0.5rem 0.75rem;
-                border-bottom: 1px solid var(--neutral-2);
-                font-size: 0.85rem;
                 vertical-align: middle;
             }
             .col-name {
@@ -703,7 +686,6 @@
                     flex-direction: column;
                     align-items: flex-start;
                     gap: 0.75rem;
-                    margin: -1rem -1rem 1.5rem -1rem;
                     padding: 1rem;
                 }
                 .grid-2,
@@ -714,6 +696,55 @@
                 .kv-grid {
                     grid-template-columns: 1fr;
                 }
+                .usage-bar-track {
+                    display: none;
+                }
+                .col-hide-mobile {
+                    display: none;
+                }
+                .badge::before {
+                    display: none;
+                }
+                .badge {
+                    gap: 0;
+                    width: 3rem;
+                    font-size: 0.6rem;
+                    padding: 2px 4px;
+                }
+                .rec-badge {
+                    min-width: 0;
+                    width: auto;
+                }
+                .checks-table {
+                    table-layout: auto;
+                }
+                .col-name, .col-value, .col-status {
+                    width: auto;
+                }
+                .col-expand,
+                .check-row > td:last-child {
+                    display: none;
+                }
+                .check-details-grid {
+                    grid-template-columns: 1fr;
+                    gap: 0;
+                }
+                .dk-key {
+                    white-space: normal;
+                }
+                .dk-val {
+                    word-break: break-all;
+                    margin-bottom: 0.4rem;
+                }
+                td.mono,
+                .mono {
+                    overflow-wrap: normal;
+                    word-break: normal;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    max-width: 0;
+                }
             }
         </style>
     </head>
@@ -721,9 +752,10 @@
         {% macro check_row(check_name, check_data) %}
                             {% set actual = check_data.details|extract_actual %}
                             {% set ref = check_data.details|extract_reference %}
+                            {% set actual_val = actual or ('Detected' if check_data.status == 'pass' else '—') %}
                             <tr class="check-row {{ 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status }}{% if check_data.category %} sev-{{ check_data.category }}{% endif %}">
                                 <td class="check-cell-name">{{ check_name|humanize_check }}</td>
-                                <td class="mono">{{ actual or ('Detected' if check_data.status == 'pass' else '—') }}</td>
+                                <td class="mono" title="{{ actual_val }}">{{ actual_val }}</td>
                                 <td class="col-status">{% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}<span class="badge badge-{{ display_status }}">{{ display_status }}</span></td>
                                 <td>{% if check_data.details or check_data.remediation %}<span class="expand-btn" aria-hidden="true">&#9658;</span>{% endif %}</td>
                             </tr>
@@ -747,9 +779,8 @@
                             </tr>
                             {% endif %}
         {% endmacro %}
-        <div class="container">
-            <!-- Header -->
-            <div class="header">
+        <!-- Header -->
+        <div class="header">
                 <div class="header-left">
                     <div class="header-icon">
                         <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fusion logo"><path d="M244.61 328.925C205.16 326.305 173.55 294.615 171.07 255.125H125C127.56 320.085 179.68 372.305 244.61 375.005V328.925Z" fill="white"/><path d="M171.08 244.615C173.7 205.165 205.39 173.555 244.88 171.075V125.005C179.92 127.565 127.7 179.685 125 244.615H171.08Z" fill="white"/><path d="M328.921 255.394C326.301 294.844 294.611 326.454 255.121 328.934V375.004C320.081 372.444 372.301 320.324 375.001 255.394H328.921Z" fill="white"/><path d="M255.391 171.085C294.841 173.705 326.451 205.395 328.931 244.885H375.001C372.441 179.925 320.321 127.705 255.391 125.005V171.085Z" fill="white"/></svg>
@@ -764,8 +795,9 @@
                     </div>
                 </div>
                 <span class="badge badge-{{ overall_status }}" style="font-size: 0.85rem; padding: 0.3rem 1rem;">{{ overall_status }}</span>
-            </div>
+        </div>
 
+        <div class="container">
             <!-- Summary metrics -->
             {% if doctor_report.check_summary or doctor_report.summary %} {% set summary = doctor_report.check_summary
             or doctor_report.summary %}
@@ -885,8 +917,10 @@
                             <tr class="check-row {{ 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status }}{% if check_data.category %} sev-{{ check_data.category }}{% endif %}">
                                 {% set actual = check_data.details|extract_actual %}
                                 {% set ref = check_data.details|extract_reference %}
-                                <td class="mono">{{ check_data.details.path|default(check_data.details.mount_point|default('—')) if check_data.details else '—' }}</td>
-                                <td class="mono">{{ actual or ('Detected' if check_data.status == 'pass' else '—') }}</td>
+                                {% set path_val = check_data.details.path|default(check_data.details.mount_point|default('—')) if check_data.details else '—' %}
+                                {% set actual_val = actual or ('Detected' if check_data.status == 'pass' else '—') %}
+                                <td class="mono" title="{{ path_val }}">{{ path_val }}</td>
+                                <td class="mono" title="{{ actual_val }}">{{ actual_val }}</td>
                                 <td class="col-status">{% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}<span class="badge badge-{{ display_status }}">{{ display_status }}</span></td>
                                 <td></td>
                             </tr>
@@ -920,7 +954,8 @@
                     {% for check_data in bucket_checks %}
                             {% set has_expandable = (check_data.sub_checks and check_data.status != 'pass') or check_data.remediation %}
                             <tr class="check-row {{ 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status }} sev-{{ check_data.category|default('critical') }}{% if has_expandable %} has-details{% endif %}">
-                                <td class="mono"><span class="access-tag">{% if check_data.check == 'bucket_access_ro' %}read-only{% else %}read-write{% endif %}</span>{{ check_data.details.uri if check_data.details else '—' }}</td>
+                                {% set uri_val = check_data.details.uri if check_data.details else '—' %}
+                                <td class="mono" title="{{ uri_val }}"><span class="access-tag">{% if check_data.check == 'bucket_access_ro' %}read-only{% else %}read-write{% endif %}</span>{{ uri_val }}</td>
                                 <td>{% if check_data.sub_checks %}{% set sc_passed = check_data.sub_checks|selectattr('status', 'equalto', 'pass')|list|length %}{{ sc_passed }}/{{ check_data.sub_checks|length }} checks passed{% else %}—{% endif %}</td>
                                 <td class="col-status"><span class="badge badge-{{ check_data.status }}">{{ check_data.status }}</span></td>
                                 <td>{% if has_expandable %}<span class="expand-btn" aria-hidden="true">&#9658;</span>{% endif %}</td>
@@ -1064,8 +1099,8 @@
                         <thead>
                             <tr>
                                 <th>Mount</th>
-                                <th>Device</th>
-                                <th>Type</th>
+                                <th class="col-hide-mobile">Device</th>
+                                <th class="col-hide-mobile">Type</th>
                                 <th style="width: 40%">Usage</th>
                             </tr>
                         </thead>
@@ -1076,8 +1111,8 @@
                             (((fs.total_bytes - fs.available_bytes) / fs.total_bytes) * 100)|round(0)|int %}
                             <tr>
                                 <td class="mono">{{ fs.mount_point }}</td>
-                                <td class="mono">{{ fs.device }}</td>
-                                <td>{{ fs.type }}</td>
+                                <td class="mono col-hide-mobile">{{ fs.device }}</td>
+                                <td class="col-hide-mobile">{{ fs.type }}</td>
                                 <td>
                                     <div class="usage-bar">
                                         <div class="usage-bar-track">
