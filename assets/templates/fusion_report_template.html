@@ -5,45 +5,48 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Fusion Filesystem Diagnostics</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
         <style>
             /* === Seqera Platform design tokens === */
             :root {
-                --brand: #160f26;
-                --primary: #4256e7;
-                --accent: #ffa500;
+                --brand: #201637;
+                --primary: #087f68;
+                --primary-light: #31C9AC;
+                --accent: #6e61ca;
                 --warn: #dc3545;
-                --green: #28ae61;
-                --orange: #e68642;
-                --purple: #8f4199;
-                --teal: #087f87;
+                --green: #31C9AC;
+                --orange: #b06020;
+                --purple: #6e61ca;
+                --teal: #087f68;
 
-                /* Purple-tinted neutrals */
-                --neutral-1: #f3f3f4;
-                --neutral-2: #e8e7e9;
-                --neutral-3: #d0cfd4;
-                --neutral-4: #b9b7be;
-                --neutral-5: #a29fa8;
-                --neutral-6: #8a8792;
-                --neutral-7: #736f7d;
-                --neutral-8: #5c5767;
-                --neutral-9: #453f51;
-                --neutral-10: #2d273c;
+                /* Neutrals (brand-aligned) */
+                --neutral-1: #f7f7f7;
+                --neutral-2: #e8e8e9;
+                --neutral-3: #cfd0d1;
+                --neutral-4: #b8b9ba;
+                --neutral-5: #a0a1a3;
+                --neutral-6: #88898b;
+                --neutral-7: #707174;
+                --neutral-8: #58595c;
+                --neutral-9: #404145;
+                --neutral-10: #28292d;
 
                 /* Functional */
-                --body-bg: #f8f9fa;
+                --body-bg: #f7f7f7;
                 --card-bg: #fff;
                 --border: #dee2e6;
                 --radius: 4px;
 
                 /* Status */
-                --clr-pass: #28ae61;
+                --clr-pass: #087f68;
                 --clr-fail: #e7363e;
-                --clr-warn: #e68642;
-                --clr-unknown: #a29fa8;
-                --clr-primary-tint: #eef0fb;
+                --clr-warn: #b06020;
+                --clr-unknown: #a0a1a3;
+                --clr-primary-tint: #e8f8f4;
 
-                /* Mono font */
-                --font-mono: SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+                /* Typography */
+                --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+                --font-mono: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             }
 
             * {
@@ -51,13 +54,21 @@
                 margin: 0;
                 padding: 0;
             }
+            .sr-only {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                padding: 0;
+                margin: -1px;
+                overflow: hidden;
+                clip: rect(0, 0, 0, 0);
+                white-space: nowrap;
+                border: 0;
+            }
 
             body {
                 background: var(--body-bg);
-                font-family:
-                    system-ui,
-                    -apple-system,
-                    sans-serif;
+                font-family: var(--font-body);
                 font-size: 0.9rem;
                 color: var(--neutral-10);
                 line-height: 1.5;
@@ -87,9 +98,9 @@
                 display: inline-flex;
                 align-items: center;
             }
-            .header-icon i {
-                font-size: 1.2rem;
-                color: #fff;
+            .header-icon svg {
+                width: 28px;
+                height: 28px;
             }
             .header-title {
                 font-size: 1.1rem;
@@ -106,20 +117,34 @@
 
             /* --- Status badge --- */
             .badge {
-                display: inline-block;
+                display: inline-flex;
+                align-items: baseline;
+                justify-content: center;
+                gap: 7px;
                 padding: 2px 10px;
                 border-radius: var(--radius);
                 font-size: 0.75rem;
                 font-weight: 600;
+                line-height: 1.4;
                 color: #fff;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
-                min-width: 3.5rem;
-                text-align: center;
+                width: 4.5rem;
             }
             .badge-pass {
                 background: var(--clr-pass);
             }
+            .badge::before {
+                font-family: 'Font Awesome 6 Free';
+                font-weight: 900;
+                font-size: 0.65rem;
+                width: 0.7em;
+                text-align: center;
+            }
+            .badge-pass::before { content: '\f00c'; }
+            .badge-fail::before { content: '\f057'; }
+            .badge-warn::before,
+            .badge-degraded::before { content: '\f071'; }
             .badge-fail {
                 background: var(--clr-fail);
             }
@@ -493,7 +518,8 @@
                 padding: 2px 6px;
                 text-align: center;
                 flex-shrink: 0;
-                min-width: 4.8rem;
+                width: auto;
+                min-width: 5.5rem;
             }
             .rec-text {
                 color: var(--neutral-10);
@@ -692,15 +718,44 @@
         </style>
     </head>
     <body>
+        {% macro check_row(check_name, check_data) %}
+                            {% set actual = check_data.details|extract_actual %}
+                            {% set ref = check_data.details|extract_reference %}
+                            <tr class="check-row {{ 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status }}{% if check_data.category %} sev-{{ check_data.category }}{% endif %}">
+                                <td class="check-cell-name">{{ check_name|humanize_check }}</td>
+                                <td class="mono">{{ actual or ('Detected' if check_data.status == 'pass' else '—') }}</td>
+                                <td class="col-status">{% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}<span class="badge badge-{{ display_status }}">{{ display_status }}</span></td>
+                                <td>{% if check_data.details or check_data.remediation %}<span class="expand-btn" aria-hidden="true">&#9658;</span>{% endif %}</td>
+                            </tr>
+                            {% if check_data.details or check_data.remediation %}
+                            <tr class="check-detail-row hidden">
+                                <td colspan="4">
+                                    {% if check_data.details %}
+                                    <div class="check-details check-details-grid">
+                                        {% if check_data.details is mapping %} {% for key, val in check_data.details.items() %}
+                                            <span class="dk-key">{{ detail_label(key, check_data.category|default('')) }}</span>
+                                            <span class="dk-val">{{ format_detail_value(val, key) }}</span>
+                                        {% endfor %} {% else %}
+                                        <pre style="grid-column: 1 / -1">{{ check_data.details|tojson(indent=2) }}</pre>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                    {% if check_data.remediation %}
+                                    <div class="remediation-callout"><i class="fa-solid fa-wrench" aria-hidden="true"></i> {{ check_data.remediation|inline_code }}</div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endif %}
+        {% endmacro %}
         <div class="container">
             <!-- Header -->
             <div class="header">
                 <div class="header-left">
                     <div class="header-icon">
-                        <i class="fa-solid fa-stethoscope"></i>
+                        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fusion logo"><path d="M244.61 328.925C205.16 326.305 173.55 294.615 171.07 255.125H125C127.56 320.085 179.68 372.305 244.61 375.005V328.925Z" fill="white"/><path d="M171.08 244.615C173.7 205.165 205.39 173.555 244.88 171.075V125.005C179.92 127.565 127.7 179.685 125 244.615H171.08Z" fill="white"/><path d="M328.921 255.394C326.301 294.844 294.611 326.454 255.121 328.934V375.004C320.081 372.444 372.301 320.324 375.001 255.394H328.921Z" fill="white"/><path d="M255.391 171.085C294.841 173.705 326.451 205.395 328.931 244.885H375.001C372.441 179.925 320.321 127.705 255.391 125.005V171.085Z" fill="white"/></svg>
                     </div>
                     <div>
-                        <div class="header-title">Fusion Filesystem Diagnostics</div>
+                        <h1 class="header-title">Fusion Filesystem Diagnostics</h1>
                         <div class="header-meta">
                             <time datetime="{{ timestamp }}" class="local-time">{{ timestamp }}</time>
                             {%- if doctor_report.fusion_version or doctor_report.version %} {%- set version =
@@ -715,7 +770,7 @@
             {% if doctor_report.check_summary or doctor_report.summary %} {% set summary = doctor_report.check_summary
             or doctor_report.summary %}
             <div class="card">
-                <div class="card-title"><i class="fa-solid fa-chart-simple"></i>Overview</div>
+                <h2 class="card-title"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i>Overview</h2>
                 <div class="grid-4">
                     <div class="metric">
                         <div class="metric-value">
@@ -747,7 +802,7 @@
             <!-- Recommendations -->
             <details class="card" open>
                 <summary>
-                    <span class="card-title"><i class="fa-solid fa-lightbulb"></i>Recommendations</span>
+                    <h2 class="card-title"><i class="fa-solid fa-lightbulb" aria-hidden="true"></i>Recommendations</h2>
                     <span class="card-summary-meta">{{ recommendations|length }} item{{ 's' if recommendations|length != 1 }}</span>
                     <span class="toggle-icon">&#9660;</span>
                 </summary>
@@ -776,7 +831,7 @@
             {% set sys_total = system_checks|length if system_checks is not mapping else system_checks|list|length %}
             <details id="system-checks" class="card" open>
                 <summary>
-                    <span class="card-title"><i class="fa-solid fa-shield-halved"></i>System Checks</span>
+                    <h2 class="card-title"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>System Checks</h2>
                     <span class="card-summary-meta">{{ sys_pass }}/{{ sys_total }} passed</span>
                     <span class="toggle-icon">&#9660;</span>
                 </summary>
@@ -787,67 +842,19 @@
                                 <th class="col-name">Check</th>
                                 <th class="col-value">Result</th>
                                 <th class="col-status">Status</th>
-                                <th class="col-expand"></th>
+                                <th class="col-expand"><span class="sr-only">Details</span></th>
                             </tr>
                         </thead>
                         <tbody>
-                    {% if system_checks is mapping %} {% for check_name, check_data in system_checks.items() %}
-                            {% set actual = check_data.details|extract_actual %}
-                            {% set ref = check_data.details|extract_reference %}
-                            <tr class="check-row {{ 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status }}{% if check_data.category %} sev-{{ check_data.category }}{% endif %}">
-                                <td class="check-cell-name">{{ check_name|humanize_check }}</td>
-                                <td class="mono">{{ actual or ('Detected' if check_data.status == 'pass' else '—') }}</td>
-                                <td class="col-status">{% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}<span class="badge badge-{{ display_status }}">{{ display_status }}</span></td>
-                                <td>{% if check_data.details or check_data.remediation %}<span class="expand-btn" aria-hidden="true">&#9658;</span>{% endif %}</td>
-                            </tr>
-                            {% if check_data.details or check_data.remediation %}
-                            <tr class="check-detail-row hidden">
-                                <td colspan="4">
-                                    {% if check_data.details %}
-                                    <div class="check-details check-details-grid">
-                                        {% if check_data.details is mapping %} {% for key, val in check_data.details.items() %}
-                                            <span class="dk-key">{{ detail_label(key, check_data.category|default('')) }}</span>
-                                            <span class="dk-val">{{ format_detail_value(val, key) }}</span>
-                                        {% endfor %} {% else %}
-                                        <pre style="grid-column: 1 / -1">{{ check_data.details|tojson(indent=2) }}</pre>
-                                        {% endif %}
-                                    </div>
-                                    {% endif %}
-                                    {% if check_data.remediation %}
-                                    <div class="remediation-callout"><i class="fa-solid fa-wrench"></i> {{ check_data.remediation|inline_code }}</div>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endif %}
-                    {% endfor %} {% else %} {% for check_data in system_checks %}
-                            {% set actual = check_data.details|extract_actual %}
-                            {% set ref = check_data.details|extract_reference %}
-                            <tr class="check-row {{ 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status }}{% if check_data.category %} sev-{{ check_data.category }}{% endif %}">
-                                <td class="check-cell-name">{{ (check_data.check or check_data.name or 'Unknown')|humanize_check }}</td>
-                                <td class="mono">{{ actual or ('Detected' if check_data.status == 'pass' else '—') }}</td>
-                                <td class="col-status">{% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}<span class="badge badge-{{ display_status }}">{{ display_status }}</span></td>
-                                <td>{% if check_data.details or check_data.remediation %}<span class="expand-btn" aria-hidden="true">&#9658;</span>{% endif %}</td>
-                            </tr>
-                            {% if check_data.details or check_data.remediation %}
-                            <tr class="check-detail-row hidden">
-                                <td colspan="4">
-                                    {% if check_data.details %}
-                                    <div class="check-details check-details-grid">
-                                        {% if check_data.details is mapping %} {% for key, val in check_data.details.items() %}
-                                            <span class="dk-key">{{ detail_label(key, check_data.category|default('')) }}</span>
-                                            <span class="dk-val">{{ format_detail_value(val, key) }}</span>
-                                        {% endfor %} {% else %}
-                                        <pre style="grid-column: 1 / -1">{{ check_data.details|tojson(indent=2) }}</pre>
-                                        {% endif %}
-                                    </div>
-                                    {% endif %}
-                                    {% if check_data.remediation %}
-                                    <div class="remediation-callout"><i class="fa-solid fa-wrench"></i> {{ check_data.remediation|inline_code }}</div>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endif %}
-                    {% endfor %} {% endif %}
+                    {% if system_checks is mapping %}
+                        {% for name, data in system_checks.items() %}
+                            {{ check_row(name, data) }}
+                        {% endfor %}
+                    {% else %}
+                        {% for data in system_checks %}
+                            {{ check_row(data.check or data.name or 'Unknown', data) }}
+                        {% endfor %}
+                    {% endif %}
                         </tbody>
                     </table>
                 </div>
@@ -859,7 +866,7 @@
             {% set disk_pass = disk_checks|selectattr('status', 'equalto', 'pass')|list|length %}
             <details id="disk-checks" class="card"{% if disk_pass < disk_checks|length %} open{% endif %}>
                 <summary>
-                    <span class="card-title"><i class="fa-solid fa-hard-drive"></i>Storage Checks</span>
+                    <h2 class="card-title"><i class="fa-solid fa-hard-drive" aria-hidden="true"></i>Storage Checks</h2>
                     <span class="card-summary-meta">{{ disk_pass }}/{{ disk_checks|length }} passed</span>
                     <span class="toggle-icon">&#9660;</span>
                 </summary>
@@ -870,7 +877,7 @@
                                 <th class="col-name">Path</th>
                                 <th class="col-value">Total Capacity</th>
                                 <th class="col-status">Status</th>
-                                <th class="col-expand"></th>
+                                <th class="col-expand"><span class="sr-only">Details</span></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -895,7 +902,7 @@
             {% set bucket_pass = bucket_checks|selectattr('status', 'equalto', 'pass')|list|length %}
             <details id="bucket-checks" class="card"{% if bucket_pass < bucket_checks|length %} open{% endif %}>
                 <summary>
-                    <span class="card-title"><i class="fa-solid fa-bucket"></i>Object Storage Checks</span>
+                    <h2 class="card-title"><i class="fa-solid fa-bucket" aria-hidden="true"></i>Object Storage Checks</h2>
                     <span class="card-summary-meta">{{ bucket_pass }}/{{ bucket_checks|length }} passed</span>
                     <span class="toggle-icon">&#9660;</span>
                 </summary>
@@ -906,7 +913,7 @@
                                 <th>Bucket</th>
                                 <th class="col-value">Result</th>
                                 <th class="col-status">Status</th>
-                                <th class="col-expand"></th>
+                                <th class="col-expand"><span class="sr-only">Details</span></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -940,7 +947,7 @@
                                     </div>
                                     {% endif %}
                                     {% if check_data.remediation %}
-                                    <div class="remediation-callout"><i class="fa-solid fa-wrench"></i> {{ check_data.remediation|inline_code }}</div>
+                                    <div class="remediation-callout"><i class="fa-solid fa-wrench" aria-hidden="true"></i> {{ check_data.remediation|inline_code }}</div>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -952,14 +959,14 @@
             </details>
             {% endif %}
 
-            <div class="section-divider"><i class="fa-solid fa-server"></i> Environment</div>
+            <h2 class="section-divider"><i class="fa-solid fa-server" aria-hidden="true"></i> Environment</h2>
 
             <!-- Instance + System -->
             {% if doctor_report.system %} {% set sys = doctor_report.system %} {% set cloud = doctor_report.cloud or {}
             %}
             <div class="grid-2">
                 <div class="card">
-                    <div class="card-title"><i class="fa-solid fa-cloud"></i>Instance</div>
+                    <h3 class="card-title"><i class="fa-solid fa-cloud" aria-hidden="true"></i>Instance</h3>
                     <div class="kv-grid">
                         <span class="kv-label">Provider</span>
                         <span class="kv-value">{{ cloud.provider|default('N/A')|upper }}</span>
@@ -979,7 +986,7 @@
                 </div>
 
                 <div class="card">
-                    <div class="card-title"><i class="fa-solid fa-microchip"></i>System</div>
+                    <h3 class="card-title"><i class="fa-solid fa-microchip" aria-hidden="true"></i>System</h3>
                     <div class="kv-grid">
                         {% if sys.os %}
                         <span class="kv-label">OS</span>
@@ -1019,7 +1026,7 @@
             {% if doctor_report.storage and doctor_report.storage.nvme_devices %}
             <details id="storage-devices" class="card"{% if system_checks is iterable and system_checks is not mapping and system_checks|selectattr('check', 'defined')|selectattr('check', 'equalto', 'nvme')|selectattr('status', 'ne', 'pass')|list|length > 0 %} open{% endif %}>
                 <summary>
-                    <span class="card-title"><i class="fa-solid fa-database"></i>Storage Devices</span>
+                    <h3 class="card-title"><i class="fa-solid fa-database" aria-hidden="true"></i>Storage Devices</h3>
                     <span class="toggle-icon">&#9660;</span>
                 </summary>
                 <div class="card-body">
@@ -1049,7 +1056,7 @@
             {% if doctor_report.storage and doctor_report.storage.filesystems %}
             <details id="mounted-filesystems" class="card"{% if disk_checks is defined and disk_checks|selectattr('check', 'defined')|selectattr('check', 'equalto', 'disk_space')|selectattr('status', 'ne', 'pass')|list|length > 0 %} open{% endif %}>
                 <summary>
-                    <span class="card-title"><i class="fa-solid fa-folder-tree"></i>Mounted Filesystems</span>
+                    <h3 class="card-title"><i class="fa-solid fa-folder-tree" aria-hidden="true"></i>Mounted Filesystems</h3>
                     <span class="toggle-icon">&#9660;</span>
                 </summary>
                 <div class="card-body">
@@ -1095,7 +1102,7 @@
             {% if doctor_report.resources %}
             <details id="resource-limits" class="card"{% if system_checks is iterable and system_checks is not mapping and system_checks|selectattr('check', 'defined')|selectattr('check', 'equalto', 'open_files')|selectattr('status', 'ne', 'pass')|list|length > 0 %} open{% endif %}>
                 <summary>
-                    <span class="card-title"><i class="fa-solid fa-sliders"></i>Resource Limits</span>
+                    <h3 class="card-title"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Resource Limits</h3>
                     <span class="toggle-icon">&#9660;</span>
                 </summary>
                 <div class="card-body">
@@ -1185,7 +1192,7 @@
             {% if bench_report and bench_report.keys()|length > 0 and 'error' not in bench_report %}
             <details id="benchmark" class="card" open>
                 <summary>
-                    <span class="card-title"><i class="fa-solid fa-gauge-high"></i>Filesystem Benchmark</span>
+                    <h3 class="card-title"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i>Filesystem Benchmark</h3>
                     <span class="toggle-icon">&#9660;</span>
                 </summary>
                 <div class="card-body">
@@ -1223,7 +1230,7 @@
             {% if objbench_report and objbench_report.keys()|length > 0 and 'error' not in objbench_report %}
             <details id="objbench" class="card" open>
                 <summary>
-                    <span class="card-title"><i class="fa-solid fa-gauge-high"></i>Object Storage Benchmark</span>
+                    <h3 class="card-title"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i>Object Storage Benchmark</h3>
                     <span class="toggle-icon">&#9660;</span>
                 </summary>
                 <div class="card-body">
@@ -1260,14 +1267,25 @@
         </div>
 
         <script>
-            // Make check rows clickable to toggle details
+            // Make check rows clickable/keyboard-accessible to toggle details
             document.querySelectorAll(".check-row").forEach(function (row) {
                 var detailRow = row.nextElementSibling;
                 if (detailRow && detailRow.classList.contains("check-detail-row")) {
                     row.classList.add("has-details");
-                    row.addEventListener("click", function () {
-                        detailRow.classList.toggle("hidden");
+                    row.setAttribute("tabindex", "0");
+                    row.setAttribute("role", "button");
+                    row.setAttribute("aria-expanded", "false");
+                    function toggle() {
+                        var isHidden = detailRow.classList.toggle("hidden");
                         row.classList.toggle("expanded");
+                        row.setAttribute("aria-expanded", String(!isHidden));
+                    }
+                    row.addEventListener("click", toggle);
+                    row.addEventListener("keydown", function (e) {
+                        if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            toggle();
+                        }
                     });
                 }
             });

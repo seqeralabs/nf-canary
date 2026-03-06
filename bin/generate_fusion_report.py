@@ -2,7 +2,7 @@
 
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["jinja2"]
+# dependencies = ["jinja2==3.1.6", "humanize==4.15.0"]
 # ///
 
 """
@@ -10,11 +10,16 @@ Generate a consolidated Fusion diagnostic report from doctor/bench/objbench outp
 Produces both JSON and self-contained HTML reports.
 """
 
+import argparse
+import copy
 import json
+import re
 import sys
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
+
+import humanize
 
 
 def load_json_report(path: Optional[str]) -> Dict[str, Any]:
@@ -105,163 +110,159 @@ def merge_reports(
     return combined
 
 
-def render_html(combined_report: Dict[str, Any], template_str: Optional[str] = None, template_path: Optional[str] = None) -> str:
-    """
-    Render self-contained HTML report from combined data.
+# --- Jinja2 filter/helper functions (module-level for testability) ---
+
+_CHECK_LABELS = {
+    "fuse_device": "FUSE Device",
+    "bucket_access_rw": "Bucket Access (read/write)",
+    "bucket_access_ro": "Bucket Access (read-only)",
+    "nvme": "NVMe",
+    "cpu_cores": "CPU Cores",
+    "open_files": "Open Files",
+    "kernel_version": "Kernel Version",
+}
+_ACRONYMS = {"uri", "id", "cpu", "gpu", "io", "os", "ip", "dns", "http", "https", "ssh", "ssl", "tls", "nfs", "api", "nvme"}
+
+
+def humanize_check(name):
+    """Convert snake_case check names to readable labels."""
+    if name in _CHECK_LABELS:
+        return _CHECK_LABELS[name]
+    words = name.replace('_', ' ').split()
+    return ' '.join(w.upper() if w.lower() in _ACRONYMS else w.capitalize() for w in words)
+
+
+def smart_title(text):
+    """Title-case that respects acronyms."""
+    words = text.replace('_', ' ').split()
+    return ' '.join(w.upper() if w.lower() in _ACRONYMS else w.capitalize() for w in words)
+
+
+_REQUIREMENT_KEYS = {'required_min', 'required_bytes', 'cores_required'}
+
+
+def detail_label(key, category=''):
+    """Label for detail keys, context-dependent on severity."""
+    if key in _REQUIREMENT_KEYS:
+        if category == 'critical':
+            return 'Required (≥)'
+        return 'Recommended (≥)'
+    return smart_title(key)
+
+
+def trim_sub_msg(msg):
+    """Strip redundant prefixes from sub-check messages."""
+    if not msg or ':' not in msg:
+        return msg or ''
+    _, _, after = msg.partition(':')
+    return after.strip()
+
+
+def truncate_error(msg, limit=80):
+    """Truncate long error messages to the actionable portion."""
+    if not msg or len(msg) <= limit:
+        return msg or ''
+    lower = msg.lower()
+    idx = lower.find('api error')
+    if idx != -1:
+        after = msg[idx + len('api error'):].lstrip(' :')
+        return after if after else msg[:limit] + '…'
+    sc_match = re.search(r'StatusCode:\s*(\d+)', msg)
+    if sc_match:
+        return f"HTTP {sc_match.group(1)}"
+    return msg[:limit] + '…'
+
+
+def inline_code(text):
+    """Convert `backtick` text to <code> elements, escaping HTML first."""
+    from markupsafe import Markup, escape
+    if not text:
+        return text
+    escaped = str(escape(str(text)))
+    result = re.sub(r'`([^`]+)`', r'<code>\1</code>', escaped)
+    return Markup(result)
+
+
+def _humanize_bytes(b):
+    """Format byte counts as human-readable GiB/MiB/KiB."""
+    fmt = '%.1f' if b >= 1073741824 else '%.0f'
+    return humanize.naturalsize(b, binary=True, format=fmt)
+
+
+def _format_number(val):
+    """Format integers with comma separators."""
+    if isinstance(val, (int, float)):
+        return humanize.intcomma(val)
+    return str(val)
+
+
+_ACTUAL_KEYS = ['kernel_version', 'cores_available', 'soft_limit', 'devices_found']
+_REFERENCE_KEYS = ['required_min', 'required_bytes', 'cores_required']
+
+
+def extract_actual(details):
+    """Extract the actual/measured value from check details."""
+    if not details or not isinstance(details, dict):
+        return ''
+    for key in _ACTUAL_KEYS:
+        if key in details:
+            return _format_number(details[key])
+    if 'total_bytes' in details:
+        return _humanize_bytes(details['total_bytes'])
+    return ''
+
+
+def extract_reference(details):
+    """Extract the reference/required value from check details."""
+    if not details or not isinstance(details, dict):
+        return ''
+    for key in _REFERENCE_KEYS:
+        if key in details:
+            val = details[key]
+            if 'bytes' in key:
+                return _humanize_bytes(val)
+            return str(val)
+    return ''
+
+
+def format_detail_value(val, key=''):
+    """Format detail values: humanize bytes, add commas to large numbers."""
+    if isinstance(val, (int, float)) and 'bytes' in key.lower():
+        return f"{_humanize_bytes(int(val))} ({humanize.intcomma(int(val))})"
+    if isinstance(val, int) and val >= 1000:
+        return humanize.intcomma(val)
+    return val
+
+
+def _create_jinja_env():
+    """Create and configure the Jinja2 environment with all filters and globals."""
+    from jinja2 import Environment
+
+    env = Environment(trim_blocks=True, lstrip_blocks=True, autoescape=True)
+    env.filters['intcomma'] = lambda v: humanize.intcomma(int(v)) if isinstance(v, (int, float)) else str(v)
+    env.filters['inline_code'] = inline_code
+    env.filters['humanize_check'] = humanize_check
+    env.filters['smart_title'] = smart_title
+    env.filters['trim_sub_msg'] = trim_sub_msg
+    env.filters['truncate_error'] = truncate_error
+    env.filters['extract_actual'] = extract_actual
+    env.filters['extract_reference'] = extract_reference
+    env.globals['detail_label'] = detail_label
+    env.globals['format_detail_value'] = format_detail_value
+
+    return env
+
+
+def prepare_template_context(combined_report: Dict[str, Any]) -> Dict[str, Any]:
+    """Prepare template context from the combined report without mutating the input.
 
     Args:
         combined_report: Merged diagnostic report dictionary
-        template_str: The HTML template string (pre-loaded for robustness).
-                     If None, will be loaded from template_path or default location.
-        template_path: Path to template file (optional, overrides default location)
 
     Returns:
-        HTML string with inline CSS/JS
+        Dictionary of template variables
     """
-    from jinja2 import Environment
-
-    # Load template if not provided (for backward compatibility with tests)
-    if template_str is None:
-        template_str = load_template(template_path)
-
-    import re
-
-    env = Environment(trim_blocks=True, lstrip_blocks=True)
-    env.filters['intcomma'] = lambda v: f"{int(v):,}" if isinstance(v, (int, float)) else str(v)
-
-    # Inline code: convert `text` to <code>text</code>
-    from markupsafe import Markup
-    def inline_code(text):
-        if not text:
-            return text
-        result = re.sub(r'`([^`]+)`', r'<code>\1</code>', str(text))
-        return Markup(result)
-
-    env.filters['inline_code'] = inline_code
-
-    # Humanize check names: snake_case identifiers → readable labels
-    _CHECK_LABELS = {
-        "fuse_device": "FUSE Device",
-        "bucket_access_rw": "Bucket Access (read/write)",
-        "bucket_access_ro": "Bucket Access (read-only)",
-        "nvme": "NVMe",
-        "cpu_cores": "CPU Cores",
-        "open_files": "Open Files",
-        "kernel_version": "Kernel Version",
-    }
-    _ACRONYMS = {"uri", "id", "cpu", "gpu", "io", "os", "ip", "dns", "http", "https", "ssh", "ssl", "tls", "nfs", "api", "nvme"}
-
-    def humanize_check(name):
-        if name in _CHECK_LABELS:
-            return _CHECK_LABELS[name]
-        words = name.replace('_', ' ').split()
-        return ' '.join(w.upper() if w.lower() in _ACRONYMS else w.capitalize() for w in words)
-
-    env.filters['humanize_check'] = humanize_check
-
-    # Title-case that respects acronyms
-    def smart_title(text):
-        words = text.replace('_', ' ').split()
-        return ' '.join(w.upper() if w.lower() in _ACRONYMS else w.capitalize() for w in words)
-
-    env.filters['smart_title'] = smart_title
-
-    # Detail key labels that depend on check severity
-    _REQUIREMENT_KEYS = {'required_min', 'required_bytes', 'cores_required'}
-
-    def detail_label(key, category=''):
-        if key in _REQUIREMENT_KEYS:
-            if category == 'critical':
-                return 'Required (≥)'
-            return 'Recommended (≥)'
-        return smart_title(key)
-
-    env.globals['detail_label'] = detail_label
-
-    # Strip redundant prefixes from sub-check messages
-    # e.g. "check bucket exists: ok" → "ok", "list objects: ok" → "ok"
-    # but keep meaningful parts: "access denied (HTTP 403)" stays
-    def trim_sub_msg(msg):
-        if not msg or ':' not in msg:
-            return msg or ''
-        _, _, after = msg.partition(':')
-        return after.strip()
-
-    env.filters['trim_sub_msg'] = trim_sub_msg
-
-    # Truncate long error messages to show only the actionable portion
-    def truncate_error(msg, limit=80):
-        if not msg or len(msg) <= limit:
-            return msg or ''
-        lower = msg.lower()
-        # Extract the meaningful suffix after "api error"
-        idx = lower.find('api error')
-        if idx != -1:
-            after = msg[idx + len('api error'):].lstrip(' :')
-            return after if after else msg[:limit] + '…'
-        # Extract HTTP status code as a short summary
-        import re as _re
-        sc_match = _re.search(r'StatusCode:\s*(\d+)', msg)
-        if sc_match:
-            return f"HTTP {sc_match.group(1)}"
-        # Generic truncation
-        return msg[:limit] + '…'
-
-    env.filters['truncate_error'] = truncate_error
-
-    # Extract actual/reference values from check details for the table columns
-    _ACTUAL_KEYS = ['kernel_version', 'cores_available', 'soft_limit', 'devices_found']
-    _REFERENCE_KEYS = ['required_min', 'required_bytes', 'cores_required']
-
-    def _humanize_bytes(b):
-        if b >= 1073741824:
-            return f"{b / 1073741824:.1f} GiB"
-        if b >= 1048576:
-            return f"{b / 1048576:.0f} MiB"
-        return str(b)
-
-    def _format_number(val):
-        if isinstance(val, int) and val >= 1000:
-            return f"{val:,}"
-        return str(val)
-
-    def extract_actual(details):
-        if not details or not isinstance(details, dict):
-            return ''
-        for key in _ACTUAL_KEYS:
-            if key in details:
-                return _format_number(details[key])
-        if 'total_bytes' in details:
-            return _humanize_bytes(details['total_bytes'])
-        return ''
-
-    def extract_reference(details):
-        if not details or not isinstance(details, dict):
-            return ''
-        for key in _REFERENCE_KEYS:
-            if key in details:
-                val = details[key]
-                if 'bytes' in key:
-                    return _humanize_bytes(val)
-                return str(val)
-        return ''
-
-    env.filters['extract_actual'] = extract_actual
-    env.filters['extract_reference'] = extract_reference
-
-    def format_detail_value(val, key=''):
-        """Format detail values: humanize bytes, add commas to large numbers."""
-        if isinstance(val, (int, float)) and 'bytes' in key.lower():
-            return f"{_humanize_bytes(int(val))} ({int(val):,})"
-        if isinstance(val, int) and val >= 1000:
-            return f"{val:,}"
-        return val
-
-    env.globals['format_detail_value'] = format_detail_value
-
-    template = env.from_string(template_str)
-
-    doctor_report = combined_report.get("reports", {}).get("doctor", {})
+    doctor_report = copy.deepcopy(combined_report.get("reports", {}).get("doctor", {}))
 
     # Compute usage% for each filesystem (for usage bar rendering)
     storage = doctor_report.get("storage", {})
@@ -291,7 +292,6 @@ def render_html(combined_report: Dict[str, Any], template_str: Optional[str] = N
             else:
                 system_checks.append(c)
     elif isinstance(checks, dict):
-        # Legacy mapping format — all go to system checks
         system_checks = checks
 
     # Count warning-category failures and collect recommendations
@@ -322,20 +322,41 @@ def render_html(combined_report: Dict[str, Any], template_str: Optional[str] = N
     _CATEGORY_ORDER = {"critical": 0, "warning": 1}
     recommendations.sort(key=lambda r: _CATEGORY_ORDER.get(r["category"], 2))
 
-    html = template.render(
-        timestamp=combined_report.get("timestamp", ""),
-        overall_status=combined_report.get("overall_status", "unknown"),
-        doctor_report=doctor_report,
-        system_checks=system_checks,
-        disk_checks=disk_checks,
-        bucket_checks=bucket_checks,
-        warnings_count=warnings_count,
-        recommendations=recommendations,
-        bench_report=combined_report.get("reports", {}).get("bench", {}),
-        objbench_report=combined_report.get("reports", {}).get("objbench", {}),
-    )
+    return {
+        "timestamp": combined_report.get("timestamp", ""),
+        "overall_status": combined_report.get("overall_status", "unknown"),
+        "doctor_report": doctor_report,
+        "system_checks": system_checks,
+        "disk_checks": disk_checks,
+        "bucket_checks": bucket_checks,
+        "warnings_count": warnings_count,
+        "recommendations": recommendations,
+        "bench_report": combined_report.get("reports", {}).get("bench", {}),
+        "objbench_report": combined_report.get("reports", {}).get("objbench", {}),
+    }
 
-    return html
+
+def render_html(combined_report: Dict[str, Any], template_str: Optional[str] = None, template_path: Optional[str] = None) -> str:
+    """
+    Render self-contained HTML report from combined data.
+
+    Args:
+        combined_report: Merged diagnostic report dictionary
+        template_str: The HTML template string (pre-loaded for robustness).
+                     If None, will be loaded from template_path or default location.
+        template_path: Path to template file (optional, overrides default location)
+
+    Returns:
+        HTML string with inline CSS/JS
+    """
+    if template_str is None:
+        template_str = load_template(template_path)
+
+    env = _create_jinja_env()
+    template = env.from_string(template_str)
+    context = prepare_template_context(combined_report)
+
+    return template.render(**context)
 
 
 def load_template(template_path: Optional[str] = None) -> str:
@@ -357,7 +378,7 @@ def load_template(template_path: Optional[str] = None) -> str:
     else:
         # Go up from bin/ to project root, then into assets/templates
         path = Path(__file__).parent.parent / "assets" / "templates" / "fusion_report_template.html"
-    
+
     try:
         with open(path, 'r') as f:
             return f.read()
@@ -372,8 +393,6 @@ def load_template(template_path: Optional[str] = None) -> str:
 
 def main():
     """Main entry point for report generation."""
-    import argparse
-
     parser = argparse.ArgumentParser(
         description="Generate consolidated Fusion diagnostic HTML report"
     )
@@ -446,15 +465,11 @@ def main():
         print(f"ERROR: Failed to render HTML report: {str(e)}", file=sys.stderr)
         sys.exit(1)
 
+    overall_status = combined.get("overall_status", "unknown")
     print(f"Reports generated:")
     print(f"  HTML: {args.output_html}")
     print(f"  JSON: {args.output_json}")
-    overall_status = combined.get("overall_status", "unknown")
     print(f"  Status: {overall_status.upper()}")
-
-    # Exit with appropriate code based on status
-    exit_codes = {"pass": 0, "warn": 0, "fail": 1, "unknown": 1}
-    sys.exit(exit_codes.get(overall_status, 1))
 
 
 if __name__ == "__main__":
