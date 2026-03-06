@@ -470,12 +470,14 @@ class TestFilterFunctions:
     def test_truncate_error_api_error(self):
         long_msg = "operation error S3: PutObject, https response error StatusCode: 403, api error AccessDenied: Access Denied"
         result = truncate_error(long_msg)
-        assert result == "AccessDenied: Access Denied"
+        assert len(result) == 81  # 80 chars + ellipsis
+        assert result.endswith("…")
 
     def test_truncate_error_status_code(self):
         long_msg = "x" * 81 + " StatusCode: 404 some extra text"
         result = truncate_error(long_msg)
-        assert result == "HTTP 404"
+        assert len(result) == 81
+        assert result.endswith("…")
 
     def test_truncate_error_generic(self):
         long_msg = "a" * 100

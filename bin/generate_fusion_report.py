@@ -159,17 +159,9 @@ def trim_sub_msg(msg):
 
 
 def truncate_error(msg, limit=80):
-    """Truncate long error messages to the actionable portion."""
+    """Truncate long error messages, keeping the start for context."""
     if not msg or len(msg) <= limit:
         return msg or ''
-    lower = msg.lower()
-    idx = lower.find('api error')
-    if idx != -1:
-        after = msg[idx + len('api error'):].lstrip(' :')
-        return after if after else msg[:limit] + '…'
-    sc_match = re.search(r'StatusCode:\s*(\d+)', msg)
-    if sc_match:
-        return f"HTTP {sc_match.group(1)}"
     return msg[:limit] + '…'
 
 
