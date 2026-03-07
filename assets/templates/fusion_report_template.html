@@ -1315,21 +1315,21 @@
             </details>
             {% endif %}
 
-            <!-- Benchmark -->
-            {% if bench_report and bench_report.keys()|length > 0 and 'error' not in bench_report %}
-            <details id="benchmark" class="card" open>
+            {% macro benchmark_card(report, id, title) %}
+            {% if report and report.keys()|length > 0 and 'error' not in report %}
+            <details id="{{ id }}" class="card" open>
                 <summary>
-                    <h3 class="card-title"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i>Filesystem Benchmark</h3>
+                    <h3 class="card-title"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i>{{ title }}</h3>
                     <span class="toggle-icon">&#9660;</span>
                 </summary>
                 <div class="card-body">
-                    {% if bench_report.summary %}
+                    {% if report.summary %}
                     <p>
-                        <span class="badge badge-{{ bench_report.summary.status }}"
-                            >{{ bench_report.summary.status }}</span
+                        <span class="badge badge-{{ report.summary.status }}"
+                            >{{ report.summary.status }}</span
                         >
                     </p>
-                    {% endif %} {% if bench_report.results %}
+                    {% endif %} {% if report.results %}
                     <pre
                         class="mono"
                         style="
@@ -1340,11 +1340,11 @@
                             overflow-x: auto;
                         "
                     >
-{{ bench_report.results|tojson(indent=2) }}</pre
+{{ report.results|tojson(indent=2) }}</pre
                     >
-                    {% elif bench_report.error %}
+                    {% elif report.error %}
                     <div class="check-item fail">
-                        <div class="check-message">Error: {{ bench_report.error }}</div>
+                        <div class="check-message">Error: {{ report.error }}</div>
                     </div>
                     {% else %}
                     <p class="text-muted">No benchmark results available</p>
@@ -1352,44 +1352,9 @@
                 </div>
             </details>
             {% endif %}
-
-            <!-- Object Storage Benchmark -->
-            {% if objbench_report and objbench_report.keys()|length > 0 and 'error' not in objbench_report %}
-            <details id="objbench" class="card" open>
-                <summary>
-                    <h3 class="card-title"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i>Object Storage Benchmark</h3>
-                    <span class="toggle-icon">&#9660;</span>
-                </summary>
-                <div class="card-body">
-                    {% if objbench_report.summary %}
-                    <p>
-                        <span class="badge badge-{{ objbench_report.summary.status }}"
-                            >{{ objbench_report.summary.status }}</span
-                        >
-                    </p>
-                    {% endif %} {% if objbench_report.results %}
-                    <pre
-                        class="mono"
-                        style="
-                            background: var(--neutral-1);
-                            padding: 1rem;
-                            border-radius: var(--radius);
-                            margin-top: 0.75rem;
-                            overflow-x: auto;
-                        "
-                    >
-{{ objbench_report.results|tojson(indent=2) }}</pre
-                    >
-                    {% elif objbench_report.error %}
-                    <div class="check-item fail">
-                        <div class="check-message">Error: {{ objbench_report.error }}</div>
-                    </div>
-                    {% else %}
-                    <p class="text-muted">No benchmark results available</p>
-                    {% endif %}
-                </div>
-            </details>
-            {% endif %}
+            {% endmacro %}
+            {{ benchmark_card(bench_report, "benchmark", "Filesystem Benchmark") }}
+            {{ benchmark_card(objbench_report, "objbench", "Object Storage Benchmark") }}
 
         </div>
 

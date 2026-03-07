@@ -11,7 +11,6 @@ Produces both JSON and self-contained HTML reports.
 """
 
 import argparse
-import copy
 import json
 import re
 import sys
@@ -124,18 +123,15 @@ _CHECK_LABELS = {
 _ACRONYMS = {"uri", "id", "cpu", "gpu", "io", "os", "ip", "dns", "http", "https", "ssh", "ssl", "tls", "nfs", "api", "nvme"}
 
 
-def humanize_check(name):
-    """Convert snake_case check names to readable labels."""
-    if name in _CHECK_LABELS:
-        return _CHECK_LABELS[name]
-    words = name.replace('_', ' ').split()
-    return ' '.join(w.upper() if w.lower() in _ACRONYMS else w.capitalize() for w in words)
-
-
 def smart_title(text):
     """Title-case that respects acronyms."""
     words = text.replace('_', ' ').split()
     return ' '.join(w.upper() if w.lower() in _ACRONYMS else w.capitalize() for w in words)
+
+
+def humanize_check(name):
+    """Convert snake_case check names to readable labels."""
+    return _CHECK_LABELS.get(name, smart_title(name))
 
 
 _REQUIREMENT_KEYS = {'required_min', 'required_bytes', 'cores_required'}
@@ -189,7 +185,7 @@ def _format_number(val):
 
 
 _ACTUAL_KEYS = ['kernel_version', 'cores_available', 'soft_limit', 'devices_found']
-_REFERENCE_KEYS = ['required_min', 'required_bytes', 'cores_required']
+_REFERENCE_KEYS = list(_REQUIREMENT_KEYS)
 
 
 def extract_actual(details):
@@ -254,17 +250,7 @@ def prepare_template_context(combined_report: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Dictionary of template variables
     """
-    doctor_report = copy.deepcopy(combined_report.get("reports", {}).get("doctor", {}))
-
-    # Compute usage% for each filesystem (for usage bar rendering)
-    storage = doctor_report.get("storage", {})
-    if storage.get("filesystems"):
-        for fs in storage["filesystems"]:
-            total = fs.get("total_bytes", 0)
-            if total > 0:
-                fs["_used_pct"] = ((total - fs.get("available_bytes", 0)) / total) * 100
-            else:
-                fs["_used_pct"] = 0
+    doctor_report = combined_report.get("reports", {}).get("doctor", {})
 
     # Split checks into groups: system, disk, bucket
     _BUCKET_CHECKS = {'bucket_access_rw', 'bucket_access_ro'}
