@@ -43,7 +43,7 @@ jobs:
         uses: astral-sh/setup-uv@v3
 
       - name: Run generate_report tests
-        run: ./tests/test_generate_fusion_report.py
+        run: uv run --no-project --with "pytest==9.0.2" --with "jinja2==3.1.6" --with "humanize==4.15.0" --with "markupsafe" python -m pytest tests/ -v
 
   nf-test:
     runs-on: ubuntu-latest

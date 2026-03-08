@@ -1,10 +1,3 @@
-#!/usr/bin/env -S uv run --no-project --script
-
-# /// script
-# requires-python = ">=3.12"
-# dependencies = ["pytest==9.0.2", "jinja2==3.1.6", "humanize==4.15.0"]
-# ///
-
 """
 Unit tests for generate_fusion_report.py
 Tests load_json_report, merge_reports, render_html, and status aggregation logic.
@@ -1163,7 +1156,3 @@ class TestSkippedCheckStatus:
         combined = merge_reports(paths["doctor"], None, None)
         html = render_html(combined)
         assert isinstance(html, str)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
