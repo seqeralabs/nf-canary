@@ -378,7 +378,6 @@ process TEST_FUSION_DOCTOR {
     environment.
     */
 
-    errorStrategy { task.exitStatus in [0,1,3] ? 'ignore' : 'terminate' }
     publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs/fusion").toUriString() }, mode: 'copy'
 
     input:
@@ -411,12 +410,27 @@ process TEST_FUSION_DOCTOR {
       fi
     fi
 
+    # Run fusion doctor and capture exit code
+    # Allow validation failures (exit codes 1 and 3) but abort on other errors
+    set +e
     fusion doctor \\
         --output fusion-doctor-report.json \\
         --reference-profile ${reference_profile} \\
         ${disk_flag} \\
         ${rw_bucket_args} \\
         ${ro_bucket_args}
+    EXIT_CODE=\$?
+    set -e
+
+    # Only allow exit codes 0, 1, and 3 (success and validation failures)
+    # Abort on any other exit code (non-validation errors)
+    if [[ \$EXIT_CODE -ne 0 && \$EXIT_CODE -ne 1 && \$EXIT_CODE -ne 3 ]]; then
+        echo "ERROR: fusion doctor failed with exit code \$EXIT_CODE (non-validation error)" >&2
+        exit \$EXIT_CODE
+    fi
+
+    # Exit successfully for validation failures to allow report generation
+    exit 0
     """
 }
 
