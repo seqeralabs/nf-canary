@@ -75,11 +75,15 @@
 
             /* --- Header (dark, Seqera Platform style) --- */
             .header {
+                background: var(--brand);
+            }
+            .header-inner {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
+                max-width: 1200px;
+                margin: 0 auto;
                 padding: 1rem 2rem;
-                background: var(--brand);
             }
             .header-left {
                 display: flex;
@@ -403,6 +407,7 @@
             }
             .col-expand {
                 width: 5%;
+                text-align: right;
             }
             .check-cell-name {
                 font-weight: 600;
@@ -681,7 +686,9 @@
                     background: white;
                     padding: 0;
                 }
-                .container {
+                .container,
+                .header-inner,
+                .footer-inner {
                     max-width: none;
                 }
                 .card {
@@ -710,7 +717,7 @@
                 body {
                     padding: 1rem;
                 }
-                .header {
+                .header-inner {
                     flex-direction: column;
                     align-items: flex-start;
                     gap: 0.75rem;
@@ -775,8 +782,7 @@
                 .col-status {
                     width: 3.5rem;
                 }
-                .col-expand,
-                .check-row > td:last-child {
+                .col-expand {
                     display: none;
                 }
                 .check-details-grid {
@@ -804,13 +810,17 @@
             /* --- Footer (Seqera Platform style) --- */
             .footer {
                 margin-top: 2rem;
-                padding: 1.25rem 2rem;
                 border-top: 1px solid var(--border);
+                font-size: 0.8rem;
+                color: var(--neutral-6);
+            }
+            .footer-inner {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                font-size: 0.8rem;
-                color: var(--neutral-6);
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 1.25rem 2rem;
             }
             .footer a {
                 color: var(--neutral-8);
@@ -840,7 +850,7 @@
                                 <td class="check-cell-name">{{ check_name|humanize_check }}</td>
                                 <td class="mono col-hide-mobile" title="{{ actual_val }}">{{ actual_val }}</td>
                                 <td class="col-status">{% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}<span class="badge badge-{{ display_status }}">{{ display_status }}</span></td>
-                                <td>{% if check_data.details or check_data.remediation %}<span class="expand-btn" aria-hidden="true">&#9660;</span>{% endif %}</td>
+                                <td class="col-expand">{% if check_data.details or check_data.remediation %}<span class="expand-btn" aria-hidden="true">&#9660;</span>{% endif %}</td>
                             </tr>
                             {% if check_data.details or check_data.remediation %}
                             <tr class="check-detail-row hidden">
@@ -867,6 +877,7 @@
         {% endmacro %}
         <!-- Header -->
         <div class="header">
+            <div class="header-inner">
                 <div class="header-left">
                     <div class="header-icon">
                         <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fusion logo"><path d="M244.61 328.925C205.16 326.305 173.55 294.615 171.07 255.125H125C127.56 320.085 179.68 372.305 244.61 375.005V328.925Z" fill="white"/><path d="M171.08 244.615C173.7 205.165 205.39 173.555 244.88 171.075V125.005C179.92 127.565 127.7 179.685 125 244.615H171.08Z" fill="white"/><path d="M328.921 255.394C326.301 294.844 294.611 326.454 255.121 328.934V375.004C320.081 372.444 372.301 320.324 375.001 255.394H328.921Z" fill="white"/><path d="M255.391 171.085C294.841 173.705 326.451 205.395 328.931 244.885H375.001C372.441 179.925 320.321 127.705 255.391 125.005V171.085Z" fill="white"/></svg>
@@ -879,6 +890,7 @@
                     </div>
                 </div>
                 <span class="badge badge-lg badge-{{ overall_status }}" aria-label="Overall status: {{ overall_status }}">{{ overall_status }}</span>
+            </div>
         </div>
 
         <div class="container">
@@ -1047,7 +1059,7 @@
                                 <td class="mono" title="{{ uri_val }}">{{ uri_val }}</td>
                                 <td class="col-hide-mobile">{% if check_data.sub_checks %}{% set sc_passed = check_data.sub_checks|selectattr('status', 'equalto', 'pass')|list|length %}{{ sc_passed }}/{{ check_data.sub_checks|length }} checks passed{% else %}—{% endif %}</td>
                                 <td class="col-status"><span class="badge badge-{{ check_data.status }}">{{ check_data.status }}</span></td>
-                                <td>{% if has_expandable %}<span class="expand-btn" aria-hidden="true">&#9660;</span>{% endif %}</td>
+                                <td class="col-expand">{% if has_expandable %}<span class="expand-btn" aria-hidden="true">&#9660;</span>{% endif %}</td>
                             </tr>
                             {% if has_expandable %}
                             <tr class="check-detail-row hidden">
@@ -1234,80 +1246,86 @@
                 </summary>
                 <div class="card-body">
                     {% set res = doctor_report.resources %} {% set unlimited = 18446744073709551615 %}
+                    {% macro rlimit_row(label, check_name, soft_display, hard_display) %}
+                        {% set chk = system_checks|selectattr('check', 'defined')|selectattr('check', 'equalto', check_name)|first if system_checks is iterable and system_checks is not mapping else none %}
+                        {% set req_min = chk.details.required_min if chk and chk.details and chk.details.required_min is defined else none %}
+                        {% set has_details = chk and (chk.details or chk.remediation) %}
+                        <tr class="check-row{% if chk %} {{ 'warn' if chk.status == 'fail' and chk.category == 'warning' else chk.status }}{% if chk.category %} sev-{{ chk.category }}{% endif %}{% endif %}">
+                            <td>{{ label }}</td>
+                            <td>
+                                {{ soft_display
+                                }}{% if req_min and soft_display != 'unlimited' %}
+                                    {% set soft_num = soft_display|replace(',', '')|int(-1) %}
+                                    {% if soft_num >= 0 and soft_num < req_min %}<span class="tag-warn">Low</span>{% endif %}
+                                {% endif %}
+                            </td>
+                            <td class="col-hide-mobile">{{ hard_display }}</td>
+                            <td class="col-expand">{% if has_details %}<span class="expand-btn" aria-hidden="true">&#9660;</span>{% endif %}</td>
+                        </tr>
+                        {% if has_details %}
+                        <tr class="check-detail-row hidden">
+                            <td colspan="4">
+                                {% if chk.details %}
+                                <div class="check-details">
+                                    <div class="detail-header">Details</div>
+                                    <div class="check-details-grid">
+                                        {% if chk.details is mapping %}
+                                            {% for key, val in chk.details.items() %}
+                                                <span class="dk-key">{{ detail_label(key, chk.category|default('')) }}</span>
+                                                <span class="dk-val">{{ format_detail_value(val, key) }}</span>
+                                            {% endfor %}
+                                        {% else %}
+                                            <pre style="grid-column: 1 / -1">{{ chk.details|tojson(indent=2) }}</pre>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% if chk.remediation %}
+                                <div class="remediation-callout"><i class="fa-solid fa-wrench" aria-hidden="true"></i> {{ chk.remediation|inline_code }}</div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                    {% endmacro %}
                     <table>
                         <thead>
                             <tr>
                                 <th>Resource</th>
                                 <th>Soft Limit</th>
-                                <th>Hard Limit</th>
+                                <th class="col-hide-mobile">Hard Limit</th>
+                                <th class="col-expand"><span class="sr-only">Details</span></th>
                             </tr>
                         </thead>
                         <tbody>
                             {% if res.open_files %}
-                            <tr>
-                                <td>Open Files</td>
-                                <td>
-                                    {{ res.open_files.soft|intcomma if res.open_files.soft != unlimited else 'unlimited'
-                                    }}{% if res.open_files.soft != unlimited and res.open_files.soft < 65536 %}
-                                    <span class="tag-warn">Low</span>{% endif %}
-                                </td>
-                                <td>
-                                    {{ res.open_files.hard|intcomma if res.open_files.hard != unlimited else 'unlimited'
-                                    }}
-                                </td>
-                            </tr>
-                            {% endif %} {% if res.max_procs %}
-                            <tr>
-                                <td>Max Processes</td>
-                                <td>
-                                    {{ res.max_procs.soft|intcomma if res.max_procs.soft != unlimited else 'unlimited'
-                                    }}
-                                </td>
-                                <td>
-                                    {{ res.max_procs.hard|intcomma if res.max_procs.hard != unlimited else 'unlimited'
-                                    }}
-                                </td>
-                            </tr>
-                            {% endif %} {% if res.mem_lock %}
-                            <tr>
-                                <td>Memory Lock</td>
-                                <td>
-                                    {% if res.mem_lock.soft == unlimited %}unlimited{% else %}{{ (res.mem_lock.soft /
-                                    1073741824)|round(1) }} GiB{% endif %}
-                                </td>
-                                <td>
-                                    {% if res.mem_lock.hard == unlimited %}unlimited{% else %}{{ (res.mem_lock.hard /
-                                    1073741824)|round(1) }} GiB{% endif %}
-                                </td>
-                            </tr>
-                            {% endif %} {% if res.stack_size %}
-                            <tr>
-                                <td>Stack Size</td>
-                                <td>
-                                    {% if res.stack_size.soft == unlimited %}unlimited{% else %}{{ (res.stack_size.soft
-                                    / 1048576)|round(1) }} MB{% endif %}
-                                </td>
-                                <td>
-                                    {% if res.stack_size.hard == unlimited %}unlimited{% else %}{{ (res.stack_size.hard
-                                    / 1048576)|round(1) }} MB{% endif %}
-                                </td>
-                            </tr>
-                            {% endif %} {% if res.file_size %}
-                            <tr>
-                                <td>Max File Size</td>
-                                <td>{{ 'unlimited' if res.file_size.soft == unlimited else res.file_size.soft }}</td>
-                                <td>{{ 'unlimited' if res.file_size.hard == unlimited else res.file_size.hard }}</td>
-                            </tr>
-                            {% endif %} {% if res.address_space %}
-                            <tr>
-                                <td>Address Space</td>
-                                <td>
-                                    {{ 'unlimited' if res.address_space.soft == unlimited else res.address_space.soft }}
-                                </td>
-                                <td>
-                                    {{ 'unlimited' if res.address_space.hard == unlimited else res.address_space.hard }}
-                                </td>
-                            </tr>
+                            {{ rlimit_row("Open Files", "open_files",
+                                res.open_files.soft|intcomma if res.open_files.soft != unlimited else 'unlimited',
+                                res.open_files.hard|intcomma if res.open_files.hard != unlimited else 'unlimited') }}
+                            {% endif %}
+                            {% if res.max_procs %}
+                            {{ rlimit_row("Max Processes", "max_procs",
+                                res.max_procs.soft|intcomma if res.max_procs.soft != unlimited else 'unlimited',
+                                res.max_procs.hard|intcomma if res.max_procs.hard != unlimited else 'unlimited') }}
+                            {% endif %}
+                            {% if res.mem_lock %}
+                            {{ rlimit_row("Memory Lock", "mem_lock",
+                                'unlimited' if res.mem_lock.soft == unlimited else ((res.mem_lock.soft / 1073741824)|round(1)|string + ' GiB'),
+                                'unlimited' if res.mem_lock.hard == unlimited else ((res.mem_lock.hard / 1073741824)|round(1)|string + ' GiB')) }}
+                            {% endif %}
+                            {% if res.stack_size %}
+                            {{ rlimit_row("Stack Size", "stack_size",
+                                'unlimited' if res.stack_size.soft == unlimited else ((res.stack_size.soft / 1048576)|round(1)|string + ' MB'),
+                                'unlimited' if res.stack_size.hard == unlimited else ((res.stack_size.hard / 1048576)|round(1)|string + ' MB')) }}
+                            {% endif %}
+                            {% if res.file_size %}
+                            {{ rlimit_row("Max File Size", "file_size",
+                                'unlimited' if res.file_size.soft == unlimited else res.file_size.soft,
+                                'unlimited' if res.file_size.hard == unlimited else res.file_size.hard) }}
+                            {% endif %}
+                            {% if res.address_space %}
+                            {{ rlimit_row("Address Space", "address_space",
+                                'unlimited' if res.address_space.soft == unlimited else res.address_space.soft,
+                                'unlimited' if res.address_space.hard == unlimited else res.address_space.hard) }}
                             {% endif %}
                         </tbody>
                     </table>
@@ -1360,16 +1378,18 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <div class="footer-left">
-                <span>&copy; 2019-2026 <a href="https://www.seqera.io" target="_blank">Seqera</a></span>
-                {%- if doctor_report.fusion_version or doctor_report.version %}
-                {%- set version = doctor_report.fusion_version or doctor_report.version %}
-                <span style="color: var(--neutral-4)">|</span>
-                <span>{{ version }}</span>
-                {%- endif %}
-            </div>
-            <div class="footer-logo">
+            <div class="footer-inner">
+                <div class="footer-left">
+                    <span>&copy; 2019-2026 <a href="https://www.seqera.io" target="_blank">Seqera</a></span>
+                    {%- if doctor_report.fusion_version or doctor_report.version %}
+                    {%- set version = doctor_report.fusion_version or doctor_report.version %}
+                    <span style="color: var(--neutral-4)">|</span>
+                    <span>{{ version }}</span>
+                    {%- endif %}
+                </div>
+                <div class="footer-logo">
                 <svg viewBox="0 0 1062 216" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Seqera logo"><g clip-path="url(#fl)"><path d="M215.965 179.672l-.043-.734-.052-.735-.077-.743-.078-.734-.104-.726-.121-.734-.129-.717-.139-.735-.172-.717-.173-.708-.199-.717-.216-.726-.216-.691-.233-.7-.259-.7-.268-.683-.285-.691-.303-.665-.302-.683-.32-.665-.345-.657-.346-.648-.38-.648-.38-.622-.389-.63-.406-.614-.424-.613-.432-.596-.458-.597-.449-.57-.466-.57-.484-.562-.501-.553-.51-.535-.518-.536-.527-.501-.527-.518-.553-.493-.561-.484-.562-.466-.993.596-.7.397-.717.389-.726.372-.717.354-.735.345-.751.329-.752.311-.752.277-.751.276-.769.259-.778.241-.769.234-.778.224-.787.216-.787.19-.806.182-.786.164-.795.147-.803.129-.795.121-.804.104-.812.086-.812.07-.808.048-.812.026-.812.008H131.458l51.546 14.178.371.113.303.112.302.121.277.138.293.156.268.164.285.173.26.19.25.199.233.216.242.216.225.233.207.233.199.268.19.259.182.268.146.268.156.294.138.293.121.285.121.303.087.32.086.302.06.32.052.311.035.328.026.311.008.328-.008.32-.026.328-.035.311-.052.32-.06.32-.086.311-.087.302-.121.311-.121.294-.138.294-.156.276-.146.285-.182.268-.19.259-.207.259-.225.242-.242.242-.233.224-.25.216-.26.19-.285.19-.268.165-.293.156-.277.146-.302.13-.303.112-.302.095-.32.078-.311.069-.319.043-.32.035-.32.034H0v27.864h181.155l.734-.009.752-.026.743-.026.726-.069.743-.06.734-.087.735-.112.725-.104.726-.129.735-.156.708-.173.717-.172.717-.19.717-.208.692-.224.699-.242.709-.26.691-.267.674-.268.674-.303.682-.319.657-.32.657-.337.648-.363.639-.363.639-.389.623-.388.622-.406.604-.424.588-.432.596-.44.588-.467.57-.442.57-.475.562-.484.553-.501.553-.518.518-.536.527-.545.527-.562.518-.536.501-.562.484-.578.449-.578.458-.604.449-.588.432-.614.38-.614.406-.622.389-.631.38-.648.346-.648.345-.657.32-.674.302-.666.303-.682.285-.683.268-.691.259-.691.233-.7.216-.7.216-.717.199-.708.173-.718.172-.717.139-.725.129-.726.121-.735.104-.734.078-.734.077-.735.052-.743.043-.734.026-.743.009-.743-.009-.734-.026-.752Z" fill="#201637"/><path d="M215.965 116.972l-.043-.743-.052-.734-.077-.734-.078-.735-.104-.734-.121-.726-.129-.734-.139-.726-.172-.726-.173-.708-.199-.718-.216-.708-.216-.7-.233-.708-.259-.692-.268-.691-.285-.691-.303-.682-.302-.674-.32-.657-.345-.665-.346-.657-.38-.63-.38-.64-.389-.613-.406-.631-.424-.614-.432-.605-.458-.588-.146-.199h-.009H131.449l51.555 14.178.371.121.303.113.302.112.277.147.293.147.268.164.285.173.26.19.25.207.233.207.242.216.225.234.207.242.199.259.19.259.182.268.146.285.156.276.138.294.121.303.121.302.087.302.086.311.06.311.052.329.035.311.026.328.008.32-.008.311-.026.328-.035.32-.052.32-.06.311-.086.311-.087.311-.121.293-.121.303-.138.302-.156.285-.146.277-.182.259-.19.268-.207.25-.225.25-.242.242-.233.224-.25.208-.26.207-.285.181-.268.173-.293.173-.277.138-.302.147-.303.13-.302.095-.32.103-.311.078-.32.069-.319.052-.32.026-.32.026H109.884 13.936H0v27.864h106.108 75.047.734l.752-.018.743-.043.726-.06.743-.061.734-.086.735-.104.725-.112.726-.138.735-.156.708-.155.717-.191.717-.181.717-.216.692-.225.699-.242.709-.241.691-.277.674-.276.674-.303.682-.311.147-.078.51-.25.657-.337.648-.354.639-.363.639-.38.623-.398.622-.415.604-.406.588-.455.596-.441.588-.466.57-.458.562-.48.553-.498.553-.51.518-.528.527-.553.527-.544.518-.536.501-.562.484-.57.449-.579.458-.605.449-.579.432-.605.38-.623.406-.614.389-.63.38-.648.346-.647.345-.657.32-.674.302-.674.303-.674.285-.683.268-.691.259-.691.233-.7.216-.717.216-.7.199-.717.173-.717.172-.726.139-.726.129-.725.121-.735.104-.734.078-.735.077-.734.052-.734.043-.734.026-.743.009-.734-.009-.743-.026-.743Z" fill="#201637"/><path d="M34.845 62.701l-.751.009-.735.017-.743.043-.734.061-.735.068-.734.087-.734.095-.726.121-.734.13-.726.156-.717.155-.717.19-.709.182-.717.216-.7.225-.708.242-.691.25-.691.278-.674.276-.674.303-.683.32-.147.069-.51.251-.656.337-.648.354-.648.363-.631.38-.622.397-.622.415-.614.406-.596.441-.588.441-.57.466-.57.458-.562.484-.553.498-.554.51-.527.528-.518.545-.527.553-.51.536-.502.562-.493.57-.458.579-.449.604-.458.579-.433.605-.39.623-.397.614-.388.63-.381.648-.354.647-.346.657-.32.674-.31.666-.294.683-.268.69-.259.692-.233.7-.216.717-.217.7-.199.708-.172.726-.173.717-.139.726-.129.725-.121.735-.104.735-.078.734-.069.735-.052.743-.035.734-.034.735V97.538l.034.743.035.752.052.734.069.735.078.735.086.734.12.734.13.717.138.734.173.717.172.708.199.709.199.717.199.708.233.699.234.7.259.691.259.691.294.683.31.674.321.657.345.674.346.648.39.63.38.64.389.622.406.614.424.614.432.596.459.588.148.19h67.578L32.988 104.26l-.363-.113-.303-.103-.302-.121-.285-.147-.286-.147-.276-.164-.277-.182-.259-.181-.259-.208-.234-.207-.241-.216-.216-.233-.208-.242-.199-.259-.199-.26-.173-.267-.164-.277-.147-.285-.138-.294-.121-.302-.113-.303-.095-.302-.078-.311-.068-.32-.043-.328-.044-.311-.017-.32.009-.328.017-.312.043-.32.044-.31.069-.329.078-.303.095-.32.113-.303.12-.293.139-.303.147-.285.164-.277.173-.259.199-.268.199-.25.208-.251.216-.225.242-.234.233-.208.26-.207.26-.19.276-.181.277-.173.276-.165.285-.138.303-.138.302-.13.303-.096.32-.103.319-.078.311-.061.311-.06.329-.026.32-.035h.328H106.125 202.055 216V62.701H109.866 34.845Z" fill="#201637"/><path d="M34.845 0l-.751.009-.735.017-.743.052-.734.06-.735.07-.734.086-.734.095-.726.121-.734.13-.726.147-.717.164-.717.181-.709.199-.717.199-.7.233-.708.233-.691.251-.691.276-.674.276-.674.294-.683.32-.66.32-.657.337-.648.354-.648.372-.631.388-.622.389-.622.406-.614.424-.596.432-.587.441-.57.458-.563.484-.553.49-.554.518-.527.528-.518.536-.527.553-.51.544-.502.553-.493.579-.459.57-.458.605-.449.57-.433.614-.39.622-.397.631-.388.639-.381.648-.354.656-.346.657-.32.674-.31.665-.294.683-.268.683-.259.69-.233.692-.216.7-.217.7-.199.716-.172.726-.173.726-.139.717-.129.717-.121.735-.104.726-.078.735-.069.734-.052.735-.035.734-.034.726V34.828l.034.751.035.743.052.734.069.735.078.734.086.735.12.726.13.734.138.726.173.717.172.726.199.708.199.717.199.717.233.7.234.7.259.691.259.691.294.692.31.674.321.665.345.648.346.665.39.631.38.631.389.63.406.614.424.604.432.596.459.605.148.19.993-.597.7-.397.717-.389.726-.372.717-.354.735-.345.751-.32.743-.328.76-.294.752-.277.769-.258.769-.242.778-.242.778-.225.778-.216.786-.199.806-.173.79-.156.783-.155.804-.13.803-.121.803-.104.793-.086.813-.069.786-.052.795-.043h.452l.828-.009.812-.018.803-.042.821-.035.812-.026h.813l.811-.009h50.245L32.988 41.558l-.363-.104-.303-.12-.302-.13-.285-.13-.286-.155-.276-.156-.277-.172-.259-.199-.259-.19-.234-.216-.241-.225-.216-.233-.208-.233-.199-.26-.199-.259-.173-.276-.164-.277-.147-.285-.138-.285-.121-.294-.113-.32-.095-.294-.078-.302-.068-.328-.043-.311-.044-.328-.017-.32.009-.328.017-.32.043-.32.044-.32.069-.311.078-.32.095-.311.113-.303.12-.303.139-.285.147-.293.164-.268.173-.277.199-.259.199-.242.208-.216.216-.25.242-.225.233-.216.26-.19.26-.172.276-.19.277-.155.285-.156.303-.138.302-.121.303-.104.302-.103.32-.086.31-.06.311-.062.329-.035.32-.026h.328H216V0H34.845Z" fill="#201637"/><path d="M338.551 175.5h-55.042v-21.506h55.042c8.522 0 15.087-1.636 19.695-4.926 4.608-3.282 6.917-7.518 6.917-12.701 0-5.182-2.18-8.984-6.522-11.405-4.351-2.412-10.787-4.406-19.309-5.958l-8.873-1.551c-8.702-1.551-16.614-3.802-23.737-6.734-7.131-2.932-12.787-6.998-16.957-12.18-4.171-5.183-6.265-11.831-6.265-19.954 0-12.087 4.523-21.463 13.568-28.112C306.113 43.824 318.11 40.5 333.068 40.5h53.738v21.77h-53.738c-7.303 0-13.045 1.338-17.215 4.015-4.171 2.676-6.265 6.435-6.265 11.268 0 5.183 2.043 8.984 6.127 11.405 4.085 2.421 9.612 4.236 16.563 5.438l9.131 1.551c9.217 1.552 17.652 3.717 25.307 6.478 7.655 2.762 13.697 6.734 18.133 11.917 4.437 5.182 6.651 12.095 6.651 20.73 0 12.785-4.789 22.716-14.349 29.799-9.568 7.083-22.432 10.62-38.608 10.62l.008.009Z" fill="#201637"/><path d="M663.027 217.191v-61.114h-4.199c-1.926 3.507-4.725 6.877-8.406 10.108-3.68 3.239-8.362 5.909-14.047 8.009-5.693 2.1-12.734 3.154-21.14 3.154-10.86 0-20.839-2.627-29.944-7.879-9.106-5.253-16.372-12.821-21.797-22.722-5.426-9.892-8.139-21.84-8.139-35.853v-3.939c0-13.945 2.756-25.893 8.277-35.793 5.512-9.892 12.821-17.469 21.926-22.721 9.106-5.253 18.998-7.879 29.677-7.879 12.604 0 22.28 2.281 29.019 6.825 6.739 4.553 11.775 9.719 15.101 15.499h4.199V40.5h26.531v176.674h-27.049l-.008.017ZM622.846 153.71c11.905 0 21.624-3.767 29.149-11.292 7.525-7.525 11.291-18.298 11.291-32.302v-2.368c0-13.831-3.81-24.509-11.421-32.043-7.62-7.525-17.296-11.292-29.019-11.292-11.723 0-21.14 3.767-28.76 11.292-7.62 7.525-11.422 18.212-11.422 32.043v2.368c0 14.013 3.81 24.777 11.422 32.302 7.619 7.533 17.2 11.292 28.76 11.292Z" fill="#201637"/><path d="M535.491 105.182c0-13.386-2.603-25.073-7.809-35.069-5.206-9.996-12.458-17.807-21.732-23.426-9.29-5.619-20.096-8.437-32.41-8.437s-23.778 2.853-33.317 8.569c-4.778 2.853-9.034 6.262-12.784 10.242-.471.493-.933 1.004-1.396 1.515-1.37 1.55-2.646 3.17-3.862 4.861-1.609 2.264-3.108 4.668-4.478 7.213-5.463 10.172-8.203 22.132-8.203 35.879v3.215c0 13.747 2.732 25.698 8.203 35.879 5.463 10.172 13.058 18.071 22.777 23.69 9.71 5.619 21.081 8.437 34.096 8.437 11.457 0 20.996-1.876 28.634-5.619 7.638-3.751 13.709-8.393 18.222-13.923 1.25-1.542 2.431-3.056 3.536-4.553 2.877-3.884 5.257-7.627 7.133-11.247l-22.383-11.783c-2.775 6.076-6.731 11.431-11.842 16.063-5.13 4.642-12.716 6.958-22.777 6.958-10.764 0-19.746-3.444-26.938-10.304-.446-.432-.882-.854-1.302-1.312a20.55 20.55 0 0 1-1.233-1.366 30.83 30.83 0 0 1-1.672-2.575c-3.502-5.407-5.505-11.845-6.011-19.305a83.45 83.45 0 0 1-.102-2.157h98.659v-10.445h-.009Zm-80.694-10.709-13.709 14.099h-4.513c-.068-4.06 0-9.273.523-14.099.256-1.832.599-3.602 1.044-5.302.428-1.7.951-3.32 1.559-4.87 2.02-5.17 5.026-9.547 8.982-13.122 6.328-5.716 14.522-8.569 24.6-8.569 10.079 0 18.222 2.853 24.473 8.569 6.25 5.716 9.804 13.483 10.669 23.294h-53.62-.008Z" fill="#201637"/><path d="M836.991 105.182c0-13.386-2.603-25.073-7.809-35.069-5.206-9.996-12.458-17.807-21.732-23.426-9.29-5.619-20.096-8.437-32.41-8.437s-23.778 2.853-33.317 8.569c-4.778 2.853-9.034 6.262-12.784 10.242-.471.493-.933 1.004-1.396 1.515-1.37 1.55-2.646 3.17-3.862 4.861-1.609 2.264-3.108 4.668-4.478 7.213-5.463 10.172-8.203 22.132-8.203 35.879v3.215c0 13.747 2.732 25.698 8.203 35.879 5.463 10.172 13.058 18.071 22.777 23.69 9.71 5.619 21.081 8.437 34.096 8.437 11.457 0 20.996-1.876 28.634-5.619 7.638-3.751 13.709-8.393 18.222-13.923 1.25-1.542 2.431-3.056 3.536-4.553 2.877-3.884 5.257-7.627 7.133-11.247l-22.383-11.783c-2.775 6.076-6.731 11.431-11.842 16.063-5.13 4.642-12.716 6.958-22.777 6.958-10.764 0-19.746-3.444-26.938-10.304-.446-.432-.882-.854-1.302-1.312a20.55 20.55 0 0 1-1.233-1.366 30.83 30.83 0 0 1-1.672-2.575c-3.502-5.407-5.505-11.845-6.011-19.305a83.45 83.45 0 0 1-.102-2.157H837v-10.445h-.009Zm-80.694-10.709-13.709 14.099h-4.513c-.068-4.06 0-9.273.523-14.099.256-1.832.599-3.602 1.044-5.302.428-1.7.951-3.32 1.559-4.87 2.02-5.17 5.026-9.547 8.982-13.122 6.328-5.716 14.522-8.569 24.6-8.569 10.079 0 18.222 2.853 24.473 8.569 6.25 5.716 9.804 13.483 10.669 23.294h-53.62-.008Z" fill="#201637"/><path d="M864.009 175.615V38.777h26.522v15.231h4.199c2.099-5.425 5.469-9.408 10.108-11.948 4.639-2.54 10.376-3.81 17.201-3.81h15.499v24.423h-16.544c-8.761 0-15.931 2.41-21.538 7.223-5.607 4.82-8.406 12.216-8.406 22.194v83.516h-27.05l.009.009Z" fill="#201637"/><path d="M1062 88.582c0-16.064-4.88-28.472-14.65-37.214-9.77-8.742-23.19-13.118-40.25-13.118-11.189 0-20.65 1.78-28.383 5.358-7.725 3.577-13.948 8.304-18.652 14.187-4.705 5.893-8.126 12.32-10.265 19.274l25.583 8.304c1.597-7.138 4.887-12.943 9.862-17.406 4.984-4.454 12.167-6.69 21.583-6.69s15.114 2.367 19.723 7.094c4.63 4.726 6.929 10.847 6.929 18.344v22.834h-4.43l-14.22-14.267h-21.322c-14.393 0-26.341 3.437-35.846 10.312-9.505 6.866-14.262 17.002-14.262 30.392 0 8.927 2.182 16.503 6.529 22.755 4.355 6.252 10.22 10.978 17.587 14.187 7.384 3.21 15.78 4.823 25.18 4.823s16.344-1.298 21.854-3.885c5.51-2.586 9.69-5.62 12.53-9.101 2.85-3.481 4.96-6.656 6.39-9.506h4.27v20.242l22.65-.001V88.59l.01-.009ZM1035.08 119.369c0 11.074-3.42 19.773-10.26 26.104-6.84 6.331-15.67 9.505-26.52 9.505-7.994 0-14.296-1.78-18.922-5.358-4.626-3.577-6.93-8.391-6.93-14.459 0-6.068 2.226-10.672 6.659-13.784 4.452-3.122 10.3-4.683 17.588-4.683h38.373v2.675h.012Z" fill="#201637"/></g><defs><clipPath id="fl"><rect width="1062" height="216" fill="white"/></clipPath></defs></svg>
+                </div>
             </div>
         </footer>
 
