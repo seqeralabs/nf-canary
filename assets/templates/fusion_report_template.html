@@ -1249,7 +1249,6 @@
                     {% macro rlimit_row(label, check_name, soft_display, hard_display) %}
                         {% set chk = system_checks|selectattr('check', 'defined')|selectattr('check', 'equalto', check_name)|first if system_checks is iterable and system_checks is not mapping else none %}
                         {% set req_min = chk.details.required_min if chk and chk.details and chk.details.required_min is defined else none %}
-                        {% set has_details = chk and (chk.details or chk.remediation) %}
                         <tr class="check-row{% if chk %} {{ 'warn' if chk.status == 'fail' and chk.category == 'warning' else chk.status }}{% if chk.category %} sev-{{ chk.category }}{% endif %}{% endif %}">
                             <td>{{ label }}</td>
                             <td>
@@ -1260,32 +1259,7 @@
                                 {% endif %}
                             </td>
                             <td class="col-hide-mobile">{{ hard_display }}</td>
-                            <td class="col-expand">{% if has_details %}<span class="expand-btn" aria-hidden="true">&#9660;</span>{% endif %}</td>
                         </tr>
-                        {% if has_details %}
-                        <tr class="check-detail-row hidden">
-                            <td colspan="4">
-                                {% if chk.details %}
-                                <div class="check-details">
-                                    <div class="detail-header">Details</div>
-                                    <div class="check-details-grid">
-                                        {% if chk.details is mapping %}
-                                            {% for key, val in chk.details.items() %}
-                                                <span class="dk-key">{{ detail_label(key, chk.category|default('')) }}</span>
-                                                <span class="dk-val">{{ format_detail_value(val, key) }}</span>
-                                            {% endfor %}
-                                        {% else %}
-                                            <pre style="grid-column: 1 / -1">{{ chk.details|tojson(indent=2) }}</pre>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                {% endif %}
-                                {% if chk.remediation %}
-                                <div class="remediation-callout"><i class="fa-solid fa-wrench" aria-hidden="true"></i> {{ chk.remediation|inline_code }}</div>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endif %}
                     {% endmacro %}
                     <table>
                         <thead>
@@ -1293,7 +1267,6 @@
                                 <th>Resource</th>
                                 <th>Soft Limit</th>
                                 <th class="col-hide-mobile">Hard Limit</th>
-                                <th class="col-expand"><span class="sr-only">Details</span></th>
                             </tr>
                         </thead>
                         <tbody>
