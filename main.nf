@@ -392,6 +392,7 @@ process TEST_FUSION_DOCTOR {
 
     script:
     def disk_flag  = "--check-disk-usage ${cache_path ?: '/tmp'}"
+    def redact_flag = params.fusion_redact ? "--redact" : ""
 
     // Build bucket args from lists
     def rw_bucket_args = rw_buckets ? rw_buckets.collect { bucket -> "--check-bucket-read-write ${bucket}" }.join(' ') : ""
@@ -417,6 +418,7 @@ process TEST_FUSION_DOCTOR {
         --output fusion-doctor-report.json \\
         --reference-profile ${reference_profile} \\
         ${disk_flag} \\
+        ${redact_flag} \\
         ${rw_bucket_args} \\
         ${ro_bucket_args}
     EXIT_CODE=\$?
