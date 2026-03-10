@@ -21,17 +21,15 @@ from typing import Dict, Any, Optional
 import humanize
 
 
-def load_json_report(path: Optional[str]) -> Dict[str, Any]:
-    """Load a JSON report file, return empty dict if path is None.
+def load_json_report(path: str) -> Dict[str, Any]:
+    """Load a JSON report file.
 
     Args:
-        path: Path to JSON report file, or None
+        path: Path to JSON report file
 
     Returns:
         Parsed JSON dictionary, or dict with "error" key if loading fails
     """
-    if not path:
-        return {}
 
     try:
         with open(path, 'r') as f:
@@ -63,9 +61,9 @@ def merge_reports(
     combined = {
         "timestamp": datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
         "reports": {
-            "doctor": load_json_report(doctor_report),
-            "bench": load_json_report(bench_report),
-            "objbench": load_json_report(objbench_report),
+            "doctor": load_json_report(doctor_report) if doctor_report else {},
+            "bench": load_json_report(bench_report) if bench_report else {},
+            "objbench": load_json_report(objbench_report) if objbench_report else {},
         },
     }
 

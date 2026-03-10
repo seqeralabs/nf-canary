@@ -51,12 +51,6 @@ class TestLoadJsonReport:
         result = load_json_report(str(path))
         assert result == {"status": "pass", "message": "All checks passed"}
 
-    def test_load_none_path(self):
-        assert load_json_report(None) == {}
-
-    def test_load_empty_string_path(self):
-        assert load_json_report("") == {}
-
     def test_load_missing_file(self):
         result = load_json_report("/nonexistent/path/file.json")
         assert "error" in result
