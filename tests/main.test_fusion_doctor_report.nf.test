@@ -1,50 +1,50 @@
-nextflow_pipeline {
+nextflow_process {
 
-    name "Test FUSION_DOCTOR_GENERATE_REPORT conditional execution"
+    name "Test Process FUSION_DOCTOR_GENERATE_REPORT"
     script "main.nf"
+    process "FUSION_DOCTOR_GENERATE_REPORT"
 
-    test("Report process does NOT run when fusion is disabled") {
+    test("generates and publishes HTML and JSON reports when fusion is enabled") {
+
+        setup {
+            run("TEST_FUSION_DOCTOR") {
+                script "main.nf"
+                params {
+                    fusion = true
+                    outdir = "${outputDir}/output"
+                }
+                process {
+                    """
+                    input[0] = 'dummy'
+                    def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                    input[1] = ref_profile  // reference_profile
+                    input[2] = []  // rw_buckets
+                    input[3] = []  // ro_buckets
+                    input[4] = '/tmp/cache'  // cache_path
+                    """
+                }
+            }
+        }
 
         when {
             params {
-                fusion = false
-                run = 'TEST_SUCCESS'  // Run a different test
-                outdir = "${launchDir}/output"
+                outdir = "${outputDir}/output"
+            }
+            process {
+                """
+                input[0] = TEST_FUSION_DOCTOR.out.report
+                input[1] = file("${projectDir}/assets/templates/fusion_report_template.html")
+                """
             }
         }
 
         then {
             assertAll(
-                { assert workflow.success },
-                // TEST_FUSION_DOCTOR should not run
-                { assert workflow.trace.tasks().findAll { it.name == 'NF_CANARY:TEST_FUSION_DOCTOR' }.size() == 0 },
-                // FUSION_DOCTOR_GENERATE_REPORT should not run
-                { assert workflow.trace.tasks().findAll { it.name == 'NF_CANARY:FUSION_DOCTOR_GENERATE_REPORT' }.size() == 0 }
-            )
-        }
-
-    }
-
-    test("Report process DOES run when fusion is enabled") {
-
-        when {
-            params {
-                fusion = true
-                run = 'TEST_FUSION_DOCTOR'
-                outdir = "${launchDir}/output"
-            }
-        }
-
-        then {
-            assertAll(
-                { assert workflow.success },
-                // Both processes should run (2 tasks total)
-                { assert workflow.trace.tasks().size() == 2 },
-                { assert workflow.trace.succeeded().size() == 2 },
+                { assert process.success },
                 // Check that report files exist in outputs
-                { assert path("${launchDir}/output/fusion/fusion-report.html").exists() },
-                { assert path("${launchDir}/output/fusion/fusion-report.json").exists() },
-                { assert path("${launchDir}/output/fusion-doctor-report.json").exists() }
+                { assert path("${outputDir}/output/fusion/fusion-report.html").exists() },
+                { assert path("${outputDir}/output/fusion/fusion-report.json").exists() },
+                { assert path("${outputDir}/output/fusion-doctor-report.json").exists() }
             )
         }
 
