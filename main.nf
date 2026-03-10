@@ -596,29 +596,5 @@ workflow NF_CANARY {
 }
 
 workflow {
-    // Validate that only one Fusion profile is specified
-    def fusionProfiles = workflow.profile.tokenize(',')
-        .findAll { it.trim().startsWith('fusion_') }
-    
-    if (fusionProfiles.size() > 1) {
-        log.error """
-        ================================================================================
-        ERROR: Multiple Fusion profiles detected: ${fusionProfiles.join(', ')}
-        
-        Only ONE Fusion profile can be specified at a time to ensure consistent
-        validation thresholds for the fusion doctor process.
-        
-        Please select only one profile from:
-          - fusion_aws_low, fusion_aws_recommended, fusion_aws_high
-          - fusion_google_low, fusion_google_recommended, fusion_google_high
-          - fusion_azure_low, fusion_azure_recommended, fusion_azure_high
-        
-        Example: nextflow run . -profile fusion_aws_recommended
-        ================================================================================
-        """.stripIndent()
-        
-        System.exit(1)
-    }
-    
     NF_CANARY(params.run, params.skip, params.gpu, params.fusion)
 }
