@@ -28,18 +28,15 @@ def load_json_report(path: str) -> Dict[str, Any]:
         path: Path to JSON report file
 
     Returns:
-        Parsed JSON dictionary, or dict with "error" key if loading fails
-    """
+        Parsed JSON dictionary
 
-    try:
-        with open(path, 'r') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return {"error": f"Report file not found: {path}"}
-    except json.JSONDecodeError as e:
-        return {"error": f"Malformed JSON in {path}: {str(e)}"}
-    except IOError as e:
-        return {"error": f"Cannot read {path}: {str(e)}"}
+    Raises:
+        FileNotFoundError: If the report file does not exist
+        json.JSONDecodeError: If the file contains malformed JSON
+        IOError: If the file cannot be read
+    """
+    with open(path, 'r') as f:
+        return json.load(f)
 
 
 def merge_reports(
@@ -72,7 +69,7 @@ def merge_reports(
     # Supports both legacy "summary.status" and real fusion "check_summary.overall"
     statuses = []
     for report in combined["reports"].values():
-        if report and "error" not in report:
+        if report:
             if "check_summary" in report:
                 statuses.append(report["check_summary"].get("overall", "unknown"))
             elif "summary" in report:
@@ -82,7 +79,7 @@ def merge_reports(
         # Check if failures are only in warning-category checks
         has_critical_failure = False
         for report in combined["reports"].values():
-            if not report or "error" in report:
+            if not report:
                 continue
             checks = report.get("checks", [])
             if isinstance(checks, list):
@@ -415,11 +412,15 @@ def main():
         sys.exit(1)
 
     # Merge all reports
-    combined = merge_reports(
-        doctor_report=args.doctor,
-        bench_report=args.bench,
-        objbench_report=args.objbench,
-    )
+    try:
+        combined = merge_reports(
+            doctor_report=args.doctor,
+            bench_report=args.bench,
+            objbench_report=args.objbench,
+        )
+    except (FileNotFoundError, json.JSONDecodeError, IOError) as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        sys.exit(1)
 
     # Write combined JSON
     try:
@@ -436,9 +437,6 @@ def main():
             f.write(html)
     except IOError as e:
         print(f"ERROR: Failed to write HTML report to {args.output_html}: {str(e)}", file=sys.stderr)
-        sys.exit(1)
-    except Exception as e:
-        print(f"ERROR: Failed to render HTML report: {str(e)}", file=sys.stderr)
         sys.exit(1)
 
     overall_status = combined.get("overall_status", "unknown")

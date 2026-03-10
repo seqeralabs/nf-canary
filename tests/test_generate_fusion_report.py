@@ -52,22 +52,20 @@ class TestLoadJsonReport:
         assert result == {"status": "pass", "message": "All checks passed"}
 
     def test_load_missing_file(self):
-        result = load_json_report("/nonexistent/path/file.json")
-        assert "error" in result
-        assert "not found" in result["error"]
+        with pytest.raises(FileNotFoundError):
+            load_json_report("/nonexistent/path/file.json")
 
     def test_load_invalid_json(self, tmp_path):
         path = tmp_path / "bad.json"
         path.write_text("{invalid json content")
-        result = load_json_report(str(path))
-        assert "error" in result
-        assert "Malformed JSON" in result["error"]
+        with pytest.raises(json.JSONDecodeError):
+            load_json_report(str(path))
 
     def test_load_empty_json_file(self, tmp_path):
         path = tmp_path / "empty.json"
         path.write_text("")
-        result = load_json_report(str(path))
-        assert "error" in result
+        with pytest.raises(json.JSONDecodeError):
+            load_json_report(str(path))
 
     def test_load_complex_json(self, tmp_path):
         test_data = {
@@ -150,12 +148,9 @@ class TestMergeReports:
         assert result["reports"]["objbench"] == {}
 
     def test_merge_with_invalid_report(self, write_reports):
-        doctor = {"summary": {"status": "pass"}}
-        paths = write_reports(doctor=doctor)
-        result = merge_reports(paths["doctor"], "/nonexistent/bench.json", None)
-        assert result["overall_status"] == "pass"
-        assert result["reports"]["doctor"] == doctor
-        assert "error" in result["reports"]["bench"]
+        paths = write_reports(doctor={"summary": {"status": "pass"}})
+        with pytest.raises(FileNotFoundError):
+            merge_reports(paths["doctor"], "/nonexistent/bench.json", None)
 
     def test_merge_timestamp_present(self):
         result = merge_reports(None, None, None)
