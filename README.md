@@ -165,7 +165,7 @@ nextflow run seqeralabs/nf-canary -profile fusion_aws_recommended
 
 > [!NOTE]
 >
-> Seqera Platform auto-selects NVMe-based instance families when Fusion is enabled (e.g. `m6id`, `c6id`, `r6id`). Fusion can also work without NVMe instances, but in this case the EBS disk shall be bumped to 100 GB (`gp3`, 325 MB/s); this is what the `low` profile validates.
+> Seqera Platform will auto-select NVMe-based instance families when Fusion is enabled (e.g. `m6id`, `c6id`, `r6id`) and the "Fast instance storage" toggle is active in the CE settings. Fusion can also work without NVMe instances, but in this case the EBS disk shall be bumped to 100 GB (`gp3`, 325 MB/s); this is what the `low` profile validates.
 
 | Profile                  | Disk   | Memory | Kernel | Based on            |
 | ------------------------ | ------ | ------ | ------ | ------------------- |
