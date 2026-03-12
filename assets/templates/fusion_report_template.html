@@ -4,7 +4,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Fusion Filesystem Diagnostics</title>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7/css/materialdesignicons.min.css" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
         <style>
             /* === Seqera Platform design tokens === */
@@ -23,12 +23,13 @@
                 --neutral-8: #58595c;
                 --neutral-9: #404145;
                 --neutral-10: #28292d;
+                --black: #242424;
 
                 /* Functional */
                 --body-bg: #f7f7f7;
                 --card-bg: #fff;
                 --border: #dee2e6;
-                --radius: 8px;
+                --radius: 4px;
 
                 /* Status */
                 --clr-pass: #087f68;
@@ -36,6 +37,11 @@
                 --clr-warn: #b06020;
                 --clr-unknown: #a0a1a3;
                 --clr-primary-tint: #e8f8f4;
+
+                /* Chart colors (from Figma) */
+                --bar-pass: #69c690;
+                --bar-warn: #ffc04d;
+                --bar-fail: #E7727D;
 
                 /* Typography */
                 --font-body: 'Inter', system-ui, -apple-system, sans-serif;
@@ -83,32 +89,37 @@
                 justify-content: space-between;
                 max-width: 1200px;
                 margin: 0 auto;
-                padding: 1rem 2rem;
+                padding: 12px 40px 8px;
             }
             .header-left {
                 display: flex;
-                align-items: center;
-                gap: 1rem;
+                align-items: flex-start;
+                gap: 8px;
             }
             .header-icon {
                 display: inline-flex;
                 align-items: center;
+                justify-content: center;
+                width: 26px;
+                height: 26px;
             }
             .header-icon svg {
-                width: 28px;
-                height: 28px;
+                width: 26px;
+                height: 26px;
             }
             .header-title {
-                font-size: 1.25rem;
-                font-weight: 600;
+                font-size: 21.6px;
+                font-weight: 500;
                 color: #fff;
+                line-height: 1.2;
             }
             .header-meta {
-                font-size: 0.8rem;
-                color: rgba(255, 255, 255, 0.6);
+                font-size: 12.8px;
+                color: #cfd0d1;
                 display: flex;
                 gap: 0.5rem;
                 align-items: center;
+                margin-top: 4px;
             }
 
             /* --- Status badge --- */
@@ -128,25 +139,59 @@
                 min-width: 4.5rem;
                 width: auto;
             }
-            .badge-lg {
-                font-size: 0.85rem;
-                padding: 0.3rem 1rem;
-                width: auto;
+            /* Pill-style header badge (light bg, coloured text) */
+            .badge-pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 2.5px 10px;
+                border-radius: 32px;
+                font-size: 14.4px;
+                font-weight: 500;
+                text-transform: none;
+                letter-spacing: 0;
+                min-width: 0;
+                line-height: 1.4;
+                color: inherit;
+                background: transparent;
+            }
+            .badge-pill::before { display: none; }
+            .badge-pill.badge-pass {
+                background: #e5f5ec;
+                color: #1b7340;
+            }
+            .badge-pill.badge-fail {
+                background: #fbe7e9;
+                color: #92232e;
+            }
+            .badge-pill.badge-warn,
+            .badge-pill.badge-degraded {
+                background: #fff4e0;
+                color: #734a00;
+            }
+            .badge-pill.badge-unknown {
+                background: var(--neutral-2);
+                color: var(--neutral-8);
+            }
+            .badge-pill .pill-icon {
+                width: 14px;
+                height: 14px;
+                flex-shrink: 0;
             }
             .badge-pass {
                 background: var(--clr-pass);
             }
             .badge::before {
-                font-family: 'Font Awesome 6 Free';
-                font-weight: 900;
-                font-size: 0.65rem;
-                width: 0.7em;
+                font-family: 'Material Design Icons';
+                font-weight: normal;
+                font-size: 0.75rem;
+                width: 0.8em;
                 text-align: center;
             }
-            .badge-pass::before { content: '\f00c'; }
-            .badge-fail::before { content: '\f057'; }
+            .badge-pass::before { content: '\F012C'; }
+            .badge-fail::before { content: '\F0156'; }
             .badge-warn::before,
-            .badge-degraded::before { content: '\f071'; }
+            .badge-degraded::before { content: '\F0026'; }
             .badge-fail {
                 background: var(--clr-fail);
             }
@@ -159,30 +204,26 @@
             }
 
             .access-tag {
-                display: inline-block;
-                font-size: 0.65rem;
-                font-weight: 600;
-                border-radius: 4px;
-                padding: 1px 5px;
-                text-transform: uppercase;
-                letter-spacing: 0.3px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 84px;
+                font-size: 12.8px;
+                font-weight: 400;
+                border-radius: 32px;
+                padding: 2.5px 8px;
+                color: #545555;
+                line-height: 1.2;
+                white-space: nowrap;
                 vertical-align: middle;
-                min-width: 5rem;
-                text-align: center;
+                margin-right: 8px;
             }
             .access-rw {
-                color: #fff;
-                background: var(--neutral-7);
+                background: #fff;
+                border: 1px solid #cfd0d1;
             }
             .access-ro {
-                color: var(--neutral-7);
-                background: var(--neutral-3);
-            }
-            .col-access {
-                width: 5.5rem;
-            }
-            .col-access-width {
-                width: 5.5rem;
+                background: #eaebeb;
             }
             .access-short {
                 display: none;
@@ -191,21 +232,22 @@
             /* --- Cards --- */
             .card {
                 background: var(--card-bg);
-                border-radius: var(--radius);
-                padding: 1.25rem;
+                border-radius: 4px;
+                border: 1px solid #eaebeb;
+                padding: 20px;
                 margin-bottom: 1rem;
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.04);
             }
             .card-title {
-                font-size: 0.85rem;
-                font-weight: 600;
-                color: var(--neutral-7);
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                margin-bottom: 1rem;
+                font-size: 16px;
+                font-weight: 500;
+                color: #545555;
+                text-transform: none;
+                letter-spacing: 0;
+                line-height: 1.4;
+                margin-bottom: 20px;
             }
             .card-title i {
-                margin-right: 0.4rem;
+                margin-right: 5px;
                 width: 1.1em;
                 text-align: center;
             }
@@ -265,6 +307,10 @@
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 gap: 1rem;
+                margin-bottom: 1rem;
+            }
+            .grid-2 > .card {
+                margin-bottom: 0;
             }
             .grid-3 {
                 display: grid;
@@ -277,58 +323,122 @@
                 gap: 1rem;
             }
 
-            @media (max-width: 768px) {
-                .grid-2,
-                .grid-3,
-                .grid-4 {
-                    grid-template-columns: 1fr;
-                }
+            /* --- Overview section --- */
+            .overview-row {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+                margin-bottom: 1rem;
+            }
+            .overview-row > .card {
+                margin-bottom: 0;
+            }
+            .card-title-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .card-title-row .card-title {
+                margin-bottom: 0;
+            }
+            .overview-row .card-title {
+                margin-bottom: 0;
+            }
+            .overview-content {
+                display: flex;
+                flex-direction: column;
+                flex: 1;
+                gap: 12px;
+                align-items: center;
+                justify-content: center;
+                margin-top: 20px;
             }
 
-            /* --- Metric tiles --- */
-            .metric {
+            /* --- Overview donut chart --- */
+            .donut-wrapper {
+                position: relative;
+                width: 180px;
+                height: 180px;
+                flex-shrink: 0;
+            }
+            .donut-wrapper svg { display: block; }
+            .donut-center-text {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
                 text-align: center;
-                padding: 1rem 0.75rem;
-                border-radius: var(--radius);
-                background: var(--card-bg);
-                border: 1px solid var(--neutral-2);
-                border-top: 3px solid var(--neutral-3);
+                pointer-events: none;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 2px;
             }
-            .metric-value {
-                font-size: 1.5rem;
-                font-weight: 600;
-                color: var(--neutral-10);
+            .donut-center-count {
+                font-size: 21.6px;
+                font-weight: 500;
+                color: #545555;
+                line-height: 1.2;
             }
-            .metric-label {
-                font-size: 0.75rem;
-                color: var(--neutral-6);
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                margin-top: 0.25rem;
+            .donut-center-label {
+                font-size: 12.8px;
+                color: #545555;
+                font-weight: 400;
+                line-height: 1.2;
             }
-            .metric-pass {
-                border-top-color: var(--clr-pass);
+            .overview-legend {
+                display: flex;
+                align-items: center;
+                row-gap: 8px;
+                column-gap: 32px;
+                color: #545555;
+                justify-content: center;
+                flex-wrap: wrap;
             }
-            .metric-fail {
-                border-top-color: var(--clr-fail);
+            .overview-legend-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
             }
-            .metric-warn {
-                border-top-color: var(--clr-warn);
+            .overview-legend-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                flex-shrink: 0;
             }
+            .overview-legend-label {
+                font-size: 14.4px;
+                font-weight: 400;
+                line-height: 1.4;
+            }
+            .overview-legend-count {
+                font-size: 14.4px;
+                font-weight: 500;
+                color: #545555;
+                line-height: 1.4;
+            }
+            .overview-legend-text {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
             /* --- Key-value pairs --- */
             .kv-grid {
                 display: grid;
-                grid-template-columns: 160px 1fr;
-                gap: 0.5rem 1rem;
+                grid-template-columns: 120px 1fr;
+                gap: 8px 32px;
             }
             .kv-label {
-                font-size: 0.8rem;
-                color: var(--neutral-6);
-                font-weight: 600;
+                font-size: 14.4px;
+                font-weight: 500;
+                color: #7b7b7b;
+                line-height: 1.4;
             }
             .kv-value {
-                font-size: 0.85rem;
-                color: var(--neutral-10);
+                font-size: 14.4px;
+                color: var(--black);
+                line-height: 1.5;
                 word-break: break-all;
             }
             .kv-value code,
@@ -348,19 +458,21 @@
             }
             th {
                 text-align: left;
-                padding: 0.6rem 0.75rem;
-                font-size: 0.75rem;
-                font-weight: 600;
-                color: var(--neutral-7);
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
+                padding: 12px;
+                font-size: 12.8px;
+                font-weight: 500;
+                color: #7b7b7b;
+                text-transform: none;
+                letter-spacing: 0;
                 background: var(--neutral-1);
-                border-bottom: 2px solid #cfd0d1;
+                border-bottom: none;
+                line-height: 1.2;
             }
             td {
-                padding: 0.5rem 0.75rem;
-                border-bottom: 1px solid var(--neutral-2);
-                font-size: 0.85rem;
+                padding: 12px;
+                border-bottom: 1px solid #eaebeb;
+                font-size: 14.4px;
+                line-height: 1.4;
             }
             tr:last-child td {
                 border-bottom: none;
@@ -375,47 +487,71 @@
             td.mono,
             .mono {
                 font-family: var(--font-mono);
-                font-size: 0.8rem;
+                font-size: 14.4px;
                 overflow-wrap: break-word;
                 word-break: break-word;
             }
             /* --- Checks table --- */
             .checks-table {
                 width: 100%;
-                border-collapse: collapse;
+                border-collapse: separate;
+                border-spacing: 0;
                 table-layout: fixed;
+                margin-top: 20px;
+            }
+            .checks-table th:first-child {
+                border-radius: 4px 0 0 4px;
+            }
+            .checks-table th.col-expand {
+                width: 32px;
+                padding: 0;
+            }
+            .checks-table th:last-child {
+                border-radius: 0 4px 4px 0;
+            }
+            .checks-table thead::after {
+                content: '';
+                display: table-row;
+                height: 4px;
             }
             .checks-table td {
                 vertical-align: middle;
+                color: var(--black);
+            }
+            .checks-table tbody tr:last-child td,
+            .checks-table tbody tr:has(+ .check-detail-row:last-child) td {
+                border-bottom: none;
             }
             .col-name {
-                width: 50%;
+                width: 45%;
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
             .col-value {
-                width: 35%;
+                width: auto;
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
             .col-status {
-                width: 10%;
-                text-align: center;
-            }
-            .checks-table td.col-status {
-                text-align: center;
+                width: 100px;
+                text-align: left;
             }
             .col-expand {
-                width: 5%;
-                text-align: right;
+                width: 32px;
+            }
+            .checks-table td.col-expand {
+                padding: 4px;
             }
             .check-cell-name {
-                font-weight: 600;
-                color: var(--neutral-10);
+                font-weight: 500;
+                font-size: 14.4px;
+                color: var(--black);
             }
             .card-summary-meta {
-                font-size: 0.8rem;
-                color: var(--neutral-6);
+                font-size: 12.8px;
+                color: #545555;
+                font-weight: 400;
+                line-height: 1.2;
             }
             .check-row.has-details {
                 cursor: pointer;
@@ -423,93 +559,156 @@
             .check-row.has-details:hover td {
                 background: var(--neutral-1);
             }
-            .check-row.warn td,
-            .check-row.warn.sev-warning td {
-                background: #fef6ee;
+            .check-row.has-details:hover td:first-child {
+                border-radius: 4px 0 0 4px;
             }
-            .check-row.warn.has-details:hover td,
-            .check-row.warn.sev-warning.has-details:hover td {
-                background: #fdebd8;
+            .check-row.has-details:hover td:last-child {
+                border-radius: 0 4px 4px 0;
             }
-            .check-row.fail.sev-critical td {
-                background: #fef2f2;
+            .check-row.expanded:hover td:first-child {
+                border-radius: 4px 0 0 0;
             }
-            .check-row.fail.sev-critical.has-details:hover td {
-                background: #fde5e5;
+            .check-row.expanded:hover td:last-child {
+                border-radius: 0 4px 0 0;
+            }
+            /* Status badge in checks table (pill style) */
+            .check-status-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                height: 20px;
+                padding: 2.5px 8px 2.5px 4px;
+                border-radius: 32px;
+                font-size: 12.8px;
+                font-weight: 400;
+                line-height: 1.2;
+            }
+            .check-status-badge.status-pass {
+                background: #e5f5ec;
+                color: #1b7340;
+            }
+            .check-status-badge.status-warn {
+                background: #fff4e0;
+                color: #734a00;
+            }
+            .check-status-badge.status-fail {
+                background: #fbe7e9;
+                color: #92232e;
+            }
+            .check-status-badge .check-status-icon {
+                width: 12px;
+                height: 12px;
+                flex-shrink: 0;
             }
             .check-detail-row td {
-                padding: 0 0.75rem 0.6rem 2rem;
-                border-bottom: 1px solid var(--neutral-2);
+                padding: 12px 12px 12px 44px;
+                border-top: 1px solid #eaebeb;
                 background: var(--neutral-1);
             }
             .check-detail-row.hidden {
                 display: none;
             }
+            .check-row.expanded,
+            .check-row.expanded + .check-detail-row {
+                background: var(--neutral-1);
+            }
+            .check-row.expanded td {
+                background: var(--neutral-1);
+                border-bottom: none;
+                border-top: 1px solid #eaebeb;
+            }
+            .check-row.expanded td:first-child {
+                border-radius: 4px 0 0 0;
+                border-left: 1px solid #eaebeb;
+            }
+            .check-row.expanded td:last-child {
+                border-radius: 0 4px 0 0;
+                border-right: 1px solid #eaebeb;
+            }
+            .check-row.expanded + .check-detail-row td {
+                border-bottom: 1px solid #eaebeb;
+                border-left: 1px solid #eaebeb;
+                border-right: 1px solid #eaebeb;
+                border-radius: 0 0 4px 4px;
+            }
             .expand-btn {
-                display: inline-block;
-                color: var(--neutral-5);
-                font-size: 0.8rem;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 24px;
+                height: 24px;
+                background: var(--neutral-1);
+                border-radius: 4px;
+                color: var(--neutral-7);
+                font-size: 0.7rem;
                 transition: transform 0.2s ease;
                 transform: rotate(-90deg);
                 pointer-events: none;
-            }
-            .check-row.expanded td {
-                border-bottom: none;
             }
             .check-row.expanded .expand-btn {
                 transform: rotate(0deg);
             }
 
             .detail-header {
-                font-size: 0.7rem;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                color: var(--neutral-5);
-                margin-bottom: 0.4rem;
+                font-size: 12.8px;
+                font-weight: 500;
+                color: var(--black);
+                margin-bottom: 8px;
+                text-transform: none;
+                letter-spacing: 0;
+                line-height: 1.2;
             }
             .check-details {
-                font-size: 0.85rem;
-                color: var(--neutral-7);
-                margin-top: 0.25rem;
-                padding: 0.6rem 0.75rem;
-                background: rgba(0, 0, 0, 0.025);
-                border-radius: var(--radius);
-                border-left: 2px solid var(--neutral-3);
+                font-size: 12.8px;
+                color: var(--black);
+                margin-top: 0;
+                padding: 0;
+                background: none;
+                border-radius: 0;
+                border-left: none;
             }
             .check-details pre {
                 overflow-x: auto;
                 font-family: var(--font-mono);
                 margin: 0;
-                font-size: 0.8rem;
+                font-size: 12.8px;
             }
 
             .check-details-grid {
                 display: grid;
                 grid-template-columns: auto 1fr;
-                gap: 0.15rem 1rem;
-                font-size: 0.85rem;
+                gap: 8px 16px;
+                font-size: 12.8px;
+                line-height: 1.2;
             }
             .dk-key {
-                color: var(--neutral-5);
+                color: #7b7b7b;
                 font-weight: 500;
-                font-size: 0.8rem;
+                font-size: 12.8px;
                 white-space: nowrap;
             }
             .dk-val {
-                color: var(--neutral-10);
+                color: var(--black);
                 font-family: var(--font-mono);
-                font-size: 0.8rem;
+                font-size: 12.8px;
             }
 
             .remediation-callout {
-                margin-top: 0.5rem;
-                padding: 0.5rem 0.75rem;
-                border-left: 3px solid var(--primary);
-                background: var(--clr-primary-tint);
-                border-radius: var(--radius);
-                font-size: 0.83rem;
-                color: var(--neutral-10);
+                margin-top: 16px;
+                padding: 12px 16px;
+                background: #e8ebfc;
+                border: 1px solid #c6ccf8;
+                border-radius: 4px;
+                font-size: 12.8px;
+                line-height: 1.2;
+                color: var(--black);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                min-width: 300px;
+            }
+            .remediation-callout:first-child {
+                margin-top: 0;
             }
 
             /* --- Recommendations --- */
@@ -517,114 +716,99 @@
                 list-style: none;
                 padding: 0;
                 margin: 0;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                margin-top: 20px;
             }
             .rec-item {
                 display: flex;
-                gap: 0.75rem;
-                align-items: center;
-                padding: 0.5rem 0;
+                flex-direction: column;
+                gap: 8px;
+                padding-bottom: 12px;
                 border-bottom: 1px solid var(--neutral-2);
-                font-size: 0.85rem;
             }
             .rec-item:last-child {
                 border-bottom: none;
+                padding-bottom: 0;
+            }
+            .rec-badge-wrapper {
+                width: 81px;
+                flex-shrink: 0;
             }
             .rec-badge {
-                padding: 2px 6px;
-                text-align: center;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                height: 20px;
+                padding: 2.5px 8px 2.5px 4px;
+                border-radius: 32px;
+                font-size: 12.8px;
+                font-weight: 400;
+                line-height: 1.2;
+                text-transform: capitalize;
+                letter-spacing: 0;
+            }
+            .rec-badge::before {
+                display: none;
+            }
+            .rec-badge.badge-warn {
+                background: #fff4e0;
+                color: #734a00;
+            }
+            .rec-badge.badge-fail {
+                background: #fbe7e9;
+                color: #92232e;
+            }
+            .rec-badge .rec-badge-icon {
+                width: 12px;
+                height: 12px;
                 flex-shrink: 0;
-                width: auto;
-                min-width: 5.5rem;
             }
             .rec-text {
-                color: var(--neutral-10);
+                font-size: 14.4px;
+                color: var(--black);
             }
             .rec-all-clear {
                 color: var(--neutral-6);
-                font-size: 0.85rem;
-                padding: 0.25rem 0;
-                margin: 0;
+                font-size: 13.6px;
+                padding: 0;
+                margin-top: 20px;
             }
 
-            /* --- Sub-checks (nested bucket operations) --- */
-            .sub-checks {
-                padding-left: 0.5rem;
-            }
-            .sub-check {
-                display: flex;
-                align-items: baseline;
-                gap: 0.4rem;
-                font-size: 0.8rem;
-                padding: 0.2rem 0;
-                color: var(--neutral-8);
-            }
-            .sub-check .status-icon {
-                width: 14px;
-                font-size: 0.85em;
-                flex-shrink: 0;
-            }
-            .sub-check .sub-name {
-                font-weight: 500;
-                min-width: 5em;
-            }
-            .sub-check .sub-msg {
-                color: var(--neutral-6);
-                word-break: break-all;
-            }
-            .sub-check.pass .status-icon {
-                color: var(--clr-pass);
-            }
-            .sub-check.fail .status-icon {
-                color: var(--clr-fail);
-            }
-            .sub-check.skip {
-                color: var(--neutral-5);
-            }
             .error-detail {
                 display: inline;
-                margin-left: 0.25rem;
             }
             .error-detail summary {
                 display: inline;
                 cursor: pointer;
-                color: var(--primary);
-                font-size: 0.75rem;
-                text-decoration: underline;
-                text-decoration-style: dotted;
+                list-style: none;
             }
-            .error-detail summary:hover { color: var(--brand); }
-            .error-full {
-                display: block;
-                margin: 0.35rem 0 0.15rem;
-                padding: 0.4rem 0.6rem;
-                background: var(--neutral-1);
-                border: 1px solid var(--neutral-2);
-                border-radius: var(--radius);
-                font-family: var(--font-mono);
-                font-size: 0.75rem;
-                color: var(--neutral-8);
-                white-space: pre-wrap;
-                word-break: break-all;
-                line-height: 1.4;
-            }
+            .error-detail summary::-webkit-details-marker { display: none; }
+            .error-detail .error-long { display: none; }
+            .error-detail .error-link { color: #087f68; }
+            .error-detail .error-link:hover { opacity: 0.8; }
+            .error-detail[open] .error-short { display: none; }
+            .error-detail[open] .error-long { display: inline; }
+            .error-detail[open] .error-link { display: none; }
 
             /* --- Usage bar --- */
             .usage-bar {
                 display: flex;
                 align-items: center;
-                gap: 0.5rem;
+                gap: 8px;
             }
             .usage-bar-track {
-                flex: 0 0 80px;
+                flex: 0 0 100px;
                 height: 8px;
-                background: var(--neutral-2);
-                border-radius: 4px;
+                background: #eaebeb;
+                border-radius: 5px;
                 overflow: hidden;
             }
             .usage-bar-fill {
                 height: 100%;
-                border-radius: 3px;
-                background: var(--clr-pass);
+                border-radius: 5px;
+                background: #1f884c;
                 min-width: 3px;
             }
             .usage-bar-fill.warn {
@@ -634,24 +818,34 @@
                 background: var(--clr-fail);
             }
             .usage-pct {
-                font-size: 0.8rem;
-                min-width: 3em;
-                color: var(--neutral-8);
+                font-family: var(--font-mono);
+                font-size: 14.4px;
+                color: var(--black);
                 font-variant-numeric: tabular-nums;
             }
+            .usage-size {
+                font-family: var(--font-mono);
+                font-size: 14.4px;
+                color: #545555;
+                margin-left: 16px;
+            }
 
-/* --- Inline badges --- */
+            /* --- Inline badges --- */
             .tag-warn {
-                display: inline-block;
-                font-size: 0.7rem;
-                color: var(--clr-warn);
-                background: #fef6ee;
-                padding: 1px 6px;
-                border-radius: 3px;
-                margin-left: 0.6rem;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.3px;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                height: 20px;
+                padding: 2.5px 8px 2.5px 4px;
+                border-radius: 32px;
+                font-family: var(--font-body);
+                font-size: 12.8px;
+                font-weight: 400;
+                line-height: 1.2;
+                color: #734a00;
+                background: #fff4e0;
+                margin-left: 8px;
+                vertical-align: middle;
             }
 
             /* --- Text helpers --- */
@@ -664,13 +858,12 @@
             .section-divider {
                 display: flex;
                 align-items: center;
-                gap: 0.75rem;
+                gap: 16px;
                 margin: 1.5rem 0 1rem;
-                color: var(--neutral-5);
-                font-size: 0.75rem;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
+                color: #7b7b7b;
+                font-size: 16px;
+                font-weight: 500;
+                line-height: 1.4;
             }
             .section-divider::before,
             .section-divider::after {
@@ -692,7 +885,6 @@
                     max-width: none;
                 }
                 .card {
-                    box-shadow: none;
                     border: 1px solid var(--border);
                 }
                 details.card {
@@ -713,99 +905,6 @@
                 }
             }
 
-            @media (max-width: 600px) {
-                body {
-                    padding: 1rem;
-                }
-                .header-inner {
-                    flex-direction: column;
-                    align-items: flex-start;
-                    gap: 0.75rem;
-                    padding: 1rem;
-                }
-                .grid-2,
-                .grid-3,
-                .grid-4 {
-                    grid-template-columns: 1fr;
-                }
-                .kv-grid {
-                    grid-template-columns: 1fr;
-                }
-                .usage-bar-track {
-                    display: none;
-                }
-                .col-hide-mobile {
-                    display: none;
-                }
-                .access-full {
-                    display: none;
-                }
-                .access-short {
-                    display: inline;
-                }
-                .col-access {
-                    width: auto;
-                }
-                .access-tag {
-                    min-width: 0;
-                    padding: 1px 3px;
-                    font-size: 0.55rem;
-                }
-                td.col-access {
-                    padding: 0.3rem 0.2rem 0.3rem 0.75rem;
-                    width: 1%;
-                    white-space: nowrap;
-                }
-                .col-access-width {
-                    width: auto;
-                }
-                .badge::before {
-                    display: none;
-                }
-                .badge {
-                    gap: 0;
-                    min-width: 3rem;
-                    width: auto;
-                    font-size: 0.6rem;
-                    padding: 2px 4px;
-                }
-                .rec-badge {
-                    min-width: 0;
-                    width: auto;
-                }
-                .checks-table {
-                    table-layout: auto;
-                }
-                .col-name, .col-value {
-                    width: auto;
-                }
-                .col-status {
-                    width: 3.5rem;
-                }
-                .col-expand {
-                    display: none;
-                }
-                .check-details-grid {
-                    grid-template-columns: 1fr;
-                    gap: 0;
-                }
-                .dk-key {
-                    white-space: normal;
-                }
-                .dk-val {
-                    word-break: break-all;
-                    margin-bottom: 0.4rem;
-                }
-                td.mono,
-                .mono {
-                    overflow-wrap: normal;
-                    word-break: normal;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    max-width: 120px;
-                }
-            }
 
             /* --- Footer (Seqera Platform style) --- */
             .footer {
@@ -839,6 +938,70 @@
                 width: auto;
                 opacity: 0.5;
             }
+
+            /* --- Mobile --- */
+            @media (max-width: 600px) {
+                body {
+                    padding: 1rem;
+                }
+                .header-inner {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 0.75rem;
+                    padding: 1rem;
+                }
+                .grid-2,
+                .grid-3,
+                .grid-4,
+                .overview-row {
+                    grid-template-columns: 1fr;
+                }
+                .kv-grid {
+                    grid-template-columns: 1fr;
+                }
+                .usage-bar-track {
+                    display: none;
+                }
+                .checks-table .col-hide-mobile {
+                    width: 0;
+                    padding: 0 !important;
+                    border: none !important;
+                    font-size: 0;
+                    overflow: hidden;
+                }
+                .checks-table .col-name {
+                    width: auto;
+                }
+                .access-tag.access-tag {
+                    width: auto;
+                }
+                .access-tag .access-full {
+                    display: none;
+                }
+                .access-tag .access-short {
+                    display: inline;
+                }
+                .check-details-grid {
+                    grid-template-columns: 1fr;
+                    gap: 0;
+                }
+                .dk-key {
+                    white-space: normal;
+                }
+                .dk-val {
+                    word-break: break-all;
+                    margin-bottom: 0.4rem;
+                }
+                td.mono,
+                .mono {
+                    overflow-wrap: normal;
+                    word-break: normal;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    max-width: 120px;
+                }
+            }
         </style>
     </head>
     <body>
@@ -846,11 +1009,23 @@
                             {% set actual = check_data.details|extract_actual %}
                             {% set ref = check_data.details|extract_reference %}
                             {% set actual_val = actual or ('Detected' if check_data.status == 'pass' else '—') %}
-                            <tr class="check-row {{ 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status }}{% if check_data.category %} sev-{{ check_data.category }}{% endif %}">
+                            {% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}
+                            <tr class="check-row {% if check_data.details or check_data.remediation %}has-details{% endif %}">
+                                <td class="col-expand">{% if check_data.details or check_data.remediation %}<span class="expand-btn" aria-hidden="true">&#9660;</span>{% endif %}</td>
                                 <td class="check-cell-name">{{ check_name|humanize_check }}</td>
                                 <td class="mono col-hide-mobile" title="{{ actual_val }}">{{ actual_val }}</td>
-                                <td class="col-status">{% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}<span class="badge badge-{{ display_status }}">{{ display_status }}</span></td>
-                                <td class="col-expand">{% if check_data.details or check_data.remediation %}<span class="expand-btn" aria-hidden="true">&#9660;</span>{% endif %}</td>
+                                <td class="col-status">
+                                    <span class="check-status-badge status-{{ display_status }}">
+                                        {% if display_status == 'pass' %}
+                                        <svg class="check-status-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7 0a7 7 0 110 14A7 7 0 017 0zm3.02 4.97a.75.75 0 00-1.06 0L6.25 7.69 5.03 6.47a.75.75 0 10-1.06 1.06l1.75 1.75a.75.75 0 001.06 0l3.24-3.25a.75.75 0 000-1.06z"/></svg>
+                                        {% elif display_status == 'warn' %}
+                                        <svg class="check-status-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7.93345 8.16667H5.8828V3.73333H7.93345M7.93345 11.6667H5.8828V9.56667H7.93345M0.397486 12.1008C0.218159 12.4313 0.457429 12.8333 0.833437 12.8333H13.1626C13.5396 12.8333 13.7788 12.4294 13.5975 12.0989L7.40068 0.797318C7.21194 0.453087 6.71706 0.454176 6.52983 0.799234L0.397486 12.1008Z"/></svg>
+                                        {% else %}
+                                        <svg class="check-status-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7 0a7 7 0 110 14A7 7 0 017 0zM5.03 4.97a.75.75 0 00-1.06 1.06L5.94 7 3.97 8.97a.75.75 0 101.06 1.06L7 8.06l1.97 1.97a.75.75 0 101.06-1.06L8.06 7l1.97-1.97a.75.75 0 10-1.06-1.06L7 5.94 5.03 4.97z"/></svg>
+                                        {% endif %}
+                                        {{ display_status|capitalize }}
+                                    </span>
+                                </td>
                             </tr>
                             {% if check_data.details or check_data.remediation %}
                             <tr class="check-detail-row hidden">
@@ -869,7 +1044,7 @@
                                     </div>
                                     {% endif %}
                                     {% if check_data.remediation %}
-                                    <div class="remediation-callout"><i class="fa-solid fa-wrench" aria-hidden="true"></i> {{ check_data.remediation|inline_code }}</div>
+                                    <div class="remediation-callout"><i class="mdi mdi-information" aria-hidden="true" style="font-size:16px;color:#4f5bd5;"></i> {{ check_data.remediation|inline_code }}</div>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -880,7 +1055,7 @@
             <div class="header-inner">
                 <div class="header-left">
                     <div class="header-icon">
-                        <svg viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fusion logo"><path d="M244.61 328.925C205.16 326.305 173.55 294.615 171.07 255.125H125C127.56 320.085 179.68 372.305 244.61 375.005V328.925Z" fill="white"/><path d="M171.08 244.615C173.7 205.165 205.39 173.555 244.88 171.075V125.005C179.92 127.565 127.7 179.685 125 244.615H171.08Z" fill="white"/><path d="M328.921 255.394C326.301 294.844 294.611 326.454 255.121 328.934V375.004C320.081 372.444 372.301 320.324 375.001 255.394H328.921Z" fill="white"/><path d="M255.391 171.085C294.841 173.705 326.451 205.395 328.931 244.885H375.001C372.441 179.925 320.321 127.705 255.391 125.005V171.085Z" fill="white"/></svg>
+                        <svg viewBox="57 57 386 386" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fusion logo"><path d="M244.61 328.925C205.16 326.305 173.55 294.615 171.07 255.125H125C127.56 320.085 179.68 372.305 244.61 375.005V328.925Z" fill="white"/><path d="M171.08 244.615C173.7 205.165 205.39 173.555 244.88 171.075V125.005C179.92 127.565 127.7 179.685 125 244.615H171.08Z" fill="white"/><path d="M328.921 255.394C326.301 294.844 294.611 326.454 255.121 328.934V375.004C320.081 372.444 372.301 320.324 375.001 255.394H328.921Z" fill="white"/><path d="M255.391 171.085C294.841 173.705 326.451 205.395 328.931 244.885H375.001C372.441 179.925 320.321 127.705 255.391 125.005V171.085Z" fill="white"/></svg>
                     </div>
                     <div>
                         <h1 class="header-title">Fusion Filesystem Diagnostics</h1>
@@ -889,57 +1064,121 @@
                         </div>
                     </div>
                 </div>
-                <span class="badge badge-lg badge-{{ overall_status }}" aria-label="Overall status: {{ overall_status }}">{{ overall_status }}</span>
+                <span class="badge badge-pill badge-{{ overall_status }}" aria-label="Overall status: {{ overall_status }}">
+                    <svg class="pill-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        {% if overall_status == 'pass' %}
+                        <path d="M7 0a7 7 0 110 14A7 7 0 017 0zm3.02 4.97a.75.75 0 00-1.06 0L6.25 7.69 5.03 6.47a.75.75 0 10-1.06 1.06l1.75 1.75a.75.75 0 001.06 0l3.24-3.25a.75.75 0 000-1.06z"/>
+                        {% elif overall_status == 'fail' %}
+                        <path d="M7 0a7 7 0 110 14A7 7 0 017 0zM5.03 4.97a.75.75 0 00-1.06 1.06L5.94 7 3.97 8.97a.75.75 0 101.06 1.06L7 8.06l1.97 1.97a.75.75 0 101.06-1.06L8.06 7l1.97-1.97a.75.75 0 10-1.06-1.06L7 5.94 5.03 4.97z"/>
+                        {% else %}
+                        <path d="M7.93345 8.16667H5.8828V3.73333H7.93345M7.93345 11.6667H5.8828V9.56667H7.93345M0.397486 12.1008C0.218159 12.4313 0.457429 12.8333 0.833437 12.8333H13.1626C13.5396 12.8333 13.7788 12.4294 13.5975 12.0989L7.40068 0.797318C7.21194 0.453087 6.71706 0.454176 6.52983 0.799234L0.397486 12.1008Z"/>
+                        {% endif %}
+                    </svg>
+                    {{ overall_status|capitalize }}
+                </span>
             </div>
         </div>
 
         <div class="container">
-            <!-- Summary metrics -->
+            <!-- Overview + Recommendations (side-by-side) -->
             {% if doctor_report.check_summary or doctor_report.summary %} {% set summary = doctor_report.check_summary
             or doctor_report.summary %}
-            <div class="card">
-                <h2 class="card-title"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i>Overview</h2>
-                <div class="grid-4">
-                    <div class="metric">
-                        <div class="metric-value">
-                            {{ (summary.passed|default(0)) + (summary.failed|default(0)) + (summary.skipped|default(0))
-                            }}
-                        </div>
-                        <div class="metric-label">Total Checks</div>
-                    </div>
-                    {% if summary.passed is defined %}
-                    <div class="metric metric-pass">
-                        <div class="metric-value">{{ summary.passed|default(0) }}</div>
-                        <div class="metric-label">Passed</div>
-                    </div>
-                    {% endif %}
-                    <div class="metric{% if warnings_count|default(0) > 0 %} metric-warn{% endif %}">
-                        <div class="metric-value">{{ warnings_count|default(0) }}</div>
-                        <div class="metric-label">Warnings</div>
-                    </div>
-                    {% if summary.failed is defined %}
-                    <div class="metric{% if (summary.failed|default(0) - warnings_count|default(0)) > 0 %} metric-fail{% endif %}">
-                        <div class="metric-value">{{ summary.failed|default(0) - warnings_count|default(0) }}</div>
-                        <div class="metric-label">Critical</div>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
+            {% set total_checks = (summary.passed|default(0)) + (summary.failed|default(0)) + (summary.skipped|default(0)) %}
+            {% set passed_count = summary.passed|default(0) %}
+            {% set warn_count = warnings_count|default(0) %}
+            {% set critical_count = [summary.failed|default(0) - warn_count, 0]|max %}
+            {% set circ = 364.42 %}
+            {% set gap = 5 %}
+            {% set segment_count = (1 if passed_count > 0 else 0) + (1 if warn_count > 0 else 0) + (1 if critical_count > 0 else 0) %}
+            {% set total_gap = gap * segment_count %}
+            {% set avail = circ - total_gap %}
+            {% if total_checks > 0 %}
+            {% set pass_len = (avail * passed_count / total_checks)|round(1) %}
+            {% set warn_len = (avail * warn_count / total_checks)|round(1) %}
+            {% set crit_len = (avail * critical_count / total_checks)|round(1) %}
+            {% else %}
+            {% set pass_len = 0 %}
+            {% set warn_len = 0 %}
+            {% set crit_len = 0 %}
             {% endif %}
+            {% set pass_off = 0 %}
+            {% set warn_off = -(pass_len + gap) if passed_count > 0 else 0 %}
+            {% set crit_off = -(pass_len + (gap if passed_count > 0 else 0) + warn_len + (gap if warn_count > 0 else 0)) %}
+            <div class="overview-row">
+                <div class="card">
+                    <h2 class="card-title"><i class="mdi mdi-chart-donut" aria-hidden="true"></i>Overview</h2>
+                    <div class="overview-content">
+                        <div class="donut-wrapper">
+                            <svg viewBox="0 0 160 160" width="180" height="180">
+                                {% if passed_count > 0 %}
+                                <circle cx="80" cy="80" r="58" fill="none" stroke="#69c690" stroke-width="22"
+                                    stroke-dasharray="{{ pass_len }} {{ circ }}" stroke-dashoffset="{{ pass_off }}"
+                                    transform="rotate(-90 80 80)"/>
+                                {% endif %}
+                                {% if warn_count > 0 %}
+                                <circle cx="80" cy="80" r="58" fill="none" stroke="#ffc04d" stroke-width="22"
+                                    stroke-dasharray="{{ warn_len }} {{ circ }}" stroke-dashoffset="{{ warn_off }}"
+                                    transform="rotate(-90 80 80)"/>
+                                {% endif %}
+                                {% if critical_count > 0 %}
+                                <circle cx="80" cy="80" r="58" fill="none" stroke="#E7727D" stroke-width="22"
+                                    stroke-dasharray="{{ crit_len }} {{ circ }}" stroke-dashoffset="{{ crit_off }}"
+                                    transform="rotate(-90 80 80)"/>
+                                {% endif %}
+                            </svg>
+                            <div class="donut-center-text">
+                                <div class="donut-center-count">{{ total_checks }}</div>
+                                <div class="donut-center-label">Total checks</div>
+                            </div>
+                        </div>
+                        <div class="overview-legend">
+                            {% if passed_count > 0 %}
+                            <span class="overview-legend-item">
+                                <span class="overview-legend-dot" style="background: var(--bar-pass)"></span>
+                                <span class="overview-legend-text">
+                                    <span class="overview-legend-label">Passed</span>
+                                    <span class="overview-legend-count">{{ passed_count }}</span>
+                                </span>
+                            </span>
+                            {% endif %}
+                            {% if warn_count > 0 %}
+                            <span class="overview-legend-item">
+                                <span class="overview-legend-dot" style="background: var(--bar-warn)"></span>
+                                <span class="overview-legend-text">
+                                    <span class="overview-legend-label">Warnings</span>
+                                    <span class="overview-legend-count">{{ warn_count }}</span>
+                                </span>
+                            </span>
+                            {% endif %}
+                            {% if critical_count > 0 %}
+                            <span class="overview-legend-item">
+                                <span class="overview-legend-dot" style="background: var(--bar-fail)"></span>
+                                <span class="overview-legend-text">
+                                    <span class="overview-legend-label">Critical</span>
+                                    <span class="overview-legend-count">{{ critical_count }}</span>
+                                </span>
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
 
-            <!-- Recommendations -->
-            <details class="card" open>
-                <summary>
-                    <h2 class="card-title"><i class="fa-solid fa-lightbulb" aria-hidden="true"></i>Recommendations</h2>
-                    {% if recommendations %}<span class="card-summary-meta">{{ recommendations|length }} item{{ 's' if recommendations|length != 1 }}</span>{% endif %}
-                    <span class="toggle-icon">&#9660;</span>
-                </summary>
-                <div class="card-body">
+                <div class="card">
+                    <h2 class="card-title"><i class="mdi mdi-lightbulb-outline" aria-hidden="true"></i>Recommendations</h2>
                     {% if recommendations %}
                     <ul class="recommendations-list">
                         {% for rec in recommendations %}
-                        <li class="rec-item rec-{{ rec.category }}">
-                            <span class="badge badge-{% if rec.category == 'critical' %}fail{% else %}warn{% endif %} rec-badge">{{ rec.category }}</span>
+                        <li class="rec-item">
+                            <div class="rec-badge-wrapper">
+                                <span class="rec-badge badge-{% if rec.category == 'critical' %}fail{% else %}warn{% endif %}">
+                                    {% if rec.category == 'critical' %}
+                                    <svg class="rec-badge-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7 0a7 7 0 110 14A7 7 0 017 0zM5.03 4.97a.75.75 0 00-1.06 1.06L5.94 7 3.97 8.97a.75.75 0 101.06 1.06L7 8.06l1.97 1.97a.75.75 0 101.06-1.06L8.06 7l1.97-1.97a.75.75 0 10-1.06-1.06L7 5.94 5.03 4.97z"/></svg>
+                                    {% else %}
+                                    <svg class="rec-badge-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7.93345 8.16667H5.8828V3.73333H7.93345M7.93345 11.6667H5.8828V9.56667H7.93345M0.397486 12.1008C0.218159 12.4313 0.457429 12.8333 0.833437 12.8333H13.1626C13.5396 12.8333 13.7788 12.4294 13.5975 12.0989L7.40068 0.797318C7.21194 0.453087 6.71706 0.454176 6.52983 0.799234L0.397486 12.1008Z"/></svg>
+                                    {% endif %}
+                                    {{ rec.category|capitalize }}
+                                </span>
+                            </div>
                             <span class="rec-text">{{ rec.remediation|inline_code }}</span>
                         </li>
                         {% endfor %}
@@ -948,29 +1187,28 @@
                     <p class="rec-all-clear">All checks passed, no recommendations.</p>
                     {% endif %}
                 </div>
-            </details>
+            </div>
+            {% endif %}
 
             <!-- System Checks -->
             {% if system_checks %}
             {% set sys_pass = system_checks|selectattr('status', 'equalto', 'pass')|list|length if system_checks is iterable and system_checks is not mapping else 0 %}
             {% set sys_total = system_checks|length if system_checks is not mapping else system_checks|list|length %}
-            <details id="system-checks" class="card" open>
-                <summary>
-                    <h2 class="card-title"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i>System Checks</h2>
+            <div class="card">
+                <div class="card-title-row">
+                    <h2 class="card-title"><i class="mdi mdi-shield-check-outline" aria-hidden="true"></i>System Checks</h2>
                     <span class="card-summary-meta">{{ sys_pass }}/{{ sys_total }} passed</span>
-                    <span class="toggle-icon">&#9660;</span>
-                </summary>
-                <div class="card-body">
-                    <table class="checks-table">
-                        <thead>
-                            <tr>
-                                <th class="col-name">Check</th>
-                                <th class="col-value col-hide-mobile">Result</th>
-                                <th class="col-status">Status</th>
-                                <th class="col-expand"><span class="sr-only">Details</span></th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                </div>
+                <table class="checks-table">
+                    <thead>
+                        <tr>
+                            <th class="col-expand"></th>
+                            <th class="col-name">Check</th>
+                            <th class="col-value col-hide-mobile">Result</th>
+                            <th class="col-status">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                     {% if system_checks is mapping %}
                         {% for name, data in system_checks.items() %}
                             {{ check_row(name, data) }}
@@ -980,132 +1218,139 @@
                             {{ check_row(data.check or data.name or 'Unknown', data) }}
                         {% endfor %}
                     {% endif %}
-                        </tbody>
-                    </table>
-                </div>
-            </details>
+                    </tbody>
+                </table>
+            </div>
             {% endif %}
 
             <!-- Storage Checks -->
             {% if disk_checks %}
             {% set disk_pass = disk_checks|selectattr('status', 'equalto', 'pass')|list|length %}
-            <details id="disk-checks" class="card"{% if disk_pass < disk_checks|length %} open{% endif %}>
-                <summary>
-                    <h2 class="card-title"><i class="fa-solid fa-hard-drive" aria-hidden="true"></i>Storage Checks</h2>
+            <div class="card">
+                <div class="card-title-row">
+                    <h2 class="card-title"><i class="mdi mdi-server" aria-hidden="true"></i>Storage Checks</h2>
                     <span class="card-summary-meta">{{ disk_pass }}/{{ disk_checks|length }} passed</span>
-                    <span class="toggle-icon">&#9660;</span>
-                </summary>
-                <div class="card-body">
-                    <table class="checks-table">
-                        <thead>
-                            <tr>
-                                <th class="col-name">Path</th>
-                                <th class="col-value">Total Capacity</th>
-                                <th class="col-status">Status</th>
-                                <th class="col-expand"><span class="sr-only">Details</span></th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                </div>
+                <table class="checks-table">
+                    <thead>
+                        <tr>
+                            <th class="col-expand"></th>
+                            <th class="col-name">URI</th>
+                            <th class="col-value col-hide-mobile">Total Capacity</th>
+                            <th class="col-status">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                     {% for check_data in disk_checks %}
-                            <tr class="check-row {{ 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status }}{% if check_data.category %} sev-{{ check_data.category }}{% endif %}">
-                                {% set actual = check_data.details|extract_actual %}
-                                {% set ref = check_data.details|extract_reference %}
-                                {% set path_val = check_data.details.path|default(check_data.details.mount_point|default('—')) if check_data.details else '—' %}
-                                {% set actual_val = actual or ('Detected' if check_data.status == 'pass' else '—') %}
-                                <td class="mono" title="{{ path_val }}">{{ path_val }}</td>
-                                <td class="mono" title="{{ actual_val }}">{{ actual_val }}</td>
-                                <td class="col-status">{% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}<span class="badge badge-{{ display_status }}">{{ display_status }}</span></td>
-                                <td></td>
+                            {% set actual = check_data.details|extract_actual %}
+                            {% set ref = check_data.details|extract_reference %}
+                            {% set path_val = check_data.details.path|default(check_data.details.mount_point|default('—')) if check_data.details else '—' %}
+                            {% set actual_val = actual or ('Detected' if check_data.status == 'pass' else '—') %}
+                            {% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}
+                            <tr class="check-row">
+                                <td class="col-expand"></td>
+                                <td class="check-cell-name" title="{{ path_val }}">{{ path_val }}</td>
+                                <td class="mono col-hide-mobile" title="{{ actual_val }}">{{ actual_val }}</td>
+                                <td class="col-status">
+                                    <span class="check-status-badge status-{{ display_status }}">
+                                        {% if display_status == 'pass' %}
+                                        <svg class="check-status-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7 0a7 7 0 110 14A7 7 0 017 0zm3.02 4.97a.75.75 0 00-1.06 0L6.25 7.69 5.03 6.47a.75.75 0 10-1.06 1.06l1.75 1.75a.75.75 0 001.06 0l3.24-3.25a.75.75 0 000-1.06z"/></svg>
+                                        {% elif display_status == 'warn' %}
+                                        <svg class="check-status-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7.93345 8.16667H5.8828V3.73333H7.93345M7.93345 11.6667H5.8828V9.56667H7.93345M0.397486 12.1008C0.218159 12.4313 0.457429 12.8333 0.833437 12.8333H13.1626C13.5396 12.8333 13.7788 12.4294 13.5975 12.0989L7.40068 0.797318C7.21194 0.453087 6.71706 0.454176 6.52983 0.799234L0.397486 12.1008Z"/></svg>
+                                        {% else %}
+                                        <svg class="check-status-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7 0a7 7 0 110 14A7 7 0 017 0zM5.03 4.97a.75.75 0 00-1.06 1.06L5.94 7 3.97 8.97a.75.75 0 101.06 1.06L7 8.06l1.97 1.97a.75.75 0 101.06-1.06L8.06 7l1.97-1.97a.75.75 0 10-1.06-1.06L7 5.94 5.03 4.97z"/></svg>
+                                        {% endif %}
+                                        {{ display_status|capitalize }}
+                                    </span>
+                                </td>
                             </tr>
                     {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </details>
+                    </tbody>
+                </table>
+            </div>
             {% endif %}
 
             <!-- Bucket Access -->
             {% if bucket_checks %}
             {% set bucket_pass = bucket_checks|selectattr('status', 'equalto', 'pass')|list|length %}
-            <details id="bucket-checks" class="card"{% if bucket_pass < bucket_checks|length %} open{% endif %}>
-                <summary>
-                    <h2 class="card-title"><i class="fa-solid fa-bucket" aria-hidden="true"></i>Object Storage Checks</h2>
+            <div class="card">
+                <div class="card-title-row">
+                    <h2 class="card-title"><i class="mdi mdi-pail-outline" aria-hidden="true"></i>Object Storage Checks</h2>
                     <span class="card-summary-meta">{{ bucket_pass }}/{{ bucket_checks|length }} passed</span>
-                    <span class="toggle-icon">&#9660;</span>
-                </summary>
-                <div class="card-body">
-                    <table class="checks-table">
-                        <colgroup>
-                            <col class="col-access-width">
-                            <col>
-                            <col class="col-hide-mobile">
-                            <col>
-                            <col>
-                        </colgroup>
-                        <thead>
-                            <tr>
-                                <th colspan="2">URI</th>
-                                <th class="col-value col-hide-mobile">Result</th>
-                                <th class="col-status">Status</th>
-                                <th class="col-expand"><span class="sr-only">Details</span></th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                </div>
+                <table class="checks-table">
+                    <thead>
+                        <tr>
+                            <th class="col-expand"></th>
+                            <th class="col-name">URI</th>
+                            <th class="col-value col-hide-mobile">Result</th>
+                            <th class="col-status">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                     {% for check_data in bucket_checks %}
                             {% set has_expandable = (check_data.sub_checks and check_data.status != 'pass') or check_data.remediation %}
-                            <tr class="check-row {{ 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status }} sev-{{ check_data.category|default('critical') }}{% if has_expandable %} has-details{% endif %}">
-                                <td class="col-access"><span class="access-tag {% if check_data.check == 'bucket_access_ro' %}access-ro{% else %}access-rw{% endif %}"><span class="access-full">{% if check_data.check == 'bucket_access_ro' %}read-only{% else %}read-write{% endif %}</span><span class="access-short">{% if check_data.check == 'bucket_access_ro' %}ro{% else %}rw{% endif %}</span></span></td>
-                                {% set uri_val = check_data.details.uri if check_data.details else '—' %}
-                                <td class="mono" title="{{ uri_val }}">{{ uri_val }}</td>
-                                <td class="col-hide-mobile">{% if check_data.sub_checks %}{% set sc_passed = check_data.sub_checks|selectattr('status', 'equalto', 'pass')|list|length %}{{ sc_passed }}/{{ check_data.sub_checks|length }} checks passed{% else %}—{% endif %}</td>
-                                <td class="col-status"><span class="badge badge-{{ check_data.status }}">{{ check_data.status }}</span></td>
+                            {% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}
+                            {% set uri_val = check_data.details.uri if check_data.details else '—' %}
+                            <tr class="check-row{% if has_expandable %} has-details{% endif %}">
                                 <td class="col-expand">{% if has_expandable %}<span class="expand-btn" aria-hidden="true">&#9660;</span>{% endif %}</td>
+                                <td class="check-cell-name" title="{{ uri_val }}">
+                                    <span class="access-tag {% if check_data.check == 'bucket_access_ro' %}access-ro{% else %}access-rw{% endif %}"><span class="access-full">{% if check_data.check == 'bucket_access_ro' %}Read-only{% else %}Read-write{% endif %}</span><span class="access-short">{% if check_data.check == 'bucket_access_ro' %}RO{% else %}RW{% endif %}</span></span>
+                                    {{ uri_val }}
+                                </td>
+                                <td class="mono col-hide-mobile">{% if check_data.sub_checks %}{% set sc_passed = check_data.sub_checks|selectattr('status', 'equalto', 'pass')|list|length %}{{ sc_passed }}/{{ check_data.sub_checks|length }} checks passed{% else %}—{% endif %}</td>
+                                <td class="col-status">
+                                    <span class="check-status-badge status-{{ display_status }}">
+                                        {% if display_status == 'pass' %}
+                                        <svg class="check-status-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7 0a7 7 0 110 14A7 7 0 017 0zm3.02 4.97a.75.75 0 00-1.06 0L6.25 7.69 5.03 6.47a.75.75 0 10-1.06 1.06l1.75 1.75a.75.75 0 001.06 0l3.24-3.25a.75.75 0 000-1.06z"/></svg>
+                                        {% elif display_status == 'warn' %}
+                                        <svg class="check-status-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7.93345 8.16667H5.8828V3.73333H7.93345M7.93345 11.6667H5.8828V9.56667H7.93345M0.397486 12.1008C0.218159 12.4313 0.457429 12.8333 0.833437 12.8333H13.1626C13.5396 12.8333 13.7788 12.4294 13.5975 12.0989L7.40068 0.797318C7.21194 0.453087 6.71706 0.454176 6.52983 0.799234L0.397486 12.1008Z"/></svg>
+                                        {% else %}
+                                        <svg class="check-status-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7 0a7 7 0 110 14A7 7 0 017 0zM5.03 4.97a.75.75 0 00-1.06 1.06L5.94 7 3.97 8.97a.75.75 0 101.06 1.06L7 8.06l1.97 1.97a.75.75 0 101.06-1.06L8.06 7l1.97-1.97a.75.75 0 10-1.06-1.06L7 5.94 5.03 4.97z"/></svg>
+                                        {% endif %}
+                                        {{ display_status|capitalize }}
+                                    </span>
+                                </td>
                             </tr>
                             {% if has_expandable %}
                             <tr class="check-detail-row hidden">
-                                <td colspan="5">
+                                <td colspan="4">
                                     {% if check_data.sub_checks and check_data.status != 'pass' %}
                                     <div class="check-details">
                                         <div class="detail-header">Details</div>
-                                        <div class="sub-checks">
-                                            {% for sc in check_data.sub_checks %} {% if sc.message %}
-                                            <div class="sub-check {{ sc.status }}">
-                                                <span class="status-icon">{% if sc.status == 'pass' %}&#10003;{% elif sc.status == 'fail' %}&#10007;{% elif sc.status == 'skip' %}&ndash;{% else %}&#9888;{% endif %}</span>
-                                                <span class="sub-name">{{ (sc.check or sc.name or '')|humanize_check }}</span>
-                                                {% set trimmed = sc.message|trim_sub_msg %}
-                                                {% if trimmed|length > 80 %}
-                                                <span class="sub-msg">{{ trimmed|truncate_error }}
-                                                    <details class="error-detail"><summary>full error</summary><pre class="error-full">{{ trimmed }}</pre></details>
-                                                </span>
-                                                {% else %}
-                                                <span class="sub-msg">{{ trimmed }}</span>
-                                                {% endif %}
-                                            </div>
-                                            {% endif %} {% endfor %}
+                                        <div class="check-details-grid">
+                                            {% for sc in check_data.sub_checks %}{% if sc.message %}
+                                            <span class="dk-key">{{ (sc.check or sc.name or '')|humanize_check }}</span>
+                                            {% set trimmed = sc.message|trim_sub_msg %}
+                                            {% if trimmed|length > 80 %}
+                                            <span class="dk-val"><details class="error-detail"><summary><span class="error-short">{{ trimmed|truncate_error }}</span><span class="error-long">{{ trimmed }}</span> <span class="error-link">full error</span></summary></details></span>
+                                            {% else %}
+                                            <span class="dk-val">{{ trimmed }}</span>
+                                            {% endif %}
+                                            {% endif %}{% endfor %}
                                         </div>
                                     </div>
                                     {% endif %}
                                     {% if check_data.remediation %}
-                                    <div class="remediation-callout"><i class="fa-solid fa-wrench" aria-hidden="true"></i> {{ check_data.remediation|inline_code }}</div>
+                                    <div class="remediation-callout"><i class="mdi mdi-information" aria-hidden="true" style="font-size:16px;color:#4f5bd5;"></i> {{ check_data.remediation|inline_code }}</div>
                                     {% endif %}
                                 </td>
                             </tr>
                             {% endif %}
                     {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </details>
+                    </tbody>
+                </table>
+            </div>
             {% endif %}
 
-            <h2 class="section-divider"><i class="fa-solid fa-server" aria-hidden="true"></i> Environment</h2>
+            <h2 class="section-divider">Environment</h2>
 
             <!-- Instance + System -->
             {% if doctor_report.system %} {% set sys = doctor_report.system %} {% set cloud = doctor_report.cloud or {}
             %}
             <div class="grid-2">
                 <div class="card">
-                    <h3 class="card-title"><i class="fa-solid fa-cloud" aria-hidden="true"></i>Instance</h3>
+                    <h3 class="card-title"><i class="mdi mdi-cloud-outline" aria-hidden="true"></i>Instance</h3>
                     <div class="kv-grid">
                         <span class="kv-label">Provider</span>
                         <span class="kv-value">{{ cloud.provider|default('N/A')|upper }}</span>
@@ -1125,7 +1370,7 @@
                 </div>
 
                 <div class="card">
-                    <h3 class="card-title"><i class="fa-solid fa-microchip" aria-hidden="true"></i>System</h3>
+                    <h3 class="card-title"><i class="mdi mdi-chip" aria-hidden="true"></i>System</h3>
                     <div class="kv-grid">
                         {% if sys.os %}
                         <span class="kv-label">OS</span>
@@ -1163,154 +1408,145 @@
 
             <!-- Storage Devices -->
             {% if doctor_report.storage and doctor_report.storage.nvme_devices %}
-            <details id="storage-devices" class="card"{% if system_checks is iterable and system_checks is not mapping and system_checks|selectattr('check', 'defined')|selectattr('check', 'equalto', 'nvme')|selectattr('status', 'ne', 'pass')|list|length > 0 %} open{% endif %}>
-                <summary>
-                    <h3 class="card-title"><i class="fa-solid fa-database" aria-hidden="true"></i>Storage Devices</h3>
-                    <span class="toggle-icon">&#9660;</span>
-                </summary>
-                <div class="card-body">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>NVMe Device</th>
-                                <th>Model</th>
-                                <th style="text-align: right">Size</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for dev in doctor_report.storage.nvme_devices %}
-                            <tr>
-                                <td class="mono">{{ dev.name }}</td>
-                                <td>{{ dev.model }}</td>
-                                <td class="num">{{ (dev.size_bytes / 1073741824)|round(0)|int }} GiB</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+            <div id="storage-devices" class="card">
+                <div class="card-title-row">
+                    <h3 class="card-title"><i class="mdi mdi-database-outline" aria-hidden="true"></i>Storage Devices</h3>
                 </div>
-            </details>
+                <table class="checks-table">
+                    <thead>
+                        <tr>
+                            <th>NVMe Device</th>
+                            <th>Model</th>
+                            <th>Size</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dev in doctor_report.storage.nvme_devices %}
+                        <tr>
+                            <td class="check-cell-name">{{ dev.name }}</td>
+                            <td class="mono">{{ dev.model }}</td>
+                            <td class="mono">{{ (dev.size_bytes / 1073741824)|round(0)|int }} GiB</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
             {% endif %}
 
             <!-- Mounted Filesystems -->
             {% if doctor_report.storage and doctor_report.storage.filesystems %}
-            <details id="mounted-filesystems" class="card"{% if disk_checks is defined and disk_checks|selectattr('check', 'defined')|selectattr('check', 'equalto', 'disk_space')|selectattr('status', 'ne', 'pass')|list|length > 0 %} open{% endif %}>
-                <summary>
-                    <h3 class="card-title"><i class="fa-solid fa-folder-tree" aria-hidden="true"></i>Mounted Filesystems</h3>
-                    <span class="toggle-icon">&#9660;</span>
-                </summary>
-                <div class="card-body">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Mount</th>
-                                <th class="col-hide-mobile">Device</th>
-                                <th class="col-hide-mobile">Type</th>
-                                <th style="width: 40%">Usage</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for fs in doctor_report.storage.filesystems %} {% if fs.total_bytes and fs.total_bytes >
-                            0 %} {% set fs_total_gib = (fs.total_bytes / 1073741824)|round(1) %} {% set fs_used_gib =
-                            ((fs.total_bytes - fs.available_bytes) / 1073741824)|round(1) %} {% set fs_used_pct =
-                            (((fs.total_bytes - fs.available_bytes) / fs.total_bytes) * 100)|round(0)|int %}
-                            <tr>
-                                <td class="mono">{{ fs.mount_point }}</td>
-                                <td class="mono col-hide-mobile">{{ fs.device }}</td>
-                                <td class="col-hide-mobile">{{ fs.type }}</td>
-                                <td>
-                                    <div class="usage-bar">
-                                        <div class="usage-bar-track">
-                                            <div
-                                                class="usage-bar-fill{% if fs_used_pct >= 90 %} critical{% elif fs_used_pct >= 75 %} warn{% endif %}"
-                                                style="width: {{ fs_used_pct }}%"
-                                            ></div>
-                                        </div>
-                                        <span class="usage-pct">{{ fs_used_pct }}%</span>
-                                        <span class="text-muted">{{ fs_used_gib }} / {{ fs_total_gib }} GiB</span>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endif %} {% endfor %}
-                        </tbody>
-                    </table>
+            <div id="mounted-filesystems" class="card">
+                <div class="card-title-row">
+                    <h3 class="card-title"><i class="mdi mdi-file-tree" aria-hidden="true"></i>Mounted Filesystems</h3>
                 </div>
-            </details>
+                <table class="checks-table">
+                    <thead>
+                        <tr>
+                            <th>Mount</th>
+                            <th class="col-hide-mobile">Device</th>
+                            <th class="col-hide-mobile">Type</th>
+                            <th style="width: 40%">Usage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fs in doctor_report.storage.filesystems %} {% if fs.total_bytes and fs.total_bytes >
+                        0 %} {% set fs_total_gib = (fs.total_bytes / 1073741824)|round(1) %} {% set fs_used_gib =
+                        ((fs.total_bytes - fs.available_bytes) / 1073741824)|round(1) %} {% set fs_used_pct =
+                        (((fs.total_bytes - fs.available_bytes) / fs.total_bytes) * 100)|round(0)|int %}
+                        <tr>
+                            <td class="check-cell-name">{{ fs.mount_point }}</td>
+                            <td class="mono col-hide-mobile">{{ fs.device }}</td>
+                            <td class="mono col-hide-mobile">{{ fs.type }}</td>
+                            <td>
+                                <div class="usage-bar">
+                                    <div class="usage-bar-track">
+                                        <div
+                                            class="usage-bar-fill{% if fs_used_pct >= 90 %} critical{% elif fs_used_pct >= 75 %} warn{% endif %}"
+                                            style="width: {{ fs_used_pct }}%"
+                                        ></div>
+                                    </div>
+                                    <span class="usage-pct">{{ fs_used_pct }}%</span>
+                                    <span class="usage-size">{{ fs_used_gib }}/{{ fs_total_gib }} GiB</span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %} {% endfor %}
+                    </tbody>
+                </table>
+            </div>
             {% endif %}
 
             <!-- Resource Limits -->
             {% if doctor_report.resources %}
-            <details id="resource-limits" class="card"{% if system_checks is iterable and system_checks is not mapping and system_checks|selectattr('check', 'defined')|selectattr('check', 'equalto', 'open_files')|selectattr('status', 'ne', 'pass')|list|length > 0 %} open{% endif %}>
-                <summary>
-                    <h3 class="card-title"><i class="fa-solid fa-sliders" aria-hidden="true"></i>Resource Limits</h3>
-                    <span class="toggle-icon">&#9660;</span>
-                </summary>
-                <div class="card-body">
-                    {% set res = doctor_report.resources %} {% set unlimited = 18446744073709551615 %}
-                    {% macro rlimit_row(label, check_name, soft_display, hard_display) %}
-                        {% set chk = system_checks|selectattr('check', 'defined')|selectattr('check', 'equalto', check_name)|first if system_checks is iterable and system_checks is not mapping else none %}
-                        {% set req_min = chk.details.required_min if chk and chk.details and chk.details.required_min is defined else none %}
-                        <tr class="check-row{% if chk %} {{ 'warn' if chk.status == 'fail' and chk.category == 'warning' else chk.status }}{% if chk.category %} sev-{{ chk.category }}{% endif %}{% endif %}">
-                            <td>{{ label }}</td>
-                            <td>
-                                {{ soft_display
-                                }}{% if req_min and soft_display != 'unlimited' %}
-                                    {% set soft_num = soft_display|replace(',', '')|int(-1) %}
-                                    {% if soft_num >= 0 and soft_num < req_min %}<span class="tag-warn">Low</span>{% endif %}
-                                {% endif %}
-                            </td>
-                            <td class="col-hide-mobile">{{ hard_display }}</td>
-                        </tr>
-                    {% endmacro %}
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Resource</th>
-                                <th>Soft Limit</th>
-                                <th class="col-hide-mobile">Hard Limit</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% if res.open_files %}
-                            {{ rlimit_row("Open Files", "open_files",
-                                res.open_files.soft|intcomma if res.open_files.soft != unlimited else 'unlimited',
-                                res.open_files.hard|intcomma if res.open_files.hard != unlimited else 'unlimited') }}
-                            {% endif %}
-                            {% if res.max_procs %}
-                            {{ rlimit_row("Max Processes", "max_procs",
-                                res.max_procs.soft|intcomma if res.max_procs.soft != unlimited else 'unlimited',
-                                res.max_procs.hard|intcomma if res.max_procs.hard != unlimited else 'unlimited') }}
-                            {% endif %}
-                            {% if res.mem_lock %}
-                            {{ rlimit_row("Memory Lock", "mem_lock",
-                                'unlimited' if res.mem_lock.soft == unlimited else ((res.mem_lock.soft / 1073741824)|round(1)|string + ' GiB'),
-                                'unlimited' if res.mem_lock.hard == unlimited else ((res.mem_lock.hard / 1073741824)|round(1)|string + ' GiB')) }}
-                            {% endif %}
-                            {% if res.stack_size %}
-                            {{ rlimit_row("Stack Size", "stack_size",
-                                'unlimited' if res.stack_size.soft == unlimited else ((res.stack_size.soft / 1048576)|round(1)|string + ' MB'),
-                                'unlimited' if res.stack_size.hard == unlimited else ((res.stack_size.hard / 1048576)|round(1)|string + ' MB')) }}
-                            {% endif %}
-                            {% if res.file_size %}
-                            {{ rlimit_row("Max File Size", "file_size",
-                                'unlimited' if res.file_size.soft == unlimited else res.file_size.soft,
-                                'unlimited' if res.file_size.hard == unlimited else res.file_size.hard) }}
-                            {% endif %}
-                            {% if res.address_space %}
-                            {{ rlimit_row("Address Space", "address_space",
-                                'unlimited' if res.address_space.soft == unlimited else res.address_space.soft,
-                                'unlimited' if res.address_space.hard == unlimited else res.address_space.hard) }}
-                            {% endif %}
-                        </tbody>
-                    </table>
+            <div id="resource-limits" class="card">
+                <div class="card-title-row">
+                    <h3 class="card-title"><i class="mdi mdi-tune" aria-hidden="true"></i>Resource Limits</h3>
                 </div>
-            </details>
+                {% set res = doctor_report.resources %} {% set unlimited = 18446744073709551615 %}
+                {% macro rlimit_row(label, check_name, soft_display, hard_display) %}
+                    {% set chk = system_checks|selectattr('check', 'defined')|selectattr('check', 'equalto', check_name)|first if system_checks is iterable and system_checks is not mapping else none %}
+                    {% set req_min = chk.details.required_min if chk and chk.details and chk.details.required_min is defined else none %}
+                    <tr>
+                        <td class="check-cell-name">{{ label }}</td>
+                        <td class="mono">
+                            {{ soft_display
+                            }}{% if req_min and soft_display != 'unlimited' %}
+                                {% set soft_num = soft_display|replace(',', '')|int(-1) %}
+                                {% if soft_num >= 0 and soft_num < req_min %}<span class="tag-warn"><svg style="width:12px;height:12px;flex-shrink:0" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7.93345 8.16667H5.8828V3.73333H7.93345M7.93345 11.6667H5.8828V9.56667H7.93345M0.397486 12.1008C0.218159 12.4313 0.457429 12.8333 0.833437 12.8333H13.1626C13.5396 12.8333 13.7788 12.4294 13.5975 12.0989L7.40068 0.797318C7.21194 0.453087 6.71706 0.454176 6.52983 0.799234L0.397486 12.1008Z"/></svg> Low</span>{% endif %}
+                            {% endif %}
+                        </td>
+                        <td class="mono col-hide-mobile">{{ hard_display }}</td>
+                    </tr>
+                {% endmacro %}
+                <table class="checks-table">
+                    <thead>
+                        <tr>
+                            <th>Resource</th>
+                            <th>Soft Limit</th>
+                            <th class="col-hide-mobile">Hard Limit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if res.open_files %}
+                        {{ rlimit_row("Open Files", "open_files",
+                            res.open_files.soft|intcomma if res.open_files.soft != unlimited else 'unlimited',
+                            res.open_files.hard|intcomma if res.open_files.hard != unlimited else 'unlimited') }}
+                        {% endif %}
+                        {% if res.max_procs %}
+                        {{ rlimit_row("Max Processes", "max_procs",
+                            res.max_procs.soft|intcomma if res.max_procs.soft != unlimited else 'unlimited',
+                            res.max_procs.hard|intcomma if res.max_procs.hard != unlimited else 'unlimited') }}
+                        {% endif %}
+                        {% if res.mem_lock %}
+                        {{ rlimit_row("Memory Lock", "mem_lock",
+                            'unlimited' if res.mem_lock.soft == unlimited else ((res.mem_lock.soft / 1073741824)|round(1)|string + ' GiB'),
+                            'unlimited' if res.mem_lock.hard == unlimited else ((res.mem_lock.hard / 1073741824)|round(1)|string + ' GiB')) }}
+                        {% endif %}
+                        {% if res.stack_size %}
+                        {{ rlimit_row("Stack Size", "stack_size",
+                            'unlimited' if res.stack_size.soft == unlimited else ((res.stack_size.soft / 1048576)|round(1)|string + ' MB'),
+                            'unlimited' if res.stack_size.hard == unlimited else ((res.stack_size.hard / 1048576)|round(1)|string + ' MB')) }}
+                        {% endif %}
+                        {% if res.file_size %}
+                        {{ rlimit_row("Max File Size", "file_size",
+                            'unlimited' if res.file_size.soft == unlimited else res.file_size.soft,
+                            'unlimited' if res.file_size.hard == unlimited else res.file_size.hard) }}
+                        {% endif %}
+                        {% if res.address_space %}
+                        {{ rlimit_row("Address Space", "address_space",
+                            'unlimited' if res.address_space.soft == unlimited else res.address_space.soft,
+                            'unlimited' if res.address_space.hard == unlimited else res.address_space.hard) }}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
             {% endif %}
 
             {% macro benchmark_card(report, id, title) %}
             {% if report and report.keys()|length > 0 and 'error' not in report %}
             <details id="{{ id }}" class="card" open>
                 <summary>
-                    <h3 class="card-title"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i>{{ title }}</h3>
+                    <h3 class="card-title"><i class="mdi mdi-speedometer" aria-hidden="true"></i>{{ title }}</h3>
                     <span class="toggle-icon">&#9660;</span>
                 </summary>
                 <div class="card-body">
