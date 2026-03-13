@@ -939,6 +939,14 @@
                 opacity: 0.5;
             }
 
+            /* --- Mobile-only detail rows --- */
+            .mobile-only-expand {
+                display: none;
+            }
+            tr.check-detail-row.mobile-only-detail {
+                display: none;
+            }
+
             /* --- Mobile --- */
             @media (max-width: 600px) {
                 body {
@@ -1000,6 +1008,16 @@
                     overflow: hidden;
                     text-overflow: ellipsis;
                     max-width: 120px;
+                }
+                /* Show mobile-only expand buttons & detail rows */
+                .mobile-only-expand {
+                    display: inline-flex;
+                }
+                tr.check-detail-row.mobile-only-detail {
+                    display: table-row;
+                }
+                tr.check-detail-row.mobile-only-detail.hidden {
+                    display: none;
                 }
             }
         </style>
@@ -1248,7 +1266,7 @@
                             {% set actual_val = actual or ('Detected' if check_data.status == 'pass' else '—') %}
                             {% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}
                             <tr class="check-row">
-                                <td class="col-expand"></td>
+                                <td class="col-expand"><span class="expand-btn mobile-only-expand" aria-hidden="true">&#9660;</span></td>
                                 <td class="check-cell-name" title="{{ path_val }}">{{ path_val }}</td>
                                 <td class="mono col-hide-mobile" title="{{ actual_val }}">{{ actual_val }}</td>
                                 <td class="col-status">
@@ -1262,6 +1280,17 @@
                                         {% endif %}
                                         {{ display_status|capitalize }}
                                     </span>
+                                </td>
+                            </tr>
+                            <tr class="check-detail-row mobile-only-detail hidden">
+                                <td colspan="4">
+                                    <div class="check-details">
+                                        <div class="detail-header">Details</div>
+                                        <div class="check-details-grid">
+                                            <span class="dk-key">Total Capacity</span>
+                                            <span class="dk-val">{{ actual_val }}</span>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                     {% endfor %}
@@ -1607,13 +1636,33 @@
             document.querySelectorAll(".check-row").forEach(function (row) {
                 var detailRow = row.nextElementSibling;
                 if (detailRow && detailRow.classList.contains("check-detail-row")) {
-                    row.classList.add("has-details");
-                    row.setAttribute("tabindex", "0");
-                    row.setAttribute("aria-expanded", "false");
+                    var isMobileOnly = detailRow.classList.contains("mobile-only-detail");
                     function toggle() {
                         var isHidden = detailRow.classList.toggle("hidden");
                         row.classList.toggle("expanded");
                         row.setAttribute("aria-expanded", String(!isHidden));
+                    }
+                    if (isMobileOnly) {
+                        // Mobile-only: activate interactivity only on small screens
+                        var mq = window.matchMedia("(max-width: 600px)");
+                        function updateMobileDetail() {
+                            if (mq.matches) {
+                                row.classList.add("has-details");
+                                row.setAttribute("tabindex", "0");
+                                row.setAttribute("aria-expanded", "false");
+                            } else {
+                                row.classList.remove("has-details", "expanded");
+                                row.removeAttribute("tabindex");
+                                row.removeAttribute("aria-expanded");
+                                detailRow.classList.add("hidden");
+                            }
+                        }
+                        updateMobileDetail();
+                        mq.addEventListener("change", updateMobileDetail);
+                    } else {
+                        row.classList.add("has-details");
+                        row.setAttribute("tabindex", "0");
+                        row.setAttribute("aria-expanded", "false");
                     }
                     row.addEventListener("click", toggle);
                     row.addEventListener("keydown", function (e) {
