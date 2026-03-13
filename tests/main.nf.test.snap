@@ -8,9 +8,9 @@
                 "errorReport": "",
                 "failed": false,
                 "trace": {
-                    "tasksCount": 16,
+                    "tasksCount": 14,
                     "tasksFailed": 1,
-                    "tasksSucceeded": 15
+                    "tasksSucceeded": 13
                 },
                 "stdout": [
                     
@@ -28,7 +28,7 @@
                 "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
-        "timestamp": "2026-03-05T12:45:32.128122199",
+        "timestamp": "2026-03-13T16:26:43.074018447",
         "meta": {
             "nf-test": "0.9.4",
             "nextflow": "25.10.4"
@@ -43,9 +43,9 @@
                 "errorReport": "",
                 "failed": false,
                 "trace": {
-                    "tasksCount": 17,
+                    "tasksCount": 15,
                     "tasksFailed": 1,
-                    "tasksSucceeded": 16
+                    "tasksSucceeded": 14
                 },
                 "stdout": [
                     
@@ -63,7 +63,7 @@
                 "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
-        "timestamp": "2026-03-05T13:30:26.867647032",
+        "timestamp": "2026-03-13T16:26:58.810660356",
         "meta": {
             "nf-test": "0.9.4",
             "nextflow": "25.10.4"
@@ -109,9 +109,9 @@
                 "errorReport": "",
                 "failed": false,
                 "trace": {
-                    "tasksCount": 17,
+                    "tasksCount": 15,
                     "tasksFailed": 1,
-                    "tasksSucceeded": 16
+                    "tasksSucceeded": 14
                 },
                 "stdout": [
                     
@@ -129,7 +129,7 @@
                 "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
-        "timestamp": "2026-03-05T12:45:22.96150697",
+        "timestamp": "2026-03-13T16:26:32.792120564",
         "meta": {
             "nf-test": "0.9.4",
             "nextflow": "25.10.4"
