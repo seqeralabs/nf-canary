@@ -488,8 +488,7 @@ workflow NF_CANARY {
         "TEST_IGNORED_FAIL",
         "TEST_GPU",
         "TEST_MV_FOLDER_CONTENTS",
-        "TEST_VAL_INPUT",
-        "TEST_FUSION_DOCTOR"
+        "TEST_VAL_INPUT"
     ]
 
     def run  = run_tools  ? run_tools.tokenize(",")*.toUpperCase() : default_run_tools
