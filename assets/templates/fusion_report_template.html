@@ -32,10 +32,14 @@
                 --radius: 4px;
 
                 /* Status */
-                --clr-pass: #087f68;
-                --clr-fail: #e7363e;
-                --clr-warn: #b06020;
+                --clr-pass: #1B7340;
+                --clr-fail: #92232E;
+                --clr-warn: #A96D00;
                 --clr-unknown: #a0a1a3;
+
+                /* Row highlights */
+                --row-fail: #FCF2F3;
+                --row-warn: #FFF9ED;
                 --clr-primary-tint: #e8f8f4;
 
                 /* Chart colors (from Figma) */
@@ -157,17 +161,17 @@
             }
             .badge-pill::before { display: none; }
             .badge-pill.badge-pass {
-                background: #e5f5ec;
-                color: #1b7340;
+                background: var(--clr-pass);
+                color: #fff;
             }
             .badge-pill.badge-fail {
-                background: #fbe7e9;
-                color: #92232e;
+                background: var(--clr-fail);
+                color: #fff;
             }
             .badge-pill.badge-warn,
             .badge-pill.badge-degraded {
-                background: #fff4e0;
-                color: #734a00;
+                background: var(--clr-warn);
+                color: #fff;
             }
             .badge-pill.badge-unknown {
                 background: var(--neutral-2);
@@ -553,11 +557,23 @@
                 font-weight: 400;
                 line-height: 1.2;
             }
+            .check-row.row-fail td {
+                background: var(--row-fail);
+            }
+            .check-row.row-warn td {
+                background: var(--row-warn);
+            }
             .check-row.has-details {
                 cursor: pointer;
             }
             .check-row.has-details:hover td {
                 background: var(--neutral-1);
+            }
+            .check-row.row-fail.has-details:hover td {
+                background: var(--row-fail);
+            }
+            .check-row.row-warn.has-details:hover td {
+                background: var(--row-warn);
             }
             .check-row.has-details:hover td:first-child {
                 border-radius: 4px 0 0 4px;
@@ -584,16 +600,16 @@
                 line-height: 1.2;
             }
             .check-status-badge.status-pass {
-                background: #e5f5ec;
-                color: #1b7340;
+                background: var(--clr-pass);
+                color: #fff;
             }
             .check-status-badge.status-warn {
-                background: #fff4e0;
-                color: #734a00;
+                background: var(--clr-warn);
+                color: #fff;
             }
             .check-status-badge.status-fail {
-                background: #fbe7e9;
-                color: #92232e;
+                background: var(--clr-fail);
+                color: #fff;
             }
             .check-status-badge .check-status-icon {
                 width: 12px;
@@ -612,10 +628,24 @@
             .check-row.expanded + .check-detail-row {
                 background: var(--neutral-1);
             }
+            .check-row.row-fail.expanded,
+            .check-row.row-fail.expanded + .check-detail-row {
+                background: var(--row-fail);
+            }
+            .check-row.row-warn.expanded,
+            .check-row.row-warn.expanded + .check-detail-row {
+                background: var(--row-warn);
+            }
             .check-row.expanded td {
                 background: var(--neutral-1);
                 border-bottom: none;
                 border-top: 1px solid #eaebeb;
+            }
+            .check-row.row-fail.expanded td {
+                background: var(--row-fail);
+            }
+            .check-row.row-warn.expanded td {
+                background: var(--row-warn);
             }
             .check-row.expanded td:first-child {
                 border-radius: 4px 0 0 0;
@@ -630,6 +660,12 @@
                 border-left: 1px solid #eaebeb;
                 border-right: 1px solid #eaebeb;
                 border-radius: 0 0 4px 4px;
+            }
+            .check-row.row-fail.expanded + .check-detail-row td {
+                background: var(--row-fail);
+            }
+            .check-row.row-warn.expanded + .check-detail-row td {
+                background: var(--row-warn);
             }
             .expand-btn {
                 display: inline-flex;
@@ -753,12 +789,12 @@
                 display: none;
             }
             .rec-badge.badge-warn {
-                background: #fff4e0;
-                color: #734a00;
+                background: var(--clr-warn);
+                color: #fff;
             }
             .rec-badge.badge-fail {
-                background: #fbe7e9;
-                color: #92232e;
+                background: var(--clr-fail);
+                color: #fff;
             }
             .rec-badge .rec-badge-icon {
                 width: 12px;
@@ -1048,7 +1084,7 @@
                             {% set ref = check_data.details|extract_reference %}
                             {% set actual_val = actual or ('Detected' if check_data.status == 'pass' else '—') %}
                             {% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}
-                            <tr class="check-row {% if check_data.details or check_data.remediation %}has-details{% endif %}">
+                            <tr class="check-row row-{{ display_status }} {% if check_data.details or check_data.remediation %}has-details{% endif %}">
                                 <td class="col-expand">{% if check_data.details or check_data.remediation %}<span class="expand-btn" aria-hidden="true">&#9660;</span>{% endif %}</td>
                                 <td class="check-cell-name">{{ check_name|humanize_check }}</td>
                                 <td class="mono col-hide-mobile" title="{{ actual_val }}">{{ actual_val }}</td>
@@ -1285,7 +1321,7 @@
                             {% set path_val = check_data.details.path|default(check_data.details.mount_point|default('—')) if check_data.details else '—' %}
                             {% set actual_val = actual or ('Detected' if check_data.status == 'pass' else '—') %}
                             {% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}
-                            <tr class="check-row">
+                            <tr class="check-row row-{{ display_status }}">
                                 <td class="col-expand"><span class="expand-btn mobile-only-expand" aria-hidden="true">&#9660;</span></td>
                                 <td class="check-cell-name" title="{{ path_val }}">{{ path_val }}</td>
                                 <td class="mono col-hide-mobile" title="{{ actual_val }}">{{ actual_val }}</td>
@@ -1341,7 +1377,7 @@
                             {% set has_expandable = (check_data.sub_checks and check_data.status != 'pass') or check_data.remediation %}
                             {% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}
                             {% set uri_val = check_data.details.uri if check_data.details else '—' %}
-                            <tr class="check-row{% if has_expandable %} has-details{% endif %}">
+                            <tr class="check-row row-{{ display_status }}{% if has_expandable %} has-details{% endif %}">
                                 <td class="col-expand">{% if has_expandable %}<span class="expand-btn" aria-hidden="true">&#9660;</span>{% else %}<span class="expand-btn mobile-only-expand" aria-hidden="true">&#9660;</span>{% endif %}</td>
                                 <td class="check-cell-name bucket-uri-cell" title="{{ uri_val }}">
                                     <span class="access-tag {% if check_data.check == 'bucket_access_ro' %}access-ro{% else %}access-rw{% endif %}"><span class="access-full">{% if check_data.check == 'bucket_access_ro' %}Read-only{% else %}Read-write{% endif %}</span><span class="access-short">{% if check_data.check == 'bucket_access_ro' %}RO{% else %}RW{% endif %}</span></span>
