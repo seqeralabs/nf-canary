@@ -8,6 +8,41 @@
                 "errorReport": "",
                 "failed": false,
                 "trace": {
+                    "tasksCount": 14,
+                    "tasksFailed": 1,
+                    "tasksSucceeded": 13
+                },
+                "stdout": [
+                    
+                ],
+                "stderr": [
+                    
+                ],
+                "name": "workflow"
+            },
+            [
+                [
+                    "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
+        ],
+        "timestamp": "2026-03-13T12:41:07.735427668",
+        "meta": {
+            "nf-test": "0.9.4",
+            "nextflow": "25.10.4"
+        }
+    },
+    "Should publish to alternative directory": {
+        "content": [
+            {
+                "success": true,
+                "exitStatus": 0,
+                "errorMessage": "",
+                "errorReport": "",
+                "failed": false,
+                "trace": {
                     "tasksCount": 15,
                     "tasksFailed": 1,
                     "tasksSucceeded": 14
@@ -28,42 +63,7 @@
                 "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
-        "timestamp": "2026-02-20T16:21:07.54100674",
-        "meta": {
-            "nf-test": "0.9.4",
-            "nextflow": "25.10.4"
-        }
-    },
-    "Should publish to alternative directory": {
-        "content": [
-            {
-                "success": true,
-                "exitStatus": 0,
-                "errorMessage": "",
-                "errorReport": "",
-                "failed": false,
-                "trace": {
-                    "tasksCount": 16,
-                    "tasksFailed": 1,
-                    "tasksSucceeded": 15
-                },
-                "stdout": [
-                    
-                ],
-                "stderr": [
-                    
-                ],
-                "name": "workflow"
-            },
-            [
-                [
-                    "test1.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
-                    "test2.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
-                ],
-                "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
-            ]
-        ],
-        "timestamp": "2026-02-20T16:21:40.15320284",
+        "timestamp": "2026-03-13T12:41:22.344930705",
         "meta": {
             "nf-test": "0.9.4",
             "nextflow": "25.10.4"
@@ -109,9 +109,9 @@
                 "errorReport": "",
                 "failed": false,
                 "trace": {
-                    "tasksCount": 16,
+                    "tasksCount": 15,
                     "tasksFailed": 1,
-                    "tasksSucceeded": 15
+                    "tasksSucceeded": 14
                 },
                 "stdout": [
                     
@@ -129,7 +129,7 @@
                 "test.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
-        "timestamp": "2026-02-20T16:20:48.129435245",
+        "timestamp": "2026-03-13T12:41:00.893832652",
         "meta": {
             "nf-test": "0.9.4",
             "nextflow": "25.10.4"
