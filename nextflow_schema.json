@@ -57,6 +57,13 @@
                     "help_text": "When enabled, run the TEST_FUSION_DOCTOR process to validate Fusion requirements.",
                     "fa_icon": "fas fa-stethoscope"
                 },
+                "fusion_redact": {
+                    "type": "boolean",
+                    "description": "Redact PII from the Fusion diagnostics report.",
+                    "help_text": "When enabled, instructs 'fusion doctor' to mask personally identifiable information (hostnames, IPs, bucket names, etc.) from the diagnostic output.",
+                    "fa_icon": "fas fa-mask",
+                    "default": false
+                },
                 "fusion_cache_path": {
                     "type": "string",
                     "description": "Filesystem path for Fusion cache directory.",

@@ -1,0 +1,1814 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Fusion Filesystem Diagnostics</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7/css/materialdesignicons.min.css" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+        <style>
+            /* === Seqera Platform design tokens === */
+            :root {
+                --brand: #201637;
+                --primary: #087f68;
+                --primary-light: #31C9AC;
+                /* Neutrals */
+                --neutral-1: #f7f7f7;
+                --neutral-2: #e8e8e9;
+                --neutral-3: #cfd0d1;
+                --neutral-4: #b8b9ba;
+                --neutral-5: #a0a1a3;
+                --neutral-6: #88898b;
+                --neutral-7: #707174;
+                --neutral-8: #58595c;
+                --neutral-9: #404145;
+                --neutral-10: #28292d;
+                --black: #242424;
+
+                /* Functional */
+                --body-bg: #f7f7f7;
+                --card-bg: #fff;
+                --border: #dee2e6;
+                --radius: 4px;
+
+                /* Status */
+                --clr-pass: #1B7340;
+                --clr-fail: #92232E;
+                --clr-warn: #A96D00;
+                --clr-unknown: #a0a1a3;
+
+                /* Row highlights */
+                --row-fail: #FCF2F3;
+                --row-warn: #FFF9ED;
+                --clr-primary-tint: #e8f8f4;
+
+                /* Chart colors (from Figma) */
+                --bar-pass: #69c690;
+                --bar-warn: #ffc04d;
+                --bar-fail: #E7727D;
+
+                /* Typography */
+                --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+                --font-mono: 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            }
+
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            .sr-only {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                padding: 0;
+                margin: -1px;
+                overflow: hidden;
+                clip: rect(0, 0, 0, 0);
+                white-space: nowrap;
+                border: 0;
+            }
+
+            body {
+                background: var(--body-bg);
+                font-family: var(--font-body);
+                font-size: 0.9rem;
+                color: var(--neutral-10);
+                line-height: 1.5;
+            }
+
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 1.5rem 2rem 2rem;
+            }
+
+            /* --- Header (dark, Seqera Platform style) --- */
+            .header {
+                background: var(--brand);
+            }
+            .header-inner {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 12px 40px 8px;
+            }
+            .header-left {
+                display: flex;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .header-icon {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 26px;
+                height: 26px;
+            }
+            .header-icon svg {
+                width: 26px;
+                height: 26px;
+            }
+            .header-title {
+                font-size: 21.6px;
+                font-weight: 500;
+                color: #fff;
+                line-height: 1.2;
+            }
+            .header-meta {
+                font-size: 12.8px;
+                color: #cfd0d1;
+                display: flex;
+                gap: 0.5rem;
+                align-items: center;
+                margin-top: 4px;
+            }
+
+            /* --- Status badge --- */
+            .badge {
+                display: inline-flex;
+                align-items: baseline;
+                justify-content: center;
+                gap: 7px;
+                padding: 2px 10px;
+                border-radius: 4px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                line-height: 1.4;
+                color: #fff;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                min-width: 4.5rem;
+                width: auto;
+            }
+            /* Pill-style header badge (light bg, coloured text) */
+            .badge-pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 2.5px 10px;
+                border-radius: 32px;
+                font-size: 14.4px;
+                font-weight: 500;
+                text-transform: none;
+                letter-spacing: 0;
+                min-width: 0;
+                line-height: 1.4;
+                color: inherit;
+                background: transparent;
+            }
+            .badge-pill::before { display: none; }
+            .badge-pill.badge-pass {
+                background: var(--clr-pass);
+                color: #fff;
+            }
+            .badge-pill.badge-fail {
+                background: var(--clr-fail);
+                color: #fff;
+            }
+            .badge-pill.badge-warn,
+            .badge-pill.badge-degraded {
+                background: var(--clr-warn);
+                color: #fff;
+            }
+            .badge-pill.badge-unknown {
+                background: var(--neutral-2);
+                color: var(--neutral-8);
+            }
+            .badge-pill .pill-icon {
+                width: 14px;
+                height: 14px;
+                flex-shrink: 0;
+            }
+            .badge-pass {
+                background: var(--clr-pass);
+            }
+            .badge::before {
+                font-family: 'Material Design Icons';
+                font-weight: normal;
+                font-size: 0.75rem;
+                width: 0.8em;
+                text-align: center;
+            }
+            .badge-pass::before { content: '\F012C'; }
+            .badge-fail::before { content: '\F0156'; }
+            .badge-warn::before,
+            .badge-degraded::before { content: '\F0026'; }
+            .badge-fail {
+                background: var(--clr-fail);
+            }
+            .badge-warn,
+            .badge-degraded {
+                background: var(--clr-warn);
+            }
+            .badge-unknown {
+                background: var(--neutral-5);
+            }
+
+            .access-tag {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 84px;
+                font-size: 12.8px;
+                font-weight: 400;
+                border-radius: 32px;
+                padding: 2.5px 8px;
+                color: #545555;
+                line-height: 1.2;
+                white-space: nowrap;
+                vertical-align: middle;
+                margin-right: 8px;
+            }
+            .access-rw {
+                background: #fff;
+                border: 1px solid #cfd0d1;
+            }
+            .access-ro {
+                background: #eaebeb;
+            }
+            .access-short {
+                display: none;
+            }
+
+            /* --- Cards --- */
+            .card {
+                background: var(--card-bg);
+                border-radius: 4px;
+                border: 1px solid #eaebeb;
+                padding: 20px;
+                margin-bottom: 1rem;
+            }
+            .card-title {
+                font-size: 16px;
+                font-weight: 500;
+                color: #545555;
+                text-transform: none;
+                letter-spacing: 0;
+                line-height: 1.4;
+                margin-bottom: 20px;
+            }
+            .card-title i {
+                margin-right: 5px;
+                width: 1.1em;
+                text-align: center;
+            }
+
+            /* --- Collapsible card using <details>/<summary> --- */
+            details.card {
+                padding: 0;
+            }
+            details.card > summary {
+                padding: 1rem 1.25rem;
+                cursor: pointer;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                user-select: none;
+                list-style: none;
+            }
+            details.card > summary::-webkit-details-marker {
+                display: none;
+            }
+            details.card > summary::marker {
+                display: none;
+                content: "";
+            }
+            details.card > summary:hover {
+                background: var(--neutral-1);
+                border-radius: var(--radius);
+            }
+            details.card > summary .card-title {
+                margin-bottom: 0;
+                flex: 1;
+            }
+            details.card > summary .toggle-icon {
+                display: inline-block;
+                width: 20px;
+                height: 20px;
+                text-align: center;
+                line-height: 20px;
+                color: var(--neutral-5);
+                font-size: 0.8rem;
+                transition: transform 0.2s ease;
+                transform: rotate(-90deg);
+            }
+            details.card[open] > summary .toggle-icon {
+                transform: rotate(0deg);
+            }
+            details.card[open] > summary {
+                border-bottom: 1px solid var(--border);
+            }
+            details.card > .card-body {
+                padding: 1.25rem;
+            }
+
+
+            /* --- Grid layouts --- */
+            .grid-2 {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+                margin-bottom: 1rem;
+            }
+            .grid-2 > .card {
+                margin-bottom: 0;
+            }
+            .grid-3 {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 1rem;
+            }
+            .grid-4 {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 1rem;
+            }
+
+            /* --- Overview section --- */
+            .overview-row {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+                margin-bottom: 1rem;
+            }
+            .overview-row > .card {
+                margin-bottom: 0;
+            }
+            .card-title-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .card-title-row .card-title {
+                margin-bottom: 0;
+            }
+            .overview-row .card-title {
+                margin-bottom: 0;
+            }
+            .overview-content {
+                display: flex;
+                flex-direction: column;
+                flex: 1;
+                gap: 12px;
+                align-items: center;
+                justify-content: center;
+                margin-top: 20px;
+            }
+
+            /* --- Overview donut chart --- */
+            .donut-wrapper {
+                position: relative;
+                width: 180px;
+                height: 180px;
+                flex-shrink: 0;
+            }
+            .donut-wrapper svg { display: block; }
+            .donut-center-text {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                text-align: center;
+                pointer-events: none;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 2px;
+            }
+            .donut-center-count {
+                font-size: 21.6px;
+                font-weight: 500;
+                color: #545555;
+                line-height: 1.2;
+            }
+            .donut-center-label {
+                font-size: 12.8px;
+                color: #545555;
+                font-weight: 400;
+                line-height: 1.2;
+            }
+            .overview-legend {
+                display: flex;
+                align-items: center;
+                row-gap: 8px;
+                column-gap: 32px;
+                color: #545555;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            .overview-legend-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            .overview-legend-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                flex-shrink: 0;
+            }
+            .overview-legend-label {
+                font-size: 14.4px;
+                font-weight: 400;
+                line-height: 1.4;
+            }
+            .overview-legend-count {
+                font-size: 14.4px;
+                font-weight: 500;
+                color: #545555;
+                line-height: 1.4;
+            }
+            .overview-legend-text {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            /* --- Key-value pairs --- */
+            .kv-grid {
+                display: grid;
+                grid-template-columns: 120px 1fr;
+                gap: 8px 32px;
+            }
+            .kv-label {
+                font-size: 14.4px;
+                font-weight: 500;
+                color: #7b7b7b;
+                line-height: 1.4;
+            }
+            .kv-value {
+                font-size: 14.4px;
+                color: var(--black);
+                line-height: 1.5;
+                word-break: break-all;
+            }
+            .kv-value code,
+            .rec-text code,
+            .remediation-callout code {
+                font-family: var(--font-mono);
+                font-size: 0.8rem;
+                background: var(--neutral-1);
+                padding: 1px 6px;
+                border-radius: 3px;
+            }
+
+            /* --- Tables --- */
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            th {
+                text-align: left;
+                padding: 12px;
+                font-size: 12.8px;
+                font-weight: 500;
+                color: #7b7b7b;
+                text-transform: none;
+                letter-spacing: 0;
+                background: var(--neutral-1);
+                border-bottom: none;
+                line-height: 1.2;
+            }
+            td {
+                padding: 12px;
+                border-bottom: 1px solid #eaebeb;
+                font-size: 14.4px;
+                line-height: 1.4;
+            }
+            tr:last-child td {
+                border-bottom: none;
+            }
+            td.num {
+                text-align: right;
+                font-variant-numeric: tabular-nums;
+            }
+            #resource-limits td {
+                font-variant-numeric: tabular-nums;
+            }
+            td.mono,
+            .mono {
+                font-family: var(--font-mono);
+                font-size: 14.4px;
+                overflow-wrap: break-word;
+                word-break: break-word;
+            }
+            /* --- Checks table --- */
+            .checks-table {
+                width: 100%;
+                border-collapse: separate;
+                border-spacing: 0;
+                table-layout: fixed;
+                margin-top: 20px;
+            }
+            .checks-table th:first-child {
+                border-radius: 4px 0 0 4px;
+            }
+            .checks-table th.col-expand {
+                width: 32px;
+                padding: 0;
+            }
+            .checks-table th:last-child {
+                border-radius: 0 4px 4px 0;
+            }
+            .checks-table thead::after {
+                content: '';
+                display: table-row;
+                height: 4px;
+            }
+            .checks-table td {
+                vertical-align: middle;
+                color: var(--black);
+            }
+            .checks-table tbody tr:last-child td,
+            .checks-table tbody tr:has(+ .check-detail-row:last-child) td {
+                border-bottom: none;
+            }
+            .col-name {
+                width: 45%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .col-value {
+                width: auto;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .col-status {
+                width: 100px;
+                text-align: left;
+            }
+            .col-expand {
+                width: 32px;
+            }
+            .checks-table td.col-expand {
+                padding: 4px;
+            }
+            .check-cell-name {
+                font-weight: 500;
+                font-size: 14.4px;
+                color: var(--black);
+            }
+            .card-summary-meta {
+                font-size: 12.8px;
+                color: #545555;
+                font-weight: 400;
+                line-height: 1.2;
+            }
+            .check-row.row-fail td {
+                background: var(--row-fail);
+            }
+            .check-row.row-warn td {
+                background: var(--row-warn);
+            }
+            .check-row.has-details {
+                cursor: pointer;
+            }
+            .check-row.has-details:hover td {
+                background: var(--neutral-1);
+            }
+            .check-row.row-fail.has-details:hover td {
+                background: var(--row-fail);
+            }
+            .check-row.row-warn.has-details:hover td {
+                background: var(--row-warn);
+            }
+            .check-row.has-details:hover td:first-child {
+                border-radius: 4px 0 0 4px;
+            }
+            .check-row.has-details:hover td:last-child {
+                border-radius: 0 4px 4px 0;
+            }
+            .check-row.expanded:hover td:first-child {
+                border-radius: 4px 0 0 0;
+            }
+            .check-row.expanded:hover td:last-child {
+                border-radius: 0 4px 0 0;
+            }
+            /* Status badge in checks table (pill style) */
+            .check-status-badge {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+                min-width: 62px;
+                height: 20px;
+                padding: 2.5px 8px 2.5px 4px;
+                border-radius: 32px;
+                font-size: 12.8px;
+                font-weight: 400;
+                line-height: 1.2;
+            }
+            .check-status-badge.status-pass {
+                background: var(--clr-pass);
+                color: #fff;
+            }
+            .check-status-badge.status-warn {
+                background: var(--clr-warn);
+                color: #fff;
+            }
+            .check-status-badge.status-fail {
+                background: var(--clr-fail);
+                color: #fff;
+            }
+            .check-status-badge .check-status-icon {
+                width: 12px;
+                height: 12px;
+                flex-shrink: 0;
+            }
+            .check-detail-row td {
+                padding: 12px 12px 12px 44px;
+                border-top: 1px solid #eaebeb;
+                background: var(--neutral-1);
+            }
+            .check-detail-row.hidden {
+                display: none;
+            }
+            .check-row.expanded,
+            .check-row.expanded + .check-detail-row {
+                background: var(--neutral-1);
+            }
+            .check-row.row-fail.expanded,
+            .check-row.row-fail.expanded + .check-detail-row {
+                background: var(--row-fail);
+            }
+            .check-row.row-warn.expanded,
+            .check-row.row-warn.expanded + .check-detail-row {
+                background: var(--row-warn);
+            }
+            .check-row.expanded td {
+                background: var(--neutral-1);
+                border-bottom: none;
+                box-shadow: inset 0 1px 0 #eaebeb;
+            }
+            .check-row.row-fail.expanded td {
+                background: var(--row-fail);
+            }
+            .check-row.row-warn.expanded td {
+                background: var(--row-warn);
+            }
+            .check-row.expanded td:first-child {
+                border-radius: 4px 0 0 0;
+                box-shadow: inset 1px 1px 0 #eaebeb;
+            }
+            .check-row.expanded td:last-child {
+                border-radius: 0 4px 0 0;
+                box-shadow: inset -1px 1px 0 #eaebeb;
+            }
+            .check-row.expanded + .check-detail-row td {
+                border-radius: 0 0 4px 4px;
+                box-shadow: inset 1px -1px 0 #eaebeb, inset -1px -1px 0 #eaebeb;
+            }
+            .check-row.row-fail.expanded + .check-detail-row td {
+                background: var(--row-fail);
+            }
+            .check-row.row-warn.expanded + .check-detail-row td {
+                background: var(--row-warn);
+            }
+            .expand-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 24px;
+                height: 24px;
+                padding: 4px;
+                background: #F7F7F7;
+                border-radius: 4px;
+                color: #242424;
+                pointer-events: none;
+            }
+            .row-fail .expand-btn {
+                background: #F4E5E7;
+            }
+            .row-warn .expand-btn {
+                background: #F5EDD9;
+            }
+            .expand-btn svg {
+                width: 5px;
+                height: 8px;
+                transition: transform 0.2s ease;
+            }
+            .check-row.expanded .expand-btn svg {
+                transform: rotate(90deg);
+            }
+
+            .detail-header {
+                font-size: 12.8px;
+                font-weight: 500;
+                color: var(--black);
+                margin-bottom: 8px;
+                text-transform: none;
+                letter-spacing: 0;
+                line-height: 1.2;
+            }
+            .check-details {
+                font-size: 12.8px;
+                color: var(--black);
+                margin-top: 0;
+                padding: 0;
+                background: none;
+                border-radius: 0;
+                border-left: none;
+            }
+            .check-details pre {
+                overflow-x: auto;
+                font-family: var(--font-mono);
+                margin: 0;
+                font-size: 12.8px;
+            }
+
+            .check-details-grid {
+                display: grid;
+                grid-template-columns: auto 1fr;
+                gap: 8px 16px;
+                font-size: 12.8px;
+                line-height: 1.2;
+            }
+            .dk-key {
+                color: #7b7b7b;
+                font-weight: 500;
+                font-size: 12.8px;
+                white-space: nowrap;
+            }
+            .dk-val {
+                color: var(--black);
+                font-family: var(--font-mono);
+                font-size: 12.8px;
+            }
+
+            .remediation-callout {
+                margin-top: 16px;
+                padding: 12px 16px;
+                background: #e8ebfc;
+                border: 1px solid #c6ccf8;
+                border-radius: 4px;
+                font-size: 12.8px;
+                line-height: 1.2;
+                color: var(--black);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                min-width: 300px;
+            }
+            .remediation-callout:first-child {
+                margin-top: 0;
+            }
+
+            /* --- Recommendations --- */
+            .recommendations-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                margin-top: 20px;
+            }
+            .rec-item {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                padding-bottom: 12px;
+                border-bottom: 1px solid var(--neutral-2);
+            }
+            .rec-item:last-child {
+                border-bottom: none;
+                padding-bottom: 0;
+            }
+            .rec-badge-wrapper {
+                width: 81px;
+                flex-shrink: 0;
+            }
+            .rec-badge {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+                width: 100%;
+                height: 20px;
+                padding: 2.5px 8px 2.5px 4px;
+                border-radius: 32px;
+                font-size: 12.8px;
+                font-weight: 400;
+                line-height: 1.2;
+                text-transform: capitalize;
+                letter-spacing: 0;
+            }
+            .rec-badge::before {
+                display: none;
+            }
+            .rec-badge.badge-warn {
+                background: var(--clr-warn);
+                color: #fff;
+            }
+            .rec-badge.badge-fail {
+                background: var(--clr-fail);
+                color: #fff;
+            }
+            .rec-badge .rec-badge-icon {
+                width: 12px;
+                height: 12px;
+                flex-shrink: 0;
+            }
+            .rec-text {
+                font-size: 14.4px;
+                color: var(--black);
+            }
+            .rec-all-clear {
+                color: var(--neutral-6);
+                font-size: 13.6px;
+                padding: 0;
+                margin-top: 20px;
+            }
+
+            .error-detail {
+                display: inline;
+            }
+            .error-detail summary {
+                display: inline;
+                cursor: pointer;
+                list-style: none;
+            }
+            .error-detail summary::-webkit-details-marker { display: none; }
+            .error-detail .error-long { display: none; }
+            .error-detail .error-link { color: #087f68; }
+            .error-detail .error-link:hover { opacity: 0.8; }
+            .error-detail[open] .error-short { display: none; }
+            .error-detail[open] .error-long { display: inline; }
+            .error-detail[open] .error-link { display: none; }
+
+            /* --- Usage bar --- */
+            .usage-bar {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .usage-bar-track {
+                flex: 0 0 100px;
+                height: 8px;
+                background: #eaebeb;
+                border-radius: 5px;
+                overflow: hidden;
+            }
+            .usage-bar-fill {
+                height: 100%;
+                border-radius: 5px;
+                background: #1f884c;
+                min-width: 3px;
+            }
+            .usage-bar-fill.warn {
+                background: var(--clr-warn);
+            }
+            .usage-bar-fill.critical {
+                background: var(--clr-fail);
+            }
+            .usage-pct {
+                font-family: var(--font-mono);
+                font-size: 14.4px;
+                color: var(--black);
+                font-variant-numeric: tabular-nums;
+            }
+            .usage-size {
+                font-family: var(--font-mono);
+                font-size: 14.4px;
+                color: #545555;
+                margin-left: 16px;
+            }
+
+            /* --- Inline badges --- */
+            .tag-warn {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                height: 20px;
+                padding: 2.5px 8px 2.5px 4px;
+                border-radius: 32px;
+                font-family: var(--font-body);
+                font-size: 12.8px;
+                font-weight: 400;
+                line-height: 1.2;
+                color: #734a00;
+                background: #fff4e0;
+                margin-left: 8px;
+                vertical-align: middle;
+            }
+
+            /* --- Text helpers --- */
+            .text-muted {
+                font-size: 0.8rem;
+                color: var(--neutral-6);
+            }
+
+            /* --- Section divider --- */
+            .section-divider {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                margin: 1.5rem 0 1rem;
+                color: #7b7b7b;
+                font-size: 16px;
+                font-weight: 500;
+                line-height: 1.4;
+            }
+            .section-divider::before,
+            .section-divider::after {
+                content: '';
+                flex: 1;
+                height: 1px;
+                background: var(--neutral-3);
+            }
+
+            /* --- Print --- */
+            @media print {
+                body {
+                    background: white;
+                    padding: 0;
+                }
+                .container,
+                .header-inner,
+                .footer-inner {
+                    max-width: none;
+                }
+                .card {
+                    border: 1px solid var(--border);
+                }
+                details.card {
+                    break-inside: avoid;
+                }
+                details.card > summary .toggle-icon {
+                    display: none;
+                }
+                details.card[open] > .card-body,
+                details.card > .card-body {
+                    display: block !important;
+                }
+                .check-detail-row.hidden {
+                    display: table-row !important;
+                }
+                .expand-btn {
+                    display: none !important;
+                }
+            }
+
+
+            /* --- Footer (Seqera Platform style) --- */
+            .footer {
+                margin-top: 2rem;
+                border-top: 1px solid var(--border);
+                font-size: 0.8rem;
+                color: var(--neutral-6);
+            }
+            .footer-inner {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 1.25rem 2rem;
+            }
+            .footer a {
+                color: var(--neutral-8);
+                text-decoration: none;
+            }
+            .footer a:hover {
+                text-decoration: underline;
+            }
+            .footer-left {
+                display: flex;
+                gap: 1.5rem;
+                align-items: center;
+            }
+            .footer-logo svg {
+                height: 20px;
+                width: auto;
+                opacity: 0.5;
+            }
+
+            /* --- Mobile-only detail rows --- */
+            .mobile-result {
+                display: none;
+            }
+            .mobile-only-expand {
+                display: none;
+            }
+            tr.check-detail-row.mobile-only-detail {
+                display: none;
+            }
+
+            /* --- Mobile --- */
+            @media (max-width: 600px) {
+                body {
+                    padding: 0;
+                }
+                .container {
+                    padding: 1rem;
+                }
+                .header-inner {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 0.75rem;
+                    padding: 1rem;
+                }
+                .grid-2,
+                .grid-3,
+                .grid-4,
+                .overview-row {
+                    grid-template-columns: 1fr;
+                }
+                .kv-grid {
+                    grid-template-columns: 1fr;
+                }
+                .usage-bar-track {
+                    display: none;
+                }
+                .checks-table .col-hide-mobile {
+                    width: 0;
+                    padding: 0 !important;
+                    border: none !important;
+                    font-size: 0;
+                    overflow: hidden;
+                }
+                .checks-table .col-name {
+                    width: auto;
+                }
+                .access-tag.access-tag {
+                    width: auto;
+                }
+                .access-tag .access-full {
+                    display: none;
+                }
+                .access-tag .access-short {
+                    display: inline;
+                }
+                .check-details-grid {
+                    grid-template-columns: 1fr;
+                    gap: 0;
+                }
+                .dk-key {
+                    white-space: normal;
+                }
+                .dk-val {
+                    word-break: break-all;
+                    margin-bottom: 0.4rem;
+                }
+                td.mono,
+                .mono {
+                    overflow-wrap: normal;
+                    word-break: normal;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    max-width: 120px;
+                }
+                .usage-size {
+                    display: none;
+                }
+                .bucket-uri-cell {
+                    max-width: 0;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+                .mobile-result {
+                    display: block;
+                }
+                .remediation-callout {
+                    min-width: 0;
+                    align-items: flex-start;
+                    word-break: break-word;
+                }
+                /* Show mobile-only expand buttons & detail rows */
+                .mobile-only-expand {
+                    display: inline-flex;
+                }
+                tr.check-detail-row.mobile-only-detail {
+                    display: table-row;
+                }
+                tr.check-detail-row.mobile-only-detail.hidden {
+                    display: none;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        {% macro check_row(check_name, check_data) %}
+                            {% set actual = check_data.details|extract_actual %}
+                            {% set ref = check_data.details|extract_reference %}
+                            {% set actual_val = actual or ('Detected' if check_data.status == 'pass' else '—') %}
+                            {% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}
+                            <tr class="check-row row-{{ display_status }} {% if check_data.details or check_data.remediation %}has-details{% endif %}">
+                                <td class="col-expand">{% if check_data.details or check_data.remediation %}<span class="expand-btn" aria-hidden="true"><svg viewBox="0 0 5 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.947L3.053 4L0 7.06L0.94 8L4.94 4L0.94 0L0 0.947Z" fill="currentColor"/></svg></span>{% endif %}</td>
+                                <td class="check-cell-name">{{ check_name|humanize_check }}</td>
+                                <td class="mono col-hide-mobile" title="{{ actual_val }}">{{ actual_val }}</td>
+                                <td class="col-status">
+                                    <span class="check-status-badge status-{{ display_status }}">
+                                        {% if display_status == 'pass' %}
+                                        <svg class="check-status-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7 0a7 7 0 110 14A7 7 0 017 0zm3.02 4.97a.75.75 0 00-1.06 0L6.25 7.69 5.03 6.47a.75.75 0 10-1.06 1.06l1.75 1.75a.75.75 0 001.06 0l3.24-3.25a.75.75 0 000-1.06z"/></svg>
+                                        {% elif display_status == 'warn' %}
+                                        <svg class="check-status-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7.93345 8.16667H5.8828V3.73333H7.93345M7.93345 11.6667H5.8828V9.56667H7.93345M0.397486 12.1008C0.218159 12.4313 0.457429 12.8333 0.833437 12.8333H13.1626C13.5396 12.8333 13.7788 12.4294 13.5975 12.0989L7.40068 0.797318C7.21194 0.453087 6.71706 0.454176 6.52983 0.799234L0.397486 12.1008Z"/></svg>
+                                        {% else %}
+                                        <svg class="check-status-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7 0a7 7 0 110 14A7 7 0 017 0zM5.03 4.97a.75.75 0 00-1.06 1.06L5.94 7 3.97 8.97a.75.75 0 101.06 1.06L7 8.06l1.97 1.97a.75.75 0 101.06-1.06L8.06 7l1.97-1.97a.75.75 0 10-1.06-1.06L7 5.94 5.03 4.97z"/></svg>
+                                        {% endif %}
+                                        {{ display_status|capitalize }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% if check_data.details or check_data.remediation %}
+                            <tr class="check-detail-row hidden">
+                                <td colspan="4">
+                                    {% if check_data.details %}
+                                    <div class="check-details">
+                                        <div class="detail-header">Details</div>
+                                        <div class="check-details-grid">
+                                            {% if check_data.details is mapping %} {% for key, val in check_data.details.items() %}
+                                                <span class="dk-key">{{ detail_label(key, check_data.category|default('')) }}</span>
+                                                <span class="dk-val">{{ format_detail_value(val, key) }}</span>
+                                            {% endfor %} {% else %}
+                                            <pre style="grid-column: 1 / -1">{{ check_data.details|tojson(indent=2) }}</pre>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    {% if check_data.remediation %}
+                                    <div class="remediation-callout"><i class="mdi mdi-information" aria-hidden="true" style="font-size:16px;color:#4f5bd5;"></i> {{ check_data.remediation|inline_code }}</div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endif %}
+        {% endmacro %}
+        <!-- Header -->
+        <div class="header">
+            <div class="header-inner">
+                <div class="header-left">
+                    <div class="header-icon">
+                        <svg viewBox="57 57 386 386" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Fusion logo"><path d="M244.61 328.925C205.16 326.305 173.55 294.615 171.07 255.125H125C127.56 320.085 179.68 372.305 244.61 375.005V328.925Z" fill="white"/><path d="M171.08 244.615C173.7 205.165 205.39 173.555 244.88 171.075V125.005C179.92 127.565 127.7 179.685 125 244.615H171.08Z" fill="white"/><path d="M328.921 255.394C326.301 294.844 294.611 326.454 255.121 328.934V375.004C320.081 372.444 372.301 320.324 375.001 255.394H328.921Z" fill="white"/><path d="M255.391 171.085C294.841 173.705 326.451 205.395 328.931 244.885H375.001C372.441 179.925 320.321 127.705 255.391 125.005V171.085Z" fill="white"/></svg>
+                    </div>
+                    <div>
+                        <h1 class="header-title">Fusion Filesystem Diagnostics</h1>
+                        <div class="header-meta">
+                            <time datetime="{{ timestamp }}" class="local-time">{{ timestamp }}</time>
+                        </div>
+                    </div>
+                </div>
+                <span class="badge badge-pill badge-{{ overall_status }}" aria-label="Overall status: {{ overall_status }}">
+                    <svg class="pill-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        {% if overall_status == 'pass' %}
+                        <path d="M7 0a7 7 0 110 14A7 7 0 017 0zm3.02 4.97a.75.75 0 00-1.06 0L6.25 7.69 5.03 6.47a.75.75 0 10-1.06 1.06l1.75 1.75a.75.75 0 001.06 0l3.24-3.25a.75.75 0 000-1.06z"/>
+                        {% elif overall_status == 'fail' %}
+                        <path d="M7 0a7 7 0 110 14A7 7 0 017 0zM5.03 4.97a.75.75 0 00-1.06 1.06L5.94 7 3.97 8.97a.75.75 0 101.06 1.06L7 8.06l1.97 1.97a.75.75 0 101.06-1.06L8.06 7l1.97-1.97a.75.75 0 10-1.06-1.06L7 5.94 5.03 4.97z"/>
+                        {% else %}
+                        <path d="M7.93345 8.16667H5.8828V3.73333H7.93345M7.93345 11.6667H5.8828V9.56667H7.93345M0.397486 12.1008C0.218159 12.4313 0.457429 12.8333 0.833437 12.8333H13.1626C13.5396 12.8333 13.7788 12.4294 13.5975 12.0989L7.40068 0.797318C7.21194 0.453087 6.71706 0.454176 6.52983 0.799234L0.397486 12.1008Z"/>
+                        {% endif %}
+                    </svg>
+                    {{ overall_status|capitalize }}
+                </span>
+            </div>
+        </div>
+
+        <div class="container">
+            <!-- Overview + Recommendations (side-by-side) -->
+            {% if doctor_report.check_summary or doctor_report.summary %} {% set summary = doctor_report.check_summary
+            or doctor_report.summary %}
+            {% set total_checks = (summary.passed|default(0)) + (summary.failed|default(0)) + (summary.skipped|default(0)) %}
+            {% set passed_count = summary.passed|default(0) %}
+            {% set warn_count = warnings_count|default(0) %}
+            {% set critical_count = [summary.failed|default(0) - warn_count, 0]|max %}
+            {% set circ = 364.42 %}
+            {% set gap = 5 %}
+            {% set segment_count = (1 if passed_count > 0 else 0) + (1 if warn_count > 0 else 0) + (1 if critical_count > 0 else 0) %}
+            {% set total_gap = gap * segment_count %}
+            {% set avail = circ - total_gap %}
+            {% if total_checks > 0 %}
+            {% set pass_len = (avail * passed_count / total_checks)|round(1) %}
+            {% set warn_len = (avail * warn_count / total_checks)|round(1) %}
+            {% set crit_len = (avail * critical_count / total_checks)|round(1) %}
+            {% else %}
+            {% set pass_len = 0 %}
+            {% set warn_len = 0 %}
+            {% set crit_len = 0 %}
+            {% endif %}
+            {% set pass_off = 0 %}
+            {% set warn_off = -(pass_len + gap) if passed_count > 0 else 0 %}
+            {% set crit_off = -(pass_len + (gap if passed_count > 0 else 0) + warn_len + (gap if warn_count > 0 else 0)) %}
+            <div class="overview-row">
+                <div class="card">
+                    <h2 class="card-title"><i class="mdi mdi-chart-donut" aria-hidden="true"></i>Overview</h2>
+                    <div class="overview-content">
+                        <div class="donut-wrapper">
+                            <svg viewBox="0 0 160 160" width="180" height="180">
+                                {% if passed_count > 0 %}
+                                <circle cx="80" cy="80" r="58" fill="none" stroke="#69c690" stroke-width="22"
+                                    stroke-dasharray="{{ pass_len }} {{ circ }}" stroke-dashoffset="{{ pass_off }}"
+                                    transform="rotate(-90 80 80)"/>
+                                {% endif %}
+                                {% if warn_count > 0 %}
+                                <circle cx="80" cy="80" r="58" fill="none" stroke="#ffc04d" stroke-width="22"
+                                    stroke-dasharray="{{ warn_len }} {{ circ }}" stroke-dashoffset="{{ warn_off }}"
+                                    transform="rotate(-90 80 80)"/>
+                                {% endif %}
+                                {% if critical_count > 0 %}
+                                <circle cx="80" cy="80" r="58" fill="none" stroke="#E7727D" stroke-width="22"
+                                    stroke-dasharray="{{ crit_len }} {{ circ }}" stroke-dashoffset="{{ crit_off }}"
+                                    transform="rotate(-90 80 80)"/>
+                                {% endif %}
+                            </svg>
+                            <div class="donut-center-text">
+                                <div class="donut-center-count">{{ total_checks }}</div>
+                                <div class="donut-center-label">Total checks</div>
+                            </div>
+                        </div>
+                        <div class="overview-legend">
+                            {% if passed_count > 0 %}
+                            <span class="overview-legend-item">
+                                <span class="overview-legend-dot" style="background: var(--bar-pass)"></span>
+                                <span class="overview-legend-text">
+                                    <span class="overview-legend-label">Passed</span>
+                                    <span class="overview-legend-count">{{ passed_count }}</span>
+                                </span>
+                            </span>
+                            {% endif %}
+                            {% if warn_count > 0 %}
+                            <span class="overview-legend-item">
+                                <span class="overview-legend-dot" style="background: var(--bar-warn)"></span>
+                                <span class="overview-legend-text">
+                                    <span class="overview-legend-label">Warnings</span>
+                                    <span class="overview-legend-count">{{ warn_count }}</span>
+                                </span>
+                            </span>
+                            {% endif %}
+                            {% if critical_count > 0 %}
+                            <span class="overview-legend-item">
+                                <span class="overview-legend-dot" style="background: var(--bar-fail)"></span>
+                                <span class="overview-legend-text">
+                                    <span class="overview-legend-label">Critical</span>
+                                    <span class="overview-legend-count">{{ critical_count }}</span>
+                                </span>
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 class="card-title"><i class="mdi mdi-lightbulb-outline" aria-hidden="true"></i>Recommendations</h2>
+                    {% if recommendations %}
+                    <ul class="recommendations-list">
+                        {% for rec in recommendations %}
+                        <li class="rec-item">
+                            <div class="rec-badge-wrapper">
+                                <span class="rec-badge badge-{% if rec.category == 'critical' %}fail{% else %}warn{% endif %}">
+                                    {% if rec.category == 'critical' %}
+                                    <svg class="rec-badge-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7 0a7 7 0 110 14A7 7 0 017 0zM5.03 4.97a.75.75 0 00-1.06 1.06L5.94 7 3.97 8.97a.75.75 0 101.06 1.06L7 8.06l1.97 1.97a.75.75 0 101.06-1.06L8.06 7l1.97-1.97a.75.75 0 10-1.06-1.06L7 5.94 5.03 4.97z"/></svg>
+                                    {% else %}
+                                    <svg class="rec-badge-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7.93345 8.16667H5.8828V3.73333H7.93345M7.93345 11.6667H5.8828V9.56667H7.93345M0.397486 12.1008C0.218159 12.4313 0.457429 12.8333 0.833437 12.8333H13.1626C13.5396 12.8333 13.7788 12.4294 13.5975 12.0989L7.40068 0.797318C7.21194 0.453087 6.71706 0.454176 6.52983 0.799234L0.397486 12.1008Z"/></svg>
+                                    {% endif %}
+                                    {{ rec.category|capitalize }}
+                                </span>
+                            </div>
+                            <span class="rec-text">{{ rec.remediation|inline_code }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="rec-all-clear">All checks passed, no recommendations.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- System Checks -->
+            {% if system_checks %}
+            {% set sys_pass = system_checks|selectattr('status', 'equalto', 'pass')|list|length if system_checks is iterable and system_checks is not mapping else 0 %}
+            {% set sys_total = system_checks|length if system_checks is not mapping else system_checks|list|length %}
+            <div class="card">
+                <div class="card-title-row">
+                    <h2 class="card-title"><i class="mdi mdi-shield-check-outline" aria-hidden="true"></i>System Checks</h2>
+                    <span class="card-summary-meta">{{ sys_pass }}/{{ sys_total }} passed</span>
+                </div>
+                <table class="checks-table">
+                    <thead>
+                        <tr>
+                            <th class="col-expand"></th>
+                            <th class="col-name">Check</th>
+                            <th class="col-value col-hide-mobile">Result</th>
+                            <th class="col-status">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% if system_checks is mapping %}
+                        {% for name, data in system_checks.items() %}
+                            {{ check_row(name, data) }}
+                        {% endfor %}
+                    {% else %}
+                        {% for data in system_checks %}
+                            {{ check_row(data.check or data.name or 'Unknown', data) }}
+                        {% endfor %}
+                    {% endif %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <!-- Storage Checks -->
+            {% if disk_checks %}
+            {% set disk_pass = disk_checks|selectattr('status', 'equalto', 'pass')|list|length %}
+            <div class="card">
+                <div class="card-title-row">
+                    <h2 class="card-title"><i class="mdi mdi-server" aria-hidden="true"></i>Storage Checks</h2>
+                    <span class="card-summary-meta">{{ disk_pass }}/{{ disk_checks|length }} passed</span>
+                </div>
+                <table class="checks-table">
+                    <thead>
+                        <tr>
+                            <th class="col-expand"></th>
+                            <th class="col-name">URI</th>
+                            <th class="col-value col-hide-mobile">Total Capacity</th>
+                            <th class="col-status">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for check_data in disk_checks %}
+                            {% set actual = check_data.details|extract_actual %}
+                            {% set ref = check_data.details|extract_reference %}
+                            {% set path_val = check_data.details.path|default(check_data.details.mount_point|default('—')) if check_data.details else '—' %}
+                            {% set actual_val = actual or ('Detected' if check_data.status == 'pass' else '—') %}
+                            {% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}
+                            <tr class="check-row row-{{ display_status }}">
+                                <td class="col-expand"><span class="expand-btn mobile-only-expand" aria-hidden="true"><svg viewBox="0 0 5 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.947L3.053 4L0 7.06L0.94 8L4.94 4L0.94 0L0 0.947Z" fill="currentColor"/></svg></span></td>
+                                <td class="check-cell-name" title="{{ path_val }}">{{ path_val }}</td>
+                                <td class="mono col-hide-mobile" title="{{ actual_val }}">{{ actual_val }}</td>
+                                <td class="col-status">
+                                    <span class="check-status-badge status-{{ display_status }}">
+                                        {% if display_status == 'pass' %}
+                                        <svg class="check-status-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7 0a7 7 0 110 14A7 7 0 017 0zm3.02 4.97a.75.75 0 00-1.06 0L6.25 7.69 5.03 6.47a.75.75 0 10-1.06 1.06l1.75 1.75a.75.75 0 001.06 0l3.24-3.25a.75.75 0 000-1.06z"/></svg>
+                                        {% elif display_status == 'warn' %}
+                                        <svg class="check-status-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7.93345 8.16667H5.8828V3.73333H7.93345M7.93345 11.6667H5.8828V9.56667H7.93345M0.397486 12.1008C0.218159 12.4313 0.457429 12.8333 0.833437 12.8333H13.1626C13.5396 12.8333 13.7788 12.4294 13.5975 12.0989L7.40068 0.797318C7.21194 0.453087 6.71706 0.454176 6.52983 0.799234L0.397486 12.1008Z"/></svg>
+                                        {% else %}
+                                        <svg class="check-status-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7 0a7 7 0 110 14A7 7 0 017 0zM5.03 4.97a.75.75 0 00-1.06 1.06L5.94 7 3.97 8.97a.75.75 0 101.06 1.06L7 8.06l1.97 1.97a.75.75 0 101.06-1.06L8.06 7l1.97-1.97a.75.75 0 10-1.06-1.06L7 5.94 5.03 4.97z"/></svg>
+                                        {% endif %}
+                                        {{ display_status|capitalize }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr class="check-detail-row mobile-only-detail hidden">
+                                <td colspan="4">
+                                    <div class="check-details">
+                                        <div class="detail-header">Details</div>
+                                        <div class="check-details-grid">
+                                            <span class="dk-key">Total Capacity</span>
+                                            <span class="dk-val">{{ actual_val }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <!-- Bucket Access -->
+            {% if bucket_checks %}
+            {% set bucket_pass = bucket_checks|selectattr('status', 'equalto', 'pass')|list|length %}
+            <div class="card">
+                <div class="card-title-row">
+                    <h2 class="card-title"><i class="mdi mdi-pail-outline" aria-hidden="true"></i>Object Storage Checks</h2>
+                    <span class="card-summary-meta">{{ bucket_pass }}/{{ bucket_checks|length }} passed</span>
+                </div>
+                <table class="checks-table">
+                    <thead>
+                        <tr>
+                            <th class="col-expand"></th>
+                            <th class="col-name">URI</th>
+                            <th class="col-value col-hide-mobile">Result</th>
+                            <th class="col-status">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for check_data in bucket_checks %}
+                            {% set has_expandable = (check_data.sub_checks and check_data.status != 'pass') or check_data.remediation %}
+                            {% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}
+                            {% set uri_val = check_data.details.uri if check_data.details else '—' %}
+                            <tr class="check-row row-{{ display_status }}{% if has_expandable %} has-details{% endif %}">
+                                <td class="col-expand">{% if has_expandable %}<span class="expand-btn" aria-hidden="true"><svg viewBox="0 0 5 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.947L3.053 4L0 7.06L0.94 8L4.94 4L0.94 0L0 0.947Z" fill="currentColor"/></svg></span>{% else %}<span class="expand-btn mobile-only-expand" aria-hidden="true"><svg viewBox="0 0 5 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.947L3.053 4L0 7.06L0.94 8L4.94 4L0.94 0L0 0.947Z" fill="currentColor"/></svg></span>{% endif %}</td>
+                                <td class="check-cell-name bucket-uri-cell" title="{{ uri_val }}">
+                                    <span class="access-tag {% if check_data.check == 'bucket_access_ro' %}access-ro{% else %}access-rw{% endif %}"><span class="access-full">{% if check_data.check == 'bucket_access_ro' %}Read-only{% else %}Read-write{% endif %}</span><span class="access-short">{% if check_data.check == 'bucket_access_ro' %}RO{% else %}RW{% endif %}</span></span>
+                                    {{ uri_val }}
+                                </td>
+                                <td class="mono col-hide-mobile">{% if check_data.sub_checks %}{% set sc_passed = check_data.sub_checks|selectattr('status', 'equalto', 'pass')|list|length %}{{ sc_passed }}/{{ check_data.sub_checks|length }} checks passed{% else %}—{% endif %}</td>
+                                <td class="col-status">
+                                    <span class="check-status-badge status-{{ display_status }}">
+                                        {% if display_status == 'pass' %}
+                                        <svg class="check-status-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7 0a7 7 0 110 14A7 7 0 017 0zm3.02 4.97a.75.75 0 00-1.06 0L6.25 7.69 5.03 6.47a.75.75 0 10-1.06 1.06l1.75 1.75a.75.75 0 001.06 0l3.24-3.25a.75.75 0 000-1.06z"/></svg>
+                                        {% elif display_status == 'warn' %}
+                                        <svg class="check-status-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7.93345 8.16667H5.8828V3.73333H7.93345M7.93345 11.6667H5.8828V9.56667H7.93345M0.397486 12.1008C0.218159 12.4313 0.457429 12.8333 0.833437 12.8333H13.1626C13.5396 12.8333 13.7788 12.4294 13.5975 12.0989L7.40068 0.797318C7.21194 0.453087 6.71706 0.454176 6.52983 0.799234L0.397486 12.1008Z"/></svg>
+                                        {% else %}
+                                        <svg class="check-status-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7 0a7 7 0 110 14A7 7 0 017 0zM5.03 4.97a.75.75 0 00-1.06 1.06L5.94 7 3.97 8.97a.75.75 0 101.06 1.06L7 8.06l1.97 1.97a.75.75 0 101.06-1.06L8.06 7l1.97-1.97a.75.75 0 10-1.06-1.06L7 5.94 5.03 4.97z"/></svg>
+                                        {% endif %}
+                                        {{ display_status|capitalize }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% if has_expandable %}
+                            <tr class="check-detail-row hidden">
+                                <td colspan="4">
+                                    <div class="mobile-result">
+                                        <div class="check-details">
+                                            <div class="detail-header">URI</div>
+                                            <div class="dk-val">{{ uri_val }}</div>
+                                        </div>
+                                    </div>
+                                    {% if check_data.sub_checks and check_data.status != 'pass' %}
+                                    <div class="check-details">
+                                        <div class="detail-header">Details</div>
+                                        <div class="check-details-grid">
+                                            {% for sc in check_data.sub_checks %}{% if sc.message %}
+                                            <span class="dk-key">{{ (sc.check or sc.name or '')|humanize_check }}</span>
+                                            {% set trimmed = sc.message|trim_sub_msg %}
+                                            {% if trimmed|length > 80 %}
+                                            <span class="dk-val"><details class="error-detail"><summary><span class="error-short">{{ trimmed|truncate_error }}</span><span class="error-long">{{ trimmed }}</span> <span class="error-link">full error</span></summary></details></span>
+                                            {% else %}
+                                            <span class="dk-val">{{ trimmed }}</span>
+                                            {% endif %}
+                                            {% endif %}{% endfor %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    {% if check_data.remediation %}
+                                    <div class="remediation-callout"><i class="mdi mdi-information" aria-hidden="true" style="font-size:16px;color:#4f5bd5;"></i> {{ check_data.remediation|inline_code }}</div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr class="check-detail-row mobile-only-detail hidden">
+                                <td colspan="4">
+                                    <div class="check-details">
+                                        <div class="detail-header">URI</div>
+                                        <div class="dk-val">{{ uri_val }}</div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endif %}
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <h2 class="section-divider">Environment</h2>
+
+            <!-- Instance + System -->
+            {% if doctor_report.system %} {% set sys = doctor_report.system %} {% set cloud = doctor_report.cloud or {}
+            %}
+            <div class="grid-2">
+                <div class="card">
+                    <h3 class="card-title"><i class="mdi mdi-cloud-outline" aria-hidden="true"></i>Instance</h3>
+                    <div class="kv-grid">
+                        <span class="kv-label">Provider</span>
+                        <span class="kv-value">{{ cloud.provider|default('N/A')|upper }}</span>
+
+                        <span class="kv-label">ID</span>
+                        <span class="kv-value">{{ cloud.instance_id|default('N/A') }}</span>
+
+                        <span class="kv-label">Type</span>
+                        <span class="kv-value">{{ cloud.instance_type|default('N/A') }}</span>
+
+                        <span class="kv-label">Region</span>
+                        <span class="kv-value">{{ cloud.region|default('N/A') }}</span>
+
+                        <span class="kv-label">Zone</span>
+                        <span class="kv-value">{{ cloud.zone|default('N/A') }}</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title"><i class="mdi mdi-chip" aria-hidden="true"></i>System</h3>
+                    <div class="kv-grid">
+                        {% if sys.os %}
+                        <span class="kv-label">OS</span>
+                        <span class="kv-value"
+                            >{{ sys.os.name|default('Unknown')|title }} {{ sys.os.version|default('') }}</span
+                        >
+
+                        <span class="kv-label">Kernel</span>
+                        <span class="kv-value">{{ sys.os.kernel|default('N/A') }}</span>
+
+                        <span class="kv-label">Architecture</span>
+                        <span class="kv-value">{{ sys.os.architecture|default('N/A') }}</span>
+                        {% endif %} {% if sys.cpu %}
+                        <span class="kv-label">CPU</span>
+                        <span class="kv-value">{{ sys.cpu.model|default('Unknown') }}</span>
+
+                        <span class="kv-label">Cores / Threads</span>
+                        <span class="kv-value"
+                            >{{ sys.cpu.cores|default('?') }} / {{ sys.cpu.threads|default('?') }}</span
+                        >
+                        {% endif %} {% if sys.memory %}
+                        {% set mem_total_gib = (sys.memory.total_bytes / 1073741824)|round(1) %}
+                        <span class="kv-label">Memory</span>
+                        <span class="kv-value">{{ mem_total_gib }} GiB</span>
+                        {% if sys.memory.swap_total_bytes and sys.memory.swap_total_bytes > 0 %}
+                        {% set swap_total_gib = (sys.memory.swap_total_bytes / 1073741824)|round(1) %}
+                        <span class="kv-label">Swap</span>
+                        <span class="kv-value">{{ swap_total_gib }} GiB</span>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Storage Devices -->
+            {% if doctor_report.storage and doctor_report.storage.nvme_devices %}
+            <div id="storage-devices" class="card">
+                <div class="card-title-row">
+                    <h3 class="card-title"><i class="mdi mdi-database-outline" aria-hidden="true"></i>Storage Devices</h3>
+                </div>
+                <table class="checks-table">
+                    <thead>
+                        <tr>
+                            <th class="col-expand"></th>
+                            <th>NVMe Device</th>
+                            <th class="col-hide-mobile">Model</th>
+                            <th class="col-hide-mobile">Size</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dev in doctor_report.storage.nvme_devices %}
+                        {% set dev_size_gib = (dev.size_bytes / 1073741824)|round(0)|int %}
+                        <tr class="check-row">
+                            <td class="col-expand"><span class="expand-btn mobile-only-expand" aria-hidden="true"><svg viewBox="0 0 5 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.947L3.053 4L0 7.06L0.94 8L4.94 4L0.94 0L0 0.947Z" fill="currentColor"/></svg></span></td>
+                            <td class="check-cell-name">{{ dev.name }}</td>
+                            <td class="mono col-hide-mobile">{{ dev.model }}</td>
+                            <td class="mono col-hide-mobile">{{ dev_size_gib }} GiB</td>
+                        </tr>
+                        <tr class="check-detail-row mobile-only-detail hidden">
+                            <td colspan="4">
+                                <div class="check-details">
+                                    <div class="detail-header">Details</div>
+                                    <div class="check-details-grid">
+                                        <span class="dk-key">Model</span>
+                                        <span class="dk-val">{{ dev.model }}</span>
+                                        <span class="dk-key">Size</span>
+                                        <span class="dk-val">{{ dev_size_gib }} GiB</span>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <!-- Mounted Filesystems -->
+            {% if doctor_report.storage and doctor_report.storage.filesystems %}
+            <div id="mounted-filesystems" class="card">
+                <div class="card-title-row">
+                    <h3 class="card-title"><i class="mdi mdi-file-tree" aria-hidden="true"></i>Mounted Filesystems</h3>
+                </div>
+                <table class="checks-table">
+                    <thead>
+                        <tr>
+                            <th class="col-expand"></th>
+                            <th>Mount</th>
+                            <th class="col-hide-mobile">Device</th>
+                            <th class="col-hide-mobile">Type</th>
+                            <th style="width: 40%">Usage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fs in doctor_report.storage.filesystems %} {% if fs.total_bytes and fs.total_bytes >
+                        0 %} {% set fs_total_gib = (fs.total_bytes / 1073741824)|round(1) %} {% set fs_used_gib =
+                        ((fs.total_bytes - fs.available_bytes) / 1073741824)|round(1) %} {% set fs_used_pct =
+                        (((fs.total_bytes - fs.available_bytes) / fs.total_bytes) * 100)|round(0)|int %}
+                        <tr class="check-row">
+                            <td class="col-expand"><span class="expand-btn mobile-only-expand" aria-hidden="true"><svg viewBox="0 0 5 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.947L3.053 4L0 7.06L0.94 8L4.94 4L0.94 0L0 0.947Z" fill="currentColor"/></svg></span></td>
+                            <td class="check-cell-name">{{ fs.mount_point }}</td>
+                            <td class="mono col-hide-mobile">{{ fs.device }}</td>
+                            <td class="mono col-hide-mobile">{{ fs.type }}</td>
+                            <td>
+                                <div class="usage-bar">
+                                    <div class="usage-bar-track">
+                                        <div
+                                            class="usage-bar-fill{% if fs_used_pct >= 90 %} critical{% elif fs_used_pct >= 75 %} warn{% endif %}"
+                                            style="width: {{ fs_used_pct }}%"
+                                        ></div>
+                                    </div>
+                                    <span class="usage-pct">{{ fs_used_pct }}%</span>
+                                    <span class="usage-size">{{ fs_used_gib }}/{{ fs_total_gib }} GiB</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="check-detail-row mobile-only-detail hidden">
+                            <td colspan="5">
+                                <div class="check-details">
+                                    <div class="detail-header">Details</div>
+                                    <div class="check-details-grid">
+                                        <span class="dk-key">Device</span>
+                                        <span class="dk-val">{{ fs.device }}</span>
+                                        <span class="dk-key">Type</span>
+                                        <span class="dk-val">{{ fs.type }}</span>
+                                        <span class="dk-key">Usage</span>
+                                        <span class="dk-val">{{ fs_used_gib }}/{{ fs_total_gib }} GiB ({{ fs_used_pct }}%)</span>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %} {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <!-- Resource Limits -->
+            {% if doctor_report.resources %}
+            <div id="resource-limits" class="card">
+                <div class="card-title-row">
+                    <h3 class="card-title"><i class="mdi mdi-tune" aria-hidden="true"></i>Resource Limits</h3>
+                </div>
+                {% set res = doctor_report.resources %} {% set unlimited = 18446744073709551615 %}
+                {% macro rlimit_row(label, check_name, soft_display, hard_display) %}
+                    {% set chk = system_checks|selectattr('check', 'defined')|selectattr('check', 'equalto', check_name)|first if system_checks is iterable and system_checks is not mapping else none %}
+                    {% set req_min = chk.details.required_min if chk and chk.details and chk.details.required_min is defined else none %}
+                    <tr>
+                        <td class="check-cell-name">{{ label }}</td>
+                        <td class="mono">
+                            {{ soft_display
+                            }}{% if req_min and soft_display != 'unlimited' %}
+                                {% set soft_num = soft_display|replace(',', '')|int(-1) %}
+                                {% if soft_num >= 0 and soft_num < req_min %}<span class="tag-warn"><svg style="width:12px;height:12px;flex-shrink:0" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M7.93345 8.16667H5.8828V3.73333H7.93345M7.93345 11.6667H5.8828V9.56667H7.93345M0.397486 12.1008C0.218159 12.4313 0.457429 12.8333 0.833437 12.8333H13.1626C13.5396 12.8333 13.7788 12.4294 13.5975 12.0989L7.40068 0.797318C7.21194 0.453087 6.71706 0.454176 6.52983 0.799234L0.397486 12.1008Z"/></svg> Low</span>{% endif %}
+                            {% endif %}
+                        </td>
+                        <td class="mono col-hide-mobile">{{ hard_display }}</td>
+                    </tr>
+                {% endmacro %}
+                <table class="checks-table">
+                    <thead>
+                        <tr>
+                            <th>Resource</th>
+                            <th>Soft Limit</th>
+                            <th class="col-hide-mobile">Hard Limit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if res.open_files %}
+                        {{ rlimit_row("Open Files", "open_files",
+                            res.open_files.soft|intcomma if res.open_files.soft != unlimited else 'unlimited',
+                            res.open_files.hard|intcomma if res.open_files.hard != unlimited else 'unlimited') }}
+                        {% endif %}
+                        {% if res.max_procs %}
+                        {{ rlimit_row("Max Processes", "max_procs",
+                            res.max_procs.soft|intcomma if res.max_procs.soft != unlimited else 'unlimited',
+                            res.max_procs.hard|intcomma if res.max_procs.hard != unlimited else 'unlimited') }}
+                        {% endif %}
+                        {% if res.mem_lock %}
+                        {{ rlimit_row("Memory Lock", "mem_lock",
+                            'unlimited' if res.mem_lock.soft == unlimited else ((res.mem_lock.soft / 1073741824)|round(1)|string + ' GiB'),
+                            'unlimited' if res.mem_lock.hard == unlimited else ((res.mem_lock.hard / 1073741824)|round(1)|string + ' GiB')) }}
+                        {% endif %}
+                        {% if res.stack_size %}
+                        {{ rlimit_row("Stack Size", "stack_size",
+                            'unlimited' if res.stack_size.soft == unlimited else ((res.stack_size.soft / 1048576)|round(1)|string + ' MB'),
+                            'unlimited' if res.stack_size.hard == unlimited else ((res.stack_size.hard / 1048576)|round(1)|string + ' MB')) }}
+                        {% endif %}
+                        {% if res.file_size %}
+                        {{ rlimit_row("Max File Size", "file_size",
+                            'unlimited' if res.file_size.soft == unlimited else res.file_size.soft,
+                            'unlimited' if res.file_size.hard == unlimited else res.file_size.hard) }}
+                        {% endif %}
+                        {% if res.address_space %}
+                        {{ rlimit_row("Address Space", "address_space",
+                            'unlimited' if res.address_space.soft == unlimited else res.address_space.soft,
+                            'unlimited' if res.address_space.hard == unlimited else res.address_space.hard) }}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            {% macro benchmark_card(report, id, title) %}
+            {% if report and report.keys()|length > 0 and 'error' not in report %}
+            <details id="{{ id }}" class="card" open>
+                <summary>
+                    <h3 class="card-title"><i class="mdi mdi-speedometer" aria-hidden="true"></i>{{ title }}</h3>
+                    <span class="toggle-icon">&#9660;</span>
+                </summary>
+                <div class="card-body">
+                    {% if report.summary %}
+                    <p>
+                        <span class="badge badge-{{ report.summary.status }}"
+                            >{{ report.summary.status }}</span
+                        >
+                    </p>
+                    {% endif %} {% if report.results %}
+                    <pre
+                        class="mono"
+                        style="
+                            background: var(--neutral-1);
+                            padding: 1rem;
+                            border-radius: var(--radius);
+                            margin-top: 0.75rem;
+                            overflow-x: auto;
+                        "
+                    >
+{{ report.results|tojson(indent=2) }}</pre
+                    >
+                    {% elif report.error %}
+                    <div class="check-item fail">
+                        <div class="check-message">Error: {{ report.error }}</div>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No benchmark results available</p>
+                    {% endif %}
+                </div>
+            </details>
+            {% endif %}
+            {% endmacro %}
+            {{ benchmark_card(bench_report, "benchmark", "Filesystem Benchmark") }}
+            {{ benchmark_card(objbench_report, "objbench", "Object Storage Benchmark") }}
+
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-inner">
+                <div class="footer-left">
+                    <span>&copy; 2019-2026 <a href="https://www.seqera.io" target="_blank">Seqera</a></span>
+                    {%- if doctor_report.fusion_version or doctor_report.version %}
+                    {%- set version = doctor_report.fusion_version or doctor_report.version %}
+                    <span style="color: var(--neutral-4)">|</span>
+                    <span>{{ version }}</span>
+                    {%- endif %}
+                </div>
+                <div class="footer-logo">
+                <svg viewBox="0 0 1062 216" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Seqera logo"><g clip-path="url(#fl)"><path d="M215.965 179.672l-.043-.734-.052-.735-.077-.743-.078-.734-.104-.726-.121-.734-.129-.717-.139-.735-.172-.717-.173-.708-.199-.717-.216-.726-.216-.691-.233-.7-.259-.7-.268-.683-.285-.691-.303-.665-.302-.683-.32-.665-.345-.657-.346-.648-.38-.648-.38-.622-.389-.63-.406-.614-.424-.613-.432-.596-.458-.597-.449-.57-.466-.57-.484-.562-.501-.553-.51-.535-.518-.536-.527-.501-.527-.518-.553-.493-.561-.484-.562-.466-.993.596-.7.397-.717.389-.726.372-.717.354-.735.345-.751.329-.752.311-.752.277-.751.276-.769.259-.778.241-.769.234-.778.224-.787.216-.787.19-.806.182-.786.164-.795.147-.803.129-.795.121-.804.104-.812.086-.812.07-.808.048-.812.026-.812.008H131.458l51.546 14.178.371.113.303.112.302.121.277.138.293.156.268.164.285.173.26.19.25.199.233.216.242.216.225.233.207.233.199.268.19.259.182.268.146.268.156.294.138.293.121.285.121.303.087.32.086.302.06.32.052.311.035.328.026.311.008.328-.008.32-.026.328-.035.311-.052.32-.06.32-.086.311-.087.302-.121.311-.121.294-.138.294-.156.276-.146.285-.182.268-.19.259-.207.259-.225.242-.242.242-.233.224-.25.216-.26.19-.285.19-.268.165-.293.156-.277.146-.302.13-.303.112-.302.095-.32.078-.311.069-.319.043-.32.035-.32.034H0v27.864h181.155l.734-.009.752-.026.743-.026.726-.069.743-.06.734-.087.735-.112.725-.104.726-.129.735-.156.708-.173.717-.172.717-.19.717-.208.692-.224.699-.242.709-.26.691-.267.674-.268.674-.303.682-.319.657-.32.657-.337.648-.363.639-.363.639-.389.623-.388.622-.406.604-.424.588-.432.596-.44.588-.467.57-.442.57-.475.562-.484.553-.501.553-.518.518-.536.527-.545.527-.562.518-.536.501-.562.484-.578.449-.578.458-.604.449-.588.432-.614.38-.614.406-.622.389-.631.38-.648.346-.648.345-.657.32-.674.302-.666.303-.682.285-.683.268-.691.259-.691.233-.7.216-.7.216-.717.199-.708.173-.718.172-.717.139-.725.129-.726.121-.735.104-.734.078-.734.077-.735.052-.743.043-.734.026-.743.009-.743-.009-.734-.026-.752Z" fill="#201637"/><path d="M215.965 116.972l-.043-.743-.052-.734-.077-.734-.078-.735-.104-.734-.121-.726-.129-.734-.139-.726-.172-.726-.173-.708-.199-.718-.216-.708-.216-.7-.233-.708-.259-.692-.268-.691-.285-.691-.303-.682-.302-.674-.32-.657-.345-.665-.346-.657-.38-.63-.38-.64-.389-.613-.406-.631-.424-.614-.432-.605-.458-.588-.146-.199h-.009H131.449l51.555 14.178.371.121.303.113.302.112.277.147.293.147.268.164.285.173.26.19.25.207.233.207.242.216.225.234.207.242.199.259.19.259.182.268.146.285.156.276.138.294.121.303.121.302.087.302.086.311.06.311.052.329.035.311.026.328.008.32-.008.311-.026.328-.035.32-.052.32-.06.311-.086.311-.087.311-.121.293-.121.303-.138.302-.156.285-.146.277-.182.259-.19.268-.207.25-.225.25-.242.242-.233.224-.25.208-.26.207-.285.181-.268.173-.293.173-.277.138-.302.147-.303.13-.302.095-.32.103-.311.078-.32.069-.319.052-.32.026-.32.026H109.884 13.936H0v27.864h106.108 75.047.734l.752-.018.743-.043.726-.06.743-.061.734-.086.735-.104.725-.112.726-.138.735-.156.708-.155.717-.191.717-.181.717-.216.692-.225.699-.242.709-.241.691-.277.674-.276.674-.303.682-.311.147-.078.51-.25.657-.337.648-.354.639-.363.639-.38.623-.398.622-.415.604-.406.588-.455.596-.441.588-.466.57-.458.562-.48.553-.498.553-.51.518-.528.527-.553.527-.544.518-.536.501-.562.484-.57.449-.579.458-.605.449-.579.432-.605.38-.623.406-.614.389-.63.38-.648.346-.647.345-.657.32-.674.302-.674.303-.674.285-.683.268-.691.259-.691.233-.7.216-.717.216-.7.199-.717.173-.717.172-.726.139-.726.129-.725.121-.735.104-.734.078-.735.077-.734.052-.734.043-.734.026-.743.009-.734-.009-.743-.026-.743Z" fill="#201637"/><path d="M34.845 62.701l-.751.009-.735.017-.743.043-.734.061-.735.068-.734.087-.734.095-.726.121-.734.13-.726.156-.717.155-.717.19-.709.182-.717.216-.7.225-.708.242-.691.25-.691.278-.674.276-.674.303-.683.32-.147.069-.51.251-.656.337-.648.354-.648.363-.631.38-.622.397-.622.415-.614.406-.596.441-.588.441-.57.466-.57.458-.562.484-.553.498-.554.51-.527.528-.518.545-.527.553-.51.536-.502.562-.493.57-.458.579-.449.604-.458.579-.433.605-.39.623-.397.614-.388.63-.381.648-.354.647-.346.657-.32.674-.31.666-.294.683-.268.69-.259.692-.233.7-.216.717-.217.7-.199.708-.172.726-.173.717-.139.726-.129.725-.121.735-.104.735-.078.734-.069.735-.052.743-.035.734-.034.735V97.538l.034.743.035.752.052.734.069.735.078.735.086.734.12.734.13.717.138.734.173.717.172.708.199.709.199.717.199.708.233.699.234.7.259.691.259.691.294.683.31.674.321.657.345.674.346.648.39.63.38.64.389.622.406.614.424.614.432.596.459.588.148.19h67.578L32.988 104.26l-.363-.113-.303-.103-.302-.121-.285-.147-.286-.147-.276-.164-.277-.182-.259-.181-.259-.208-.234-.207-.241-.216-.216-.233-.208-.242-.199-.259-.199-.26-.173-.267-.164-.277-.147-.285-.138-.294-.121-.302-.113-.303-.095-.302-.078-.311-.068-.32-.043-.328-.044-.311-.017-.32.009-.328.017-.312.043-.32.044-.31.069-.329.078-.303.095-.32.113-.303.12-.293.139-.303.147-.285.164-.277.173-.259.199-.268.199-.25.208-.251.216-.225.242-.234.233-.208.26-.207.26-.19.276-.181.277-.173.276-.165.285-.138.303-.138.302-.13.303-.096.32-.103.319-.078.311-.061.311-.06.329-.026.32-.035h.328H106.125 202.055 216V62.701H109.866 34.845Z" fill="#201637"/><path d="M34.845 0l-.751.009-.735.017-.743.052-.734.06-.735.07-.734.086-.734.095-.726.121-.734.13-.726.147-.717.164-.717.181-.709.199-.717.199-.7.233-.708.233-.691.251-.691.276-.674.276-.674.294-.683.32-.66.32-.657.337-.648.354-.648.372-.631.388-.622.389-.622.406-.614.424-.596.432-.587.441-.57.458-.563.484-.553.49-.554.518-.527.528-.518.536-.527.553-.51.544-.502.553-.493.579-.459.57-.458.605-.449.57-.433.614-.39.622-.397.631-.388.639-.381.648-.354.656-.346.657-.32.674-.31.665-.294.683-.268.683-.259.69-.233.692-.216.7-.217.7-.199.716-.172.726-.173.726-.139.717-.129.717-.121.735-.104.726-.078.735-.069.734-.052.735-.035.734-.034.726V34.828l.034.751.035.743.052.734.069.735.078.734.086.735.12.726.13.734.138.726.173.717.172.726.199.708.199.717.199.717.233.7.234.7.259.691.259.691.294.692.31.674.321.665.345.648.346.665.39.631.38.631.389.63.406.614.424.604.432.596.459.605.148.19.993-.597.7-.397.717-.389.726-.372.717-.354.735-.345.751-.32.743-.328.76-.294.752-.277.769-.258.769-.242.778-.242.778-.225.778-.216.786-.199.806-.173.79-.156.783-.155.804-.13.803-.121.803-.104.793-.086.813-.069.786-.052.795-.043h.452l.828-.009.812-.018.803-.042.821-.035.812-.026h.813l.811-.009h50.245L32.988 41.558l-.363-.104-.303-.12-.302-.13-.285-.13-.286-.155-.276-.156-.277-.172-.259-.199-.259-.19-.234-.216-.241-.225-.216-.233-.208-.233-.199-.26-.199-.259-.173-.276-.164-.277-.147-.285-.138-.285-.121-.294-.113-.32-.095-.294-.078-.302-.068-.328-.043-.311-.044-.328-.017-.32.009-.328.017-.32.043-.32.044-.32.069-.311.078-.32.095-.311.113-.303.12-.303.139-.285.147-.293.164-.268.173-.277.199-.259.199-.242.208-.216.216-.25.242-.225.233-.216.26-.19.26-.172.276-.19.277-.155.285-.156.303-.138.302-.121.303-.104.302-.103.32-.086.31-.06.311-.062.329-.035.32-.026h.328H216V0H34.845Z" fill="#201637"/><path d="M338.551 175.5h-55.042v-21.506h55.042c8.522 0 15.087-1.636 19.695-4.926 4.608-3.282 6.917-7.518 6.917-12.701 0-5.182-2.18-8.984-6.522-11.405-4.351-2.412-10.787-4.406-19.309-5.958l-8.873-1.551c-8.702-1.551-16.614-3.802-23.737-6.734-7.131-2.932-12.787-6.998-16.957-12.18-4.171-5.183-6.265-11.831-6.265-19.954 0-12.087 4.523-21.463 13.568-28.112C306.113 43.824 318.11 40.5 333.068 40.5h53.738v21.77h-53.738c-7.303 0-13.045 1.338-17.215 4.015-4.171 2.676-6.265 6.435-6.265 11.268 0 5.183 2.043 8.984 6.127 11.405 4.085 2.421 9.612 4.236 16.563 5.438l9.131 1.551c9.217 1.552 17.652 3.717 25.307 6.478 7.655 2.762 13.697 6.734 18.133 11.917 4.437 5.182 6.651 12.095 6.651 20.73 0 12.785-4.789 22.716-14.349 29.799-9.568 7.083-22.432 10.62-38.608 10.62l.008.009Z" fill="#201637"/><path d="M663.027 217.191v-61.114h-4.199c-1.926 3.507-4.725 6.877-8.406 10.108-3.68 3.239-8.362 5.909-14.047 8.009-5.693 2.1-12.734 3.154-21.14 3.154-10.86 0-20.839-2.627-29.944-7.879-9.106-5.253-16.372-12.821-21.797-22.722-5.426-9.892-8.139-21.84-8.139-35.853v-3.939c0-13.945 2.756-25.893 8.277-35.793 5.512-9.892 12.821-17.469 21.926-22.721 9.106-5.253 18.998-7.879 29.677-7.879 12.604 0 22.28 2.281 29.019 6.825 6.739 4.553 11.775 9.719 15.101 15.499h4.199V40.5h26.531v176.674h-27.049l-.008.017ZM622.846 153.71c11.905 0 21.624-3.767 29.149-11.292 7.525-7.525 11.291-18.298 11.291-32.302v-2.368c0-13.831-3.81-24.509-11.421-32.043-7.62-7.525-17.296-11.292-29.019-11.292-11.723 0-21.14 3.767-28.76 11.292-7.62 7.525-11.422 18.212-11.422 32.043v2.368c0 14.013 3.81 24.777 11.422 32.302 7.619 7.533 17.2 11.292 28.76 11.292Z" fill="#201637"/><path d="M535.491 105.182c0-13.386-2.603-25.073-7.809-35.069-5.206-9.996-12.458-17.807-21.732-23.426-9.29-5.619-20.096-8.437-32.41-8.437s-23.778 2.853-33.317 8.569c-4.778 2.853-9.034 6.262-12.784 10.242-.471.493-.933 1.004-1.396 1.515-1.37 1.55-2.646 3.17-3.862 4.861-1.609 2.264-3.108 4.668-4.478 7.213-5.463 10.172-8.203 22.132-8.203 35.879v3.215c0 13.747 2.732 25.698 8.203 35.879 5.463 10.172 13.058 18.071 22.777 23.69 9.71 5.619 21.081 8.437 34.096 8.437 11.457 0 20.996-1.876 28.634-5.619 7.638-3.751 13.709-8.393 18.222-13.923 1.25-1.542 2.431-3.056 3.536-4.553 2.877-3.884 5.257-7.627 7.133-11.247l-22.383-11.783c-2.775 6.076-6.731 11.431-11.842 16.063-5.13 4.642-12.716 6.958-22.777 6.958-10.764 0-19.746-3.444-26.938-10.304-.446-.432-.882-.854-1.302-1.312a20.55 20.55 0 0 1-1.233-1.366 30.83 30.83 0 0 1-1.672-2.575c-3.502-5.407-5.505-11.845-6.011-19.305a83.45 83.45 0 0 1-.102-2.157h98.659v-10.445h-.009Zm-80.694-10.709-13.709 14.099h-4.513c-.068-4.06 0-9.273.523-14.099.256-1.832.599-3.602 1.044-5.302.428-1.7.951-3.32 1.559-4.87 2.02-5.17 5.026-9.547 8.982-13.122 6.328-5.716 14.522-8.569 24.6-8.569 10.079 0 18.222 2.853 24.473 8.569 6.25 5.716 9.804 13.483 10.669 23.294h-53.62-.008Z" fill="#201637"/><path d="M836.991 105.182c0-13.386-2.603-25.073-7.809-35.069-5.206-9.996-12.458-17.807-21.732-23.426-9.29-5.619-20.096-8.437-32.41-8.437s-23.778 2.853-33.317 8.569c-4.778 2.853-9.034 6.262-12.784 10.242-.471.493-.933 1.004-1.396 1.515-1.37 1.55-2.646 3.17-3.862 4.861-1.609 2.264-3.108 4.668-4.478 7.213-5.463 10.172-8.203 22.132-8.203 35.879v3.215c0 13.747 2.732 25.698 8.203 35.879 5.463 10.172 13.058 18.071 22.777 23.69 9.71 5.619 21.081 8.437 34.096 8.437 11.457 0 20.996-1.876 28.634-5.619 7.638-3.751 13.709-8.393 18.222-13.923 1.25-1.542 2.431-3.056 3.536-4.553 2.877-3.884 5.257-7.627 7.133-11.247l-22.383-11.783c-2.775 6.076-6.731 11.431-11.842 16.063-5.13 4.642-12.716 6.958-22.777 6.958-10.764 0-19.746-3.444-26.938-10.304-.446-.432-.882-.854-1.302-1.312a20.55 20.55 0 0 1-1.233-1.366 30.83 30.83 0 0 1-1.672-2.575c-3.502-5.407-5.505-11.845-6.011-19.305a83.45 83.45 0 0 1-.102-2.157H837v-10.445h-.009Zm-80.694-10.709-13.709 14.099h-4.513c-.068-4.06 0-9.273.523-14.099.256-1.832.599-3.602 1.044-5.302.428-1.7.951-3.32 1.559-4.87 2.02-5.17 5.026-9.547 8.982-13.122 6.328-5.716 14.522-8.569 24.6-8.569 10.079 0 18.222 2.853 24.473 8.569 6.25 5.716 9.804 13.483 10.669 23.294h-53.62-.008Z" fill="#201637"/><path d="M864.009 175.615V38.777h26.522v15.231h4.199c2.099-5.425 5.469-9.408 10.108-11.948 4.639-2.54 10.376-3.81 17.201-3.81h15.499v24.423h-16.544c-8.761 0-15.931 2.41-21.538 7.223-5.607 4.82-8.406 12.216-8.406 22.194v83.516h-27.05l.009.009Z" fill="#201637"/><path d="M1062 88.582c0-16.064-4.88-28.472-14.65-37.214-9.77-8.742-23.19-13.118-40.25-13.118-11.189 0-20.65 1.78-28.383 5.358-7.725 3.577-13.948 8.304-18.652 14.187-4.705 5.893-8.126 12.32-10.265 19.274l25.583 8.304c1.597-7.138 4.887-12.943 9.862-17.406 4.984-4.454 12.167-6.69 21.583-6.69s15.114 2.367 19.723 7.094c4.63 4.726 6.929 10.847 6.929 18.344v22.834h-4.43l-14.22-14.267h-21.322c-14.393 0-26.341 3.437-35.846 10.312-9.505 6.866-14.262 17.002-14.262 30.392 0 8.927 2.182 16.503 6.529 22.755 4.355 6.252 10.22 10.978 17.587 14.187 7.384 3.21 15.78 4.823 25.18 4.823s16.344-1.298 21.854-3.885c5.51-2.586 9.69-5.62 12.53-9.101 2.85-3.481 4.96-6.656 6.39-9.506h4.27v20.242l22.65-.001V88.59l.01-.009ZM1035.08 119.369c0 11.074-3.42 19.773-10.26 26.104-6.84 6.331-15.67 9.505-26.52 9.505-7.994 0-14.296-1.78-18.922-5.358-4.626-3.577-6.93-8.391-6.93-14.459 0-6.068 2.226-10.672 6.659-13.784 4.452-3.122 10.3-4.683 17.588-4.683h38.373v2.675h.012Z" fill="#201637"/></g><defs><clipPath id="fl"><rect width="1062" height="216" fill="white"/></clipPath></defs></svg>
+                </div>
+            </div>
+        </footer>
+
+        <script>
+            // Make check rows clickable/keyboard-accessible to toggle details
+            document.querySelectorAll(".check-row").forEach(function (row) {
+                var detailRow = row.nextElementSibling;
+                if (detailRow && detailRow.classList.contains("check-detail-row")) {
+                    var isMobileOnly = detailRow.classList.contains("mobile-only-detail");
+                    function toggle() {
+                        var isHidden = detailRow.classList.toggle("hidden");
+                        row.classList.toggle("expanded");
+                        row.setAttribute("aria-expanded", String(!isHidden));
+                    }
+                    if (isMobileOnly) {
+                        // Mobile-only: activate interactivity only on small screens
+                        var mq = window.matchMedia("(max-width: 600px)");
+                        function updateMobileDetail() {
+                            if (mq.matches) {
+                                row.classList.add("has-details");
+                                row.setAttribute("tabindex", "0");
+                                row.setAttribute("aria-expanded", "false");
+                            } else {
+                                row.classList.remove("has-details", "expanded");
+                                row.removeAttribute("tabindex");
+                                row.removeAttribute("aria-expanded");
+                                detailRow.classList.add("hidden");
+                            }
+                        }
+                        updateMobileDetail();
+                        mq.addEventListener("change", updateMobileDetail);
+                    } else {
+                        row.classList.add("has-details");
+                        row.setAttribute("tabindex", "0");
+                        row.setAttribute("aria-expanded", "false");
+                    }
+                    row.addEventListener("click", toggle);
+                    row.addEventListener("keydown", function (e) {
+                        if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            toggle();
+                        }
+                    });
+                }
+            });
+
+            // Localize timestamps
+            document.querySelectorAll("time.local-time").forEach(function (el) {
+                try {
+                    var d = new Date(el.getAttribute("datetime"));
+                    if (!isNaN(d)) {
+                        el.textContent = d.toLocaleString(undefined, {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit",
+                            timeZoneName: "short",
+                        });
+                    }
+                } catch (e) {}
+            });
+        </script>
+    </body>
+</html>

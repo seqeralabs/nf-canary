@@ -33,12 +33,27 @@ jobs:
       - name: Run Prettier --check
         run: prettier --check .
 
+  python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Run generate_report tests
+        run: uv run --no-project --with "pytest==9.0.2" --with "jinja2==3.1.6" --with "humanize==4.15.0" --with "markupsafe" python -m pytest tests/ -v
+
   nf-test:
     runs-on: ubuntu-latest
     env:
       NXF_ANSI_LOG: false
     steps:
       - uses: actions/checkout@v3
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
 
       - uses: actions/setup-java@v3
         with:

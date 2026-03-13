@@ -392,6 +392,7 @@ process TEST_FUSION_DOCTOR {
 
     script:
     def disk_flag  = "--check-disk-usage ${cache_path ?: '/tmp'}"
+    def redact_flag = params.fusion_redact ? "--redact" : ""
 
     // Build bucket args from lists
     def rw_bucket_args = rw_buckets ? rw_buckets.collect { bucket -> "--check-bucket-read-write ${bucket}" }.join(' ') : ""
@@ -410,12 +411,56 @@ process TEST_FUSION_DOCTOR {
       fi
     fi
 
+    # Run fusion doctor and capture exit code
+    # Allow validation failures (exit codes 1 and 3) but abort on other errors
+    set +e
     fusion doctor \\
         --output fusion-doctor-report.json \\
         --reference-profile ${reference_profile} \\
         ${disk_flag} \\
+        ${redact_flag} \\
         ${rw_bucket_args} \\
         ${ro_bucket_args}
+    EXIT_CODE=\$?
+    set -e
+
+    # Only allow exit codes 0, 1, and 3 (success and validation failures)
+    # Abort on any other exit code (non-validation errors)
+    if [[ \$EXIT_CODE -ne 0 && \$EXIT_CODE -ne 1 && \$EXIT_CODE -ne 3 ]]; then
+        echo "ERROR: fusion doctor failed with exit code \$EXIT_CODE (non-validation error)" >&2
+        exit \$EXIT_CODE
+    fi
+
+    # Exit successfully for validation failures to allow report generation
+    exit 0
+    """
+}
+
+process FUSION_DOCTOR_GENERATE_REPORT {
+    /*
+    Aggregates doctor, bench, and objbench JSON reports into a single
+    consolidated HTML report and combined JSON report using the Python
+    generate_fusion_report.py script.
+    */
+
+    container 'community.wave.seqera.io/library/jinja2_python_uv:7113b0a0e59d95a6'
+    publishDir { (params.outdir ? file(params.outdir) : file(workflow.workDir).resolve("outputs")).resolve("fusion").toUriString() }, mode: 'copy'
+
+    input:
+        path(doctor_report)
+        path(template_file)
+
+    output:
+        path("fusion-report.html"), emit: html_report
+        path("fusion-report.json"), emit: json_report
+
+    script:
+    """
+    generate_fusion_report.py \\
+        --doctor ${doctor_report} \\
+        --template ${template_file} \\
+        --output-html fusion-report.html \\
+        --output-json fusion-report.json
     """
 }
 
@@ -487,6 +532,9 @@ workflow NF_CANARY {
         if (params.fusion_kernel_version_min) yaml_lines.add("kernel_version_min: \"${params.fusion_kernel_version_min}\"")
         if (params.fusion_memory_gb_min) yaml_lines.add("memory_gb_min: ${params.fusion_memory_gb_min}")
         if (params.fusion_disk_gb_min) yaml_lines.add("disk_gb_min: ${params.fusion_disk_gb_min}")
+        if (params.fusion_nvme_required != null) yaml_lines.add("nvme_required: ${params.fusion_nvme_required}")
+        if (params.fusion_cpu_cores_min) yaml_lines.add("cpu_cores_min: ${params.fusion_cpu_cores_min}")
+        if (params.fusion_open_files_min) yaml_lines.add("open_files_min: ${params.fusion_open_files_min}")
         reference_profile_ch = channel.of(yaml_lines.join('\n'))
             .collectFile(name: 'fusion-reference-profile.yaml', newLine: true)
 
@@ -510,6 +558,13 @@ workflow NF_CANARY {
 
         TEST_FUSION_DOCTOR(run_ch.TEST_FUSION_DOCTOR, reference_profile_ch, rw_buckets_list, ro_buckets_list, params.fusion_cache_path)
 
+        // Generate consolidated fusion report from doctor output
+        // Only run FUSION_DOCTOR_GENERATE_REPORT if TEST_FUSION_DOCTOR produced output
+        FUSION_DOCTOR_GENERATE_REPORT(
+            TEST_FUSION_DOCTOR.out.report,
+            file("${projectDir}/assets/templates/fusion_report_template.html")
+        )
+
         // POC of emitting the channel
         Channel.empty()
             .mix(
@@ -529,7 +584,9 @@ workflow NF_CANARY {
                 TEST_MV_FOLDER_CONTENTS.out,
                 TEST_VAL_INPUT.out,
                 TEST_GPU.out,
-                TEST_FUSION_DOCTOR.out
+                TEST_FUSION_DOCTOR.out,
+                FUSION_DOCTOR_GENERATE_REPORT.out.html_report.ifEmpty([]),
+                FUSION_DOCTOR_GENERATE_REPORT.out.json_report.ifEmpty([])
             )
             .set { ch_out }
 
