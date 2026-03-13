@@ -1,0 +1,385 @@
+nextflow_workflow {
+
+    name "Test workflow FUSION_DOCTOR (channel preparation)"
+    script "../main.nf"
+    workflow "FUSION_DOCTOR"
+
+    test("Emits one item for single values across all sweep params") {
+
+        when {
+            workflow {
+                """
+                input[0]  = channel.of('trigger')   // trigger_ch
+                input[1]  = "5.10"                  // kernel_version_min
+                input[2]  = "8"                     // memory_gb_min
+                input[3]  = "200"                   // disk_gb_min
+                input[4]  = "true"                  // nvme_required
+                input[5]  = "4"                     // cpu_cores_min
+                input[6]  = "131072"                // open_files_min
+                input[7]  = "/tmp"                  // cache_path
+                input[8]  = ""                      // read_write_buckets
+                input[9]  = ""                      // read_only_buckets
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.inputs.size() == 1 }
+            )
+        }
+
+    }
+
+    test("Cartesian product: 2 kernels × 2 memory values = 4 combinations") {
+
+        when {
+            workflow {
+                """
+                input[0]  = channel.of('trigger')
+                input[1]  = "5.10,5.15"
+                input[2]  = "4,8"
+                input[3]  = "200"
+                input[4]  = "true"
+                input[5]  = "4"
+                input[6]  = "131072"
+                input[7]  = "/tmp"
+                input[8]  = ""
+                input[9]  = ""
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.inputs.size() == 4 }
+            )
+        }
+
+    }
+
+    test("Cartesian product: 2 kernels × 3 memory × 2 nvme = 12 combinations") {
+
+        when {
+            workflow {
+                """
+                input[0]  = channel.of('trigger')
+                input[1]  = "5.10,5.15"
+                input[2]  = "4,8,16"
+                input[3]  = "200"
+                input[4]  = "false,true"
+                input[5]  = "4"
+                input[6]  = "131072"
+                input[7]  = "/tmp"
+                input[8]  = ""
+                input[9]  = ""
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.inputs.size() == 12 }
+            )
+        }
+
+    }
+
+    test("meta snapshot and YAML content for single combination") {
+
+        when {
+            workflow {
+                """
+                input[0]  = channel.of('trigger')
+                input[1]  = "5.10"
+                input[2]  = "8"
+                input[3]  = "200"
+                input[4]  = "true"
+                input[5]  = "4"
+                input[6]  = "131072"
+                input[7]  = "/tmp"
+                input[8]  = ""
+                input[9]  = ""
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                // meta map
+                { assert snapshot(workflow.out.inputs[0][1]).match("meta") },
+                // YAML file — read content directly; path() wrapping avoids collectFile hang
+                { assert snapshot(path(workflow.out.inputs[0][2]).text).match("yaml_text") },
+                { assert path(workflow.out.inputs[0][2]).name == "fusion-reference-profile-k5_10_mem8_disk200_nvmetrue_cpu4_of131072.yaml" }
+            )
+        }
+
+    }
+
+    test("run_id omits cache suffix when cache_path is /tmp (default)") {
+
+        when {
+            workflow {
+                """
+                input[0]  = channel.of('trigger')
+                input[1]  = "5.10"
+                input[2]  = "8"
+                input[3]  = "200"
+                input[4]  = "true"
+                input[5]  = "4"
+                input[6]  = "131072"
+                input[7]  = "/tmp"
+                input[8]  = ""
+                input[9]  = ""
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert !workflow.out.inputs[0][1].run_id.contains("cache") }
+            )
+        }
+
+    }
+
+    test("run_id includes cache suffix when cache_path is non-default") {
+
+        when {
+            workflow {
+                """
+                input[0]  = channel.of('trigger')
+                input[1]  = "5.10"
+                input[2]  = "8"
+                input[3]  = "200"
+                input[4]  = "true"
+                input[5]  = "4"
+                input[6]  = "131072"
+                input[7]  = "/scratch"
+                input[8]  = ""
+                input[9]  = ""
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out.inputs[0][1]).match("meta_scratch") }
+            )
+        }
+
+    }
+
+    test("cache_path sweep produces one item per path") {
+
+        when {
+            workflow {
+                """
+                input[0]  = channel.of('trigger')
+                input[1]  = "5.10"
+                input[2]  = "8"
+                input[3]  = "200"
+                input[4]  = "true"
+                input[5]  = "4"
+                input[6]  = "131072"
+                input[7]  = "/tmp,/scratch"
+                input[8]  = ""
+                input[9]  = ""
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.inputs.size() == 2 },
+                { assert snapshot(
+                    workflow.out.inputs.collect { it[1] }.sort { a, b -> a.run_id <=> b.run_id }
+                  ).match("cache_sweep_metas") }
+            )
+        }
+
+    }
+
+    test("workDir is always appended to rw_buckets when none are supplied") {
+
+        when {
+            workflow {
+                """
+                input[0]  = channel.of('trigger')
+                input[1]  = "5.10"
+                input[2]  = "8"
+                input[3]  = "200"
+                input[4]  = "true"
+                input[5]  = "4"
+                input[6]  = "131072"
+                input[7]  = "/tmp"
+                input[8]  = ""
+                input[9]  = ""
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.inputs[0][3].size() == 1 },
+                { assert workflow.out.inputs[0][3][0].startsWith("file://") }
+            )
+        }
+
+    }
+
+    test("explicit rw_buckets are prepended before workDir") {
+
+        when {
+            workflow {
+                """
+                input[0]  = channel.of('trigger')
+                input[1]  = "5.10"
+                input[2]  = "8"
+                input[3]  = "200"
+                input[4]  = "true"
+                input[5]  = "4"
+                input[6]  = "131072"
+                input[7]  = "/tmp"
+                input[8]  = "s3://my-results,s3://my-cache"
+                input[9]  = ""
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.inputs[0][3].size() == 3 },
+                // snapshot the two stable explicit entries; workDir varies by run
+                { assert snapshot(workflow.out.inputs[0][3][0..1]).match("rw_buckets_explicit") },
+                { assert workflow.out.inputs[0][3][2].startsWith("file://") }
+            )
+        }
+
+    }
+
+    test("ro_buckets are passed through correctly") {
+
+        when {
+            workflow {
+                """
+                input[0]  = channel.of('trigger')
+                input[1]  = "5.10"
+                input[2]  = "8"
+                input[3]  = "200"
+                input[4]  = "true"
+                input[5]  = "4"
+                input[6]  = "131072"
+                input[7]  = "/tmp"
+                input[8]  = ""
+                input[9]  = "s3://reference-data,gs://shared-files"
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out.inputs[0][4]).match("ro_buckets") }
+            )
+        }
+
+    }
+
+    test("empty ro_buckets produces an empty list") {
+
+        when {
+            workflow {
+                """
+                input[0]  = channel.of('trigger')
+                input[1]  = "5.10"
+                input[2]  = "8"
+                input[3]  = "200"
+                input[4]  = "true"
+                input[5]  = "4"
+                input[6]  = "131072"
+                input[7]  = "/tmp"
+                input[8]  = ""
+                input[9]  = ""
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out.inputs[0][4]).match("ro_buckets_empty") }
+            )
+        }
+
+    }
+
+    test("meta.cache_path reflects the cache_path input") {
+
+        when {
+            workflow {
+                """
+                input[0]  = channel.of('trigger')
+                input[1]  = "5.10"
+                input[2]  = "8"
+                input[3]  = "200"
+                input[4]  = "true"
+                input[5]  = "4"
+                input[6]  = "131072"
+                input[7]  = "/scratch"
+                input[8]  = ""
+                input[9]  = ""
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.inputs[0][1].cache_path == "/scratch" }
+            )
+        }
+
+    }
+
+    test("whitespace in comma-separated params is trimmed") {
+
+        when {
+            workflow {
+                """
+                input[0]  = channel.of('trigger')
+                input[1]  = " 5.10 , 5.15 "
+                input[2]  = "4 , 8"
+                input[3]  = "200"
+                input[4]  = "true"
+                input[5]  = "4"
+                input[6]  = "131072"
+                input[7]  = "/tmp"
+                input[8]  = ""
+                input[9]  = ""
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.inputs.size() == 4 },
+                { assert snapshot(
+                    workflow.out.inputs.collect { it[1] }.sort { a, b -> a.run_id <=> b.run_id }
+                  ).match("whitespace_trim_metas") }
+            )
+        }
+
+    }
+
+}

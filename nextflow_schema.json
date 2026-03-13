@@ -13,13 +13,13 @@
             "properties": {
                 "run": {
                     "type": "string",
-                    "description": "Selectively run tests  as comma delimited values",
-                    "help_text": "Tests to run as comma delimited values. E.g. --skip TEST_SUCCESS,TEST_INPUT. Case insensitive. Note this excludes all other tests."
+                    "description": "Selectively run tests as comma-delimited values.",
+                    "help_text": "Tests to run as comma-delimited values. E.g. --run TEST_SUCCESS,TEST_INPUT. Case insensitive. Note this excludes all other tests."
                 },
                 "skip": {
                     "type": "string",
-                    "description": "Tests to skip as comma delimited values.",
-                    "help_text": "Tests to skip as comma delimited values. E.g. --skip TEST_SUCCESS,TEST_INPUT. Case insensitive."
+                    "description": "Tests to skip as comma-delimited values.",
+                    "help_text": "Tests to skip as comma-delimited values. E.g. --skip TEST_SUCCESS,TEST_INPUT. Case insensitive."
                 },
                 "remoteFile": {
                     "type": "string",
@@ -29,7 +29,7 @@
                 },
                 "container": {
                     "type": "string",
-                    "description": "Container URI for nf-canary",
+                    "description": "Container URI for nf-canary.",
                     "help_text": "Specifies the container URI. By default, this is an Ubuntu container on quay.io with no usage limits.",
                     "default": "quay.io/biocontainers/ubuntu:24.04"
                 },
@@ -64,13 +64,55 @@
                     "fa_icon": "fas fa-mask",
                     "default": false
                 },
+                "fusion_kernel_version_min": {
+                    "type": "string",
+                    "description": "Minimum Linux kernel version(s) required for Fusion.",
+                    "help_text": "Comma-separated list of kernel version thresholds to sweep. FUSION_DOCTOR runs once per value. E.g. '5.10' for a single check, or '5.10,5.15,6.1' to sweep multiple thresholds. AWS Forge images ship 5.10+ (AL2) or 6.1+ (AL2023); GCP and Azure ship 5.15+.",
+                    "default": "5.10,5.15",
+                    "fa_icon": "fas fa-microchip"
+                },
+                "fusion_memory_gb_min": {
+                    "type": "string",
+                    "description": "Minimum memory (GB) required for Fusion, as a comma-separated sweep.",
+                    "help_text": "Comma-separated list of memory thresholds (in GB) to sweep. FUSION_DOCTOR runs once per value. E.g. '8' for a single check, or '4,8,16' to sweep multiple thresholds.",
+                    "default": "4,8,16",
+                    "fa_icon": "fas fa-memory"
+                },
+                "fusion_disk_gb_min": {
+                    "type": "string",
+                    "description": "Minimum local disk size (GB) required for Fusion, as a comma-separated sweep.",
+                    "help_text": "Comma-separated list of disk size thresholds (in GB) to sweep. FUSION_DOCTOR runs once per value. E.g. '200' for a single check, or '100,200,950' to sweep multiple thresholds. Seqera docs require at least 200 GB local temp storage; 400 GB+ for files >100 GB. Cloud-specific profiles override this with values appropriate to that cloud's disk increments.",
+                    "default": "50,75,100,200,300,375,600,750,950",
+                    "fa_icon": "fas fa-hdd"
+                },
+                "fusion_nvme_required": {
+                    "type": "string",
+                    "description": "Whether NVMe local storage is required, as a comma-separated sweep.",
+                    "help_text": "Comma-separated list of boolean values to sweep ('true', 'false', or 'false,true'). FUSION_DOCTOR runs once per value. Fusion performs best on NVMe-backed instance storage. Set to 'true' when using NVMe instance families (e.g. AWS m6id, GCP local SSD, Azure 'd'-suffix VMs).",
+                    "default": "false,true",
+                    "fa_icon": "fas fa-bolt"
+                },
+                "fusion_cpu_cores_min": {
+                    "type": "string",
+                    "description": "Minimum CPU cores required for Fusion, as a comma-separated sweep.",
+                    "help_text": "Comma-separated list of CPU core thresholds to sweep. FUSION_DOCTOR runs once per value. E.g. '4' for a single check, or '2,4,16' to sweep multiple thresholds. Seqera recommends 16 vCPUs for large production pipelines.",
+                    "default": "2,4,16",
+                    "fa_icon": "fas fa-server"
+                },
+                "fusion_open_files_min": {
+                    "type": "string",
+                    "description": "Minimum open file descriptor limit required for Fusion, as a comma-separated sweep.",
+                    "help_text": "Comma-separated list of open file descriptor thresholds to sweep. FUSION_DOCTOR runs once per value. Fusion opens many file handles for FUSE operations and cloud storage connections. E.g. '65535' (Linux default), '131072' (recommended), or '65535,131072,1048576' to sweep all tiers.",
+                    "default": "65535,131072,1048576",
+                    "fa_icon": "fas fa-file"
+                },
                 "fusion_cache_path": {
                     "type": "string",
-                    "description": "Filesystem path for Fusion cache directory.",
-                    "help_text": "Specifies the directory where Fusion should cache data locally. Used by the diagnostics process to verify sufficient disk space is available.",
+                    "description": "Filesystem path(s) for Fusion cache directory, as a comma-separated sweep.",
+                    "help_text": "Comma-separated list of cache directory paths to sweep. FUSION_DOCTOR runs once per value. Used to verify sufficient disk space is available at that location. E.g. '/tmp' or '/tmp,/scratch'.",
                     "default": "/tmp",
-                    "pattern": "^/.*$",
-                    "fa_icon": "fas fa-hdd",
+                    "pattern": "^/[^,]*(,/[^,]*)*$",
+                    "fa_icon": "fas fa-folder",
                     "hidden": true
                 },
                 "fusion_read_only_buckets": {

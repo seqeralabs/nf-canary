@@ -373,30 +373,24 @@ process TEST_GPU {
 process TEST_FUSION_DOCTOR {
     /*
     Runs fusion doctor to validate the Fusion filesystem configuration.
-    Prints a text diagnostic report to stdout and saves a JSON report
-    to file. Fails if the fusion binary is not available in the task
-    environment.
+    The reference-profile YAML is staged in as a file (built via collectFile
+    in the workflow), avoiding any shell quoting or indentation issues.
     */
 
-    publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs/fusion").toUriString() }, mode: 'copy'
+    tag { meta.run_id }
+    publishDir { (params.outdir ? file(params.outdir) : file(workflow.workDir).resolve("outputs/fusion")).toUriString() }, mode: 'copy'
 
     input:
-        val(dummy_val)
-        path(reference_profile)
-        val(rw_buckets)
-        val(ro_buckets)
-        val(cache_path)
+        tuple val(dummy_val), val(meta), path(reference_profile), val(rw_buckets), val(ro_buckets)
 
     output:
-        path("fusion-doctor-report.json"), emit: report
+        path("fusion-doctor-report-${meta.run_id}.json"), emit: report
 
     script:
-    def disk_flag  = "--check-disk-usage ${cache_path ?: '/tmp'}"
-    def redact_flag = params.fusion_redact ? "--redact" : ""
-
-    // Build bucket args from lists
-    def rw_bucket_args = rw_buckets ? rw_buckets.collect { bucket -> "--check-bucket-read-write ${bucket}" }.join(' ') : ""
-    def ro_bucket_args = ro_buckets ? ro_buckets.collect { bucket -> "--check-bucket-read-only ${bucket}" }.join(' ') : ""
+    def disk_flag      = "--check-disk-usage ${meta.cache_path ?: '/tmp'}"
+    def redact_flag    = params.fusion_redact ? "--redact" : ""
+    def rw_bucket_args = rw_buckets ? rw_buckets.collect { b -> "--check-bucket-read-write ${b}" }.join(' ') : ""
+    def ro_bucket_args = ro_buckets ? ro_buckets.collect { b -> "--check-bucket-read-only ${b}"  }.join(' ') : ""
 
     """
     #!/bin/bash
@@ -411,11 +405,10 @@ process TEST_FUSION_DOCTOR {
       fi
     fi
 
-    # Run fusion doctor and capture exit code
-    # Allow validation failures (exit codes 1 and 3) but abort on other errors
+    # Run fusion doctor; allow validation failures (exit 1/3) but abort on others
     set +e
     fusion doctor \\
-        --output fusion-doctor-report.json \\
+        --output fusion-doctor-report-${meta.run_id}.json \\
         --reference-profile ${reference_profile} \\
         ${disk_flag} \\
         ${redact_flag} \\
@@ -424,30 +417,30 @@ process TEST_FUSION_DOCTOR {
     EXIT_CODE=\$?
     set -e
 
-    # Only allow exit codes 0, 1, and 3 (success and validation failures)
-    # Abort on any other exit code (non-validation errors)
     if [[ \$EXIT_CODE -ne 0 && \$EXIT_CODE -ne 1 && \$EXIT_CODE -ne 3 ]]; then
         echo "ERROR: fusion doctor failed with exit code \$EXIT_CODE (non-validation error)" >&2
         exit \$EXIT_CODE
     fi
-
-    # Exit successfully for validation failures to allow report generation
     exit 0
     """
 }
 
 process FUSION_DOCTOR_GENERATE_REPORT {
     /*
-    Aggregates doctor, bench, and objbench JSON reports into a single
-    consolidated HTML report and combined JSON report using the Python
-    generate_fusion_report.py script.
+    Aggregates one or more doctor JSON reports (one per parameter-sweep
+    combination) into a single consolidated HTML report and combined JSON
+    report using the Python generate_fusion_report.py script.
+
+    When multiple doctor reports exist (parameter sweep), they are all
+    staged into the task directory and passed to the script via repeated
+    --doctor flags so the report covers every combination.
     */
 
     container 'community.wave.seqera.io/library/jinja2_python_uv:7113b0a0e59d95a6'
     publishDir { (params.outdir ? file(params.outdir) : file(workflow.workDir).resolve("outputs")).resolve("fusion").toUriString() }, mode: 'copy'
 
     input:
-        path(doctor_report)
+        path(doctor_reports)   // one or more JSON reports from the sweep
         path(template_file)
 
     output:
@@ -455,13 +448,102 @@ process FUSION_DOCTOR_GENERATE_REPORT {
         path("fusion-report.json"), emit: json_report
 
     script:
+    def doctor_args = doctor_reports.collect { f -> "--doctor ${f}" }.join(' \\\n        ')
     """
     generate_fusion_report.py \\
-        --doctor ${doctor_report} \\
+        ${doctor_args} \\
         --template ${template_file} \\
         --output-html fusion-report.html \\
         --output-json fusion-report.json
     """
+}
+
+/* sweepList
+*/
+/**
+ * Split a comma-separated parameter string into a trimmed, non-empty list.
+ * Returns an empty list when the value is null, empty, or blank.
+ * Used to normalise all sweep parameters before building the Cartesian product.
+ *
+ * Examples:
+ *   sweepList("5.10, 5.15")  → ["5.10", "5.15"]
+ *   sweepList("4,8, ,16")    → ["4", "8", "16"]
+ *   sweepList(null)           → []
+ */
+def sweepList(v) {
+    v ? v.toString().tokenize(',').collect { p -> p.trim() }.findAll { p -> p } : []
+}
+
+workflow FUSION_DOCTOR {
+    take:
+        trigger_ch              // val channel — one item fires the whole sweep
+        kernel_version_min      // e.g. "5.10,5.15"
+        memory_gb_min           // e.g. "4,8,16"
+        disk_gb_min             // e.g. "100,200,950"
+        nvme_required           // e.g. "false,true"
+        cpu_cores_min           // e.g. "2,4,16"
+        open_files_min          // e.g. "65535,131072,1048576"
+        cache_path              // e.g. "/tmp"
+        read_write_buckets      // comma-separated bucket URIs
+        read_only_buckets       // comma-separated bucket URIs
+
+    main:
+        def rw_buckets_list = sweepList(read_write_buckets) + [workflow.workDir.toUriString()]
+        def ro_buckets_list = sweepList(read_only_buckets)
+
+        def kernel_sweep = sweepList(kernel_version_min)
+        def memory_sweep = sweepList(memory_gb_min)
+        def disk_sweep   = sweepList(disk_gb_min)
+        def nvme_sweep   = sweepList(nvme_required)
+        def cpu_sweep    = sweepList(cpu_cores_min)
+        def openf_sweep  = sweepList(open_files_min)
+        def cache_sweep  = sweepList(cache_path ?: '/tmp')
+
+        trigger_ch
+            .combine(channel.fromList(kernel_sweep))
+            .combine(channel.fromList(memory_sweep))
+            .combine(channel.fromList(disk_sweep))
+            .combine(channel.fromList(nvme_sweep))
+            .combine(channel.fromList(cpu_sweep))
+            .combine(channel.fromList(openf_sweep))
+            .combine(channel.fromList(cache_sweep))
+            .map { dummy_val, kernel, memory, disk, nvme, cpu, openf, cache ->
+                def parts = []
+                if (kernel) parts << "k${kernel.replaceAll('[^a-zA-Z0-9]', '_')}"
+                if (memory) parts << "mem${memory}"
+                if (disk)   parts << "disk${disk}"
+                if (nvme)   parts << "nvme${nvme}"
+                if (cpu)    parts << "cpu${cpu}"
+                if (openf)  parts << "of${openf}"
+                if (cache && cache != '/tmp') parts << "cache${cache.replaceAll('[^a-zA-Z0-9]', '_')}"
+
+                def yaml_lines = []
+                if (kernel) yaml_lines << "kernel_version_min: \"${kernel}\""
+                if (memory) yaml_lines << "memory_gb_min: ${memory}"
+                if (disk)   yaml_lines << "disk_gb_min: ${disk}"
+                if (nvme)   yaml_lines << "nvme_required: ${nvme}"
+                if (cpu)    yaml_lines << "cpu_cores_min: ${cpu}"
+                if (openf)  yaml_lines << "open_files_min: ${openf}"
+
+                def run_id = parts ? parts.join('_') : 'default'
+                [run_id, dummy_val, [run_id: run_id, cache_path: cache ?: '/tmp'], yaml_lines.join('\n')]
+            }
+            .set { sweep_ch }
+
+        // Materialise each per-combination YAML string as a staged file,
+        // then rejoin on run_id to rebuild the full process input tuple.
+        sweep_ch
+            .map { run_id, dummy_val, meta, yaml_text -> [run_id, yaml_text] }
+            .collectFile { run_id, yaml_text -> [ "fusion-reference-profile-${run_id}.yaml", yaml_text + '\n' ] }
+            .map { f -> [f.baseName.replace('fusion-reference-profile-', ''), f] }
+            .join(sweep_ch.map { run_id, dummy_val, meta, yaml_text -> [run_id, dummy_val, meta] })
+            .map { run_id, reference_profile, dummy_val, meta ->
+                [dummy_val, meta, reference_profile, rw_buckets_list, ro_buckets_list]
+            }
+            .set { inputs_ch }
+
+    emit:
+        inputs = inputs_ch   // tuple: [dummy_val, meta, reference_profile, rw_buckets, ro_buckets]
 }
 
 workflow NF_CANARY {
@@ -470,6 +552,15 @@ workflow NF_CANARY {
         skip_tools
         gpu
         fusion
+        fusion_kernel_version_min
+        fusion_memory_gb_min
+        fusion_disk_gb_min
+        fusion_nvme_required
+        fusion_cpu_cores_min
+        fusion_open_files_min
+        fusion_cache_path
+        fusion_read_write_buckets
+        fusion_read_only_buckets
 
     main:
     def default_run_tools = [
@@ -494,7 +585,7 @@ workflow NF_CANARY {
 
     def run  = run_tools  ? run_tools.tokenize(",")*.toUpperCase() : default_run_tools
     def skip = skip_tools.tokenize(",")*.toUpperCase()
-    Channel.fromList(run.findAll { it !in skip })
+    channel.fromList(run.findAll { it !in skip })
         .flatten()
         .branch { toolname ->
             TEST_BIN_SCRIPT:         toolname == "TEST_BIN_SCRIPT"
@@ -517,27 +608,12 @@ workflow NF_CANARY {
         }
         .set { run_ch }
 
-        Channel
+        channel
             .of("alpha", "beta", "gamma")
             .collectFile(name: 'sample.txt', newLine: true)
             .set { test_file }
 
-        remote_file = params.remoteFile ? Channel.fromPath(params.remoteFile, glob:false) : Channel.empty()
-
-        // Parse bucket parameters into lists
-        def rw_buckets_list = (params.fusion_read_write_buckets ? params.fusion_read_write_buckets.tokenize(',').collect { it.trim() } : []) + [workflow.workDir.toUriString()]
-        def ro_buckets_list = params.fusion_read_only_buckets ? params.fusion_read_only_buckets.tokenize(',').collect { it.trim() } : []
-
-        // Build fusion-doctor reference profile YAML from fusion parameters
-        def yaml_lines = []
-        if (params.fusion_kernel_version_min) yaml_lines.add("kernel_version_min: \"${params.fusion_kernel_version_min}\"")
-        if (params.fusion_memory_gb_min) yaml_lines.add("memory_gb_min: ${params.fusion_memory_gb_min}")
-        if (params.fusion_disk_gb_min) yaml_lines.add("disk_gb_min: ${params.fusion_disk_gb_min}")
-        if (params.fusion_nvme_required != null) yaml_lines.add("nvme_required: ${params.fusion_nvme_required}")
-        if (params.fusion_cpu_cores_min) yaml_lines.add("cpu_cores_min: ${params.fusion_cpu_cores_min}")
-        if (params.fusion_open_files_min) yaml_lines.add("open_files_min: ${params.fusion_open_files_min}")
-        reference_profile_ch = channel.of(yaml_lines.join('\n'))
-            .collectFile(name: 'fusion-reference-profile.yaml', newLine: true)
+        remote_file = params.remoteFile ? channel.fromPath(params.remoteFile, glob:false) : channel.empty()
 
         // Run tests
         TEST_SUCCESS(           run_ch.TEST_SUCCESS )
@@ -557,17 +633,27 @@ workflow NF_CANARY {
         TEST_VAL_INPUT(         run_ch.TEST_VAL_INPUT, "Hello World" )
         TEST_GPU(               run_ch.TEST_GPU, "dummy" )
 
-        TEST_FUSION_DOCTOR(run_ch.TEST_FUSION_DOCTOR, reference_profile_ch, rw_buckets_list, ro_buckets_list, params.fusion_cache_path)
+        FUSION_DOCTOR(
+            run_ch.TEST_FUSION_DOCTOR,
+            fusion_kernel_version_min,
+            fusion_memory_gb_min,
+            fusion_disk_gb_min,
+            fusion_nvme_required,
+            fusion_cpu_cores_min,
+            fusion_open_files_min,
+            fusion_cache_path,
+            fusion_read_write_buckets,
+            fusion_read_only_buckets
+        )
 
-        // Generate consolidated fusion report from doctor output
-        // Only run FUSION_DOCTOR_GENERATE_REPORT if TEST_FUSION_DOCTOR produced output
+        TEST_FUSION_DOCTOR(FUSION_DOCTOR.out.inputs)
+
         FUSION_DOCTOR_GENERATE_REPORT(
-            TEST_FUSION_DOCTOR.out.report,
+            TEST_FUSION_DOCTOR.out.report.collect(),
             file("${projectDir}/assets/templates/fusion_report_template.html")
         )
 
-        // POC of emitting the channel
-        Channel.empty()
+        channel.empty()
             .mix(
                 TEST_SUCCESS.out,
                 TEST_CREATE_FILE.out,
@@ -585,7 +671,7 @@ workflow NF_CANARY {
                 TEST_MV_FOLDER_CONTENTS.out,
                 TEST_VAL_INPUT.out,
                 TEST_GPU.out,
-                TEST_FUSION_DOCTOR.out,
+                TEST_FUSION_DOCTOR.out.report,
                 FUSION_DOCTOR_GENERATE_REPORT.out.html_report.ifEmpty([]),
                 FUSION_DOCTOR_GENERATE_REPORT.out.json_report.ifEmpty([])
             )
@@ -596,5 +682,19 @@ workflow NF_CANARY {
 }
 
 workflow {
-    NF_CANARY(params.run, params.skip, params.gpu, params.fusion)
+    NF_CANARY(
+        params.run,
+        params.skip,
+        params.gpu,
+        params.fusion,
+        params.fusion_kernel_version_min,
+        params.fusion_memory_gb_min,
+        params.fusion_disk_gb_min,
+        params.fusion_nvme_required,
+        params.fusion_cpu_cores_min,
+        params.fusion_open_files_min,
+        params.fusion_cache_path,
+        params.fusion_read_write_buckets,
+        params.fusion_read_only_buckets
+    )
 }
