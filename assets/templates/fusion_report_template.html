@@ -1447,17 +1447,33 @@
                 <table class="checks-table">
                     <thead>
                         <tr>
+                            <th class="col-expand"></th>
                             <th>NVMe Device</th>
-                            <th>Model</th>
-                            <th>Size</th>
+                            <th class="col-hide-mobile">Model</th>
+                            <th class="col-hide-mobile">Size</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for dev in doctor_report.storage.nvme_devices %}
-                        <tr>
+                        {% set dev_size_gib = (dev.size_bytes / 1073741824)|round(0)|int %}
+                        <tr class="check-row">
+                            <td class="col-expand"><span class="expand-btn mobile-only-expand" aria-hidden="true">&#9660;</span></td>
                             <td class="check-cell-name">{{ dev.name }}</td>
-                            <td class="mono">{{ dev.model }}</td>
-                            <td class="mono">{{ (dev.size_bytes / 1073741824)|round(0)|int }} GiB</td>
+                            <td class="mono col-hide-mobile">{{ dev.model }}</td>
+                            <td class="mono col-hide-mobile">{{ dev_size_gib }} GiB</td>
+                        </tr>
+                        <tr class="check-detail-row mobile-only-detail hidden">
+                            <td colspan="4">
+                                <div class="check-details">
+                                    <div class="detail-header">Details</div>
+                                    <div class="check-details-grid">
+                                        <span class="dk-key">Model</span>
+                                        <span class="dk-val">{{ dev.model }}</span>
+                                        <span class="dk-key">Size</span>
+                                        <span class="dk-val">{{ dev_size_gib }} GiB</span>
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
