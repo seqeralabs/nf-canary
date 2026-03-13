@@ -1009,6 +1009,9 @@
                     text-overflow: ellipsis;
                     max-width: 120px;
                 }
+                .usage-size {
+                    display: none;
+                }
                 /* Show mobile-only expand buttons & detail rows */
                 .mobile-only-expand {
                     display: inline-flex;
@@ -1471,6 +1474,7 @@
                 <table class="checks-table">
                     <thead>
                         <tr>
+                            <th class="col-expand"></th>
                             <th>Mount</th>
                             <th class="col-hide-mobile">Device</th>
                             <th class="col-hide-mobile">Type</th>
@@ -1482,7 +1486,8 @@
                         0 %} {% set fs_total_gib = (fs.total_bytes / 1073741824)|round(1) %} {% set fs_used_gib =
                         ((fs.total_bytes - fs.available_bytes) / 1073741824)|round(1) %} {% set fs_used_pct =
                         (((fs.total_bytes - fs.available_bytes) / fs.total_bytes) * 100)|round(0)|int %}
-                        <tr>
+                        <tr class="check-row">
+                            <td class="col-expand"><span class="expand-btn mobile-only-expand" aria-hidden="true">&#9660;</span></td>
                             <td class="check-cell-name">{{ fs.mount_point }}</td>
                             <td class="mono col-hide-mobile">{{ fs.device }}</td>
                             <td class="mono col-hide-mobile">{{ fs.type }}</td>
@@ -1496,6 +1501,21 @@
                                     </div>
                                     <span class="usage-pct">{{ fs_used_pct }}%</span>
                                     <span class="usage-size">{{ fs_used_gib }}/{{ fs_total_gib }} GiB</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="check-detail-row mobile-only-detail hidden">
+                            <td colspan="5">
+                                <div class="check-details">
+                                    <div class="detail-header">Details</div>
+                                    <div class="check-details-grid">
+                                        <span class="dk-key">Device</span>
+                                        <span class="dk-val">{{ fs.device }}</span>
+                                        <span class="dk-key">Type</span>
+                                        <span class="dk-val">{{ fs.type }}</span>
+                                        <span class="dk-key">Usage</span>
+                                        <span class="dk-val">{{ fs_used_gib }}/{{ fs_total_gib }} GiB ({{ fs_used_pct }}%)</span>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
