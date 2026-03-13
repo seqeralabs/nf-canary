@@ -320,7 +320,7 @@ class TestRenderHtml:
         html = render_html(combined_report)
         assert "<script>alert" not in html
         assert "<img src=x" not in html
-        assert "&lt;script&gt;" in html or "&#" in html
+        assert "&lt;img src=x onerror=alert(1)&gt;" in html
 
     def test_xss_in_check_message_is_escaped(self):
         """Test that HTML in check messages is escaped."""

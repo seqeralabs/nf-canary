@@ -675,16 +675,25 @@
                 justify-content: center;
                 width: 24px;
                 height: 24px;
-                background: var(--neutral-1);
+                padding: 4px;
+                background: #F7F7F7;
                 border-radius: 4px;
-                color: var(--neutral-7);
-                font-size: 0.7rem;
-                transition: transform 0.2s ease;
-                transform: rotate(-90deg);
+                color: #242424;
                 pointer-events: none;
             }
-            .check-row.expanded .expand-btn {
-                transform: rotate(0deg);
+            .row-fail .expand-btn {
+                background: #F4E5E7;
+            }
+            .row-warn .expand-btn {
+                background: #F5EDD9;
+            }
+            .expand-btn svg {
+                width: 5px;
+                height: 8px;
+                transition: transform 0.2s ease;
+            }
+            .check-row.expanded .expand-btn svg {
+                transform: rotate(90deg);
             }
 
             .detail-header {
@@ -1089,7 +1098,7 @@
                             {% set actual_val = actual or ('Detected' if check_data.status == 'pass' else '—') %}
                             {% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}
                             <tr class="check-row row-{{ display_status }} {% if check_data.details or check_data.remediation %}has-details{% endif %}">
-                                <td class="col-expand">{% if check_data.details or check_data.remediation %}<span class="expand-btn" aria-hidden="true">&#9660;</span>{% endif %}</td>
+                                <td class="col-expand">{% if check_data.details or check_data.remediation %}<span class="expand-btn" aria-hidden="true"><svg viewBox="0 0 5 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.947L3.053 4L0 7.06L0.94 8L4.94 4L0.94 0L0 0.947Z" fill="currentColor"/></svg></span>{% endif %}</td>
                                 <td class="check-cell-name">{{ check_name|humanize_check }}</td>
                                 <td class="mono col-hide-mobile" title="{{ actual_val }}">{{ actual_val }}</td>
                                 <td class="col-status">
@@ -1326,7 +1335,7 @@
                             {% set actual_val = actual or ('Detected' if check_data.status == 'pass' else '—') %}
                             {% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}
                             <tr class="check-row row-{{ display_status }}">
-                                <td class="col-expand"><span class="expand-btn mobile-only-expand" aria-hidden="true">&#9660;</span></td>
+                                <td class="col-expand"><span class="expand-btn mobile-only-expand" aria-hidden="true"><svg viewBox="0 0 5 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.947L3.053 4L0 7.06L0.94 8L4.94 4L0.94 0L0 0.947Z" fill="currentColor"/></svg></span></td>
                                 <td class="check-cell-name" title="{{ path_val }}">{{ path_val }}</td>
                                 <td class="mono col-hide-mobile" title="{{ actual_val }}">{{ actual_val }}</td>
                                 <td class="col-status">
@@ -1382,7 +1391,7 @@
                             {% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}
                             {% set uri_val = check_data.details.uri if check_data.details else '—' %}
                             <tr class="check-row row-{{ display_status }}{% if has_expandable %} has-details{% endif %}">
-                                <td class="col-expand">{% if has_expandable %}<span class="expand-btn" aria-hidden="true">&#9660;</span>{% else %}<span class="expand-btn mobile-only-expand" aria-hidden="true">&#9660;</span>{% endif %}</td>
+                                <td class="col-expand">{% if has_expandable %}<span class="expand-btn" aria-hidden="true"><svg viewBox="0 0 5 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.947L3.053 4L0 7.06L0.94 8L4.94 4L0.94 0L0 0.947Z" fill="currentColor"/></svg></span>{% else %}<span class="expand-btn mobile-only-expand" aria-hidden="true"><svg viewBox="0 0 5 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.947L3.053 4L0 7.06L0.94 8L4.94 4L0.94 0L0 0.947Z" fill="currentColor"/></svg></span>{% endif %}</td>
                                 <td class="check-cell-name bucket-uri-cell" title="{{ uri_val }}">
                                     <span class="access-tag {% if check_data.check == 'bucket_access_ro' %}access-ro{% else %}access-rw{% endif %}"><span class="access-full">{% if check_data.check == 'bucket_access_ro' %}Read-only{% else %}Read-write{% endif %}</span><span class="access-short">{% if check_data.check == 'bucket_access_ro' %}RO{% else %}RW{% endif %}</span></span>
                                     {{ uri_val }}
@@ -1529,7 +1538,7 @@
                         {% for dev in doctor_report.storage.nvme_devices %}
                         {% set dev_size_gib = (dev.size_bytes / 1073741824)|round(0)|int %}
                         <tr class="check-row">
-                            <td class="col-expand"><span class="expand-btn mobile-only-expand" aria-hidden="true">&#9660;</span></td>
+                            <td class="col-expand"><span class="expand-btn mobile-only-expand" aria-hidden="true"><svg viewBox="0 0 5 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.947L3.053 4L0 7.06L0.94 8L4.94 4L0.94 0L0 0.947Z" fill="currentColor"/></svg></span></td>
                             <td class="check-cell-name">{{ dev.name }}</td>
                             <td class="mono col-hide-mobile">{{ dev.model }}</td>
                             <td class="mono col-hide-mobile">{{ dev_size_gib }} GiB</td>
@@ -1575,7 +1584,7 @@
                         ((fs.total_bytes - fs.available_bytes) / 1073741824)|round(1) %} {% set fs_used_pct =
                         (((fs.total_bytes - fs.available_bytes) / fs.total_bytes) * 100)|round(0)|int %}
                         <tr class="check-row">
-                            <td class="col-expand"><span class="expand-btn mobile-only-expand" aria-hidden="true">&#9660;</span></td>
+                            <td class="col-expand"><span class="expand-btn mobile-only-expand" aria-hidden="true"><svg viewBox="0 0 5 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.947L3.053 4L0 7.06L0.94 8L4.94 4L0.94 0L0 0.947Z" fill="currentColor"/></svg></span></td>
                             <td class="check-cell-name">{{ fs.mount_point }}</td>
                             <td class="mono col-hide-mobile">{{ fs.device }}</td>
                             <td class="mono col-hide-mobile">{{ fs.type }}</td>
