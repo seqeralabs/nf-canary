@@ -940,6 +940,9 @@
             }
 
             /* --- Mobile-only detail rows --- */
+            .mobile-result {
+                display: none;
+            }
             .mobile-only-expand {
                 display: none;
             }
@@ -1011,6 +1014,15 @@
                 }
                 .usage-size {
                     display: none;
+                }
+                .bucket-uri-cell {
+                    max-width: 0;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+                .mobile-result {
+                    display: block;
                 }
                 /* Show mobile-only expand buttons & detail rows */
                 .mobile-only-expand {
@@ -1325,8 +1337,8 @@
                             {% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}
                             {% set uri_val = check_data.details.uri if check_data.details else '—' %}
                             <tr class="check-row{% if has_expandable %} has-details{% endif %}">
-                                <td class="col-expand">{% if has_expandable %}<span class="expand-btn" aria-hidden="true">&#9660;</span>{% endif %}</td>
-                                <td class="check-cell-name" title="{{ uri_val }}">
+                                <td class="col-expand">{% if has_expandable %}<span class="expand-btn" aria-hidden="true">&#9660;</span>{% else %}<span class="expand-btn mobile-only-expand" aria-hidden="true">&#9660;</span>{% endif %}</td>
+                                <td class="check-cell-name bucket-uri-cell" title="{{ uri_val }}">
                                     <span class="access-tag {% if check_data.check == 'bucket_access_ro' %}access-ro{% else %}access-rw{% endif %}"><span class="access-full">{% if check_data.check == 'bucket_access_ro' %}Read-only{% else %}Read-write{% endif %}</span><span class="access-short">{% if check_data.check == 'bucket_access_ro' %}RO{% else %}RW{% endif %}</span></span>
                                     {{ uri_val }}
                                 </td>
@@ -1347,6 +1359,12 @@
                             {% if has_expandable %}
                             <tr class="check-detail-row hidden">
                                 <td colspan="4">
+                                    <div class="mobile-result">
+                                        <div class="check-details">
+                                            <div class="detail-header">URI</div>
+                                            <div class="dk-val">{{ uri_val }}</div>
+                                        </div>
+                                    </div>
                                     {% if check_data.sub_checks and check_data.status != 'pass' %}
                                     <div class="check-details">
                                         <div class="detail-header">Details</div>
@@ -1366,6 +1384,15 @@
                                     {% if check_data.remediation %}
                                     <div class="remediation-callout"><i class="mdi mdi-information" aria-hidden="true" style="font-size:16px;color:#4f5bd5;"></i> {{ check_data.remediation|inline_code }}</div>
                                     {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr class="check-detail-row mobile-only-detail hidden">
+                                <td colspan="4">
+                                    <div class="check-details">
+                                        <div class="detail-header">URI</div>
+                                        <div class="dk-val">{{ uri_val }}</div>
+                                    </div>
                                 </td>
                             </tr>
                             {% endif %}
