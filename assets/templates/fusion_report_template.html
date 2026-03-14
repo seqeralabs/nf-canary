@@ -551,6 +551,31 @@
                 font-size: 14.4px;
                 color: var(--black);
             }
+            .has-tooltip {
+                position: relative;
+            }
+            .check-tooltip {
+                display: none;
+                position: absolute;
+                left: 0;
+                bottom: calc(100% + 6px);
+                background: var(--neutral-10);
+                color: #fff;
+                font-size: 12px;
+                font-weight: 400;
+                line-height: 1.4;
+                padding: 6px 10px;
+                border-radius: 4px;
+                white-space: normal;
+                width: max-content;
+                max-width: 280px;
+                z-index: 10;
+                box-shadow: 0 2px 8px rgba(0,0,0,.15);
+                pointer-events: none;
+            }
+            .has-tooltip:hover .check-tooltip {
+                display: block;
+            }
             .card-summary-meta {
                 font-size: 12.8px;
                 color: #545555;
@@ -1100,7 +1125,7 @@
                             {% set display_status = 'warn' if check_data.status == 'fail' and check_data.severity == 'warning' else check_data.status %}
                             <tr class="check-row row-{{ display_status }} {% if check_data.details or check_data.remediation %}has-details{% endif %}">
                                 <td class="col-expand">{% if check_data.details or check_data.remediation %}<span class="expand-btn" aria-hidden="true"><svg viewBox="0 0 5 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.947L3.053 4L0 7.06L0.94 8L4.94 4L0.94 0L0 0.947Z" fill="currentColor"/></svg></span>{% endif %}</td>
-                                <td class="check-cell-name">{{ humanize_check(check_name, check_catalog) }}</td>
+                                <td class="check-cell-name{% if check_description(check_name, check_catalog) %} has-tooltip{% endif %}">{{ humanize_check(check_name, check_catalog) }}{% if check_description(check_name, check_catalog) %}<span class="check-tooltip">{{ check_description(check_name, check_catalog) }}</span>{% endif %}</td>
                                 <td class="mono col-hide-mobile" title="{{ actual_val }}">{{ actual_val }}</td>
                                 <td class="col-status">
                                     <span class="check-status-badge status-{{ display_status }}">
@@ -1337,7 +1362,7 @@
                             {% set display_status = 'warn' if check_data.status == 'fail' and check_data.severity == 'warning' else check_data.status %}
                             <tr class="check-row row-{{ display_status }}">
                                 <td class="col-expand"><span class="expand-btn mobile-only-expand" aria-hidden="true"><svg viewBox="0 0 5 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.947L3.053 4L0 7.06L0.94 8L4.94 4L0.94 0L0 0.947Z" fill="currentColor"/></svg></span></td>
-                                <td class="check-cell-name" title="{{ path_val }}">{{ path_val }}</td>
+                                <td class="check-cell-name{% if check_description(check_data.check, check_catalog) %} has-tooltip{% endif %}">{{ path_val }}{% if check_description(check_data.check, check_catalog) %}<span class="check-tooltip">{{ check_description(check_data.check, check_catalog) }}</span>{% endif %}</td>
                                 <td class="mono col-hide-mobile" title="{{ actual_val }}">{{ actual_val }}</td>
                                 <td class="col-status">
                                     <span class="check-status-badge status-{{ display_status }}">
@@ -1393,9 +1418,9 @@
                             {% set uri_val = check_data.details.uri if check_data.details else '—' %}
                             <tr class="check-row row-{{ display_status }}{% if has_expandable %} has-details{% endif %}">
                                 <td class="col-expand">{% if has_expandable %}<span class="expand-btn" aria-hidden="true"><svg viewBox="0 0 5 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.947L3.053 4L0 7.06L0.94 8L4.94 4L0.94 0L0 0.947Z" fill="currentColor"/></svg></span>{% else %}<span class="expand-btn mobile-only-expand" aria-hidden="true"><svg viewBox="0 0 5 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.947L3.053 4L0 7.06L0.94 8L4.94 4L0.94 0L0 0.947Z" fill="currentColor"/></svg></span>{% endif %}</td>
-                                <td class="check-cell-name bucket-uri-cell" title="{{ uri_val }}">
+                                <td class="check-cell-name bucket-uri-cell{% if check_description(check_data.check, check_catalog) %} has-tooltip{% endif %}" title="{{ uri_val }}">
                                     <span class="access-tag {% if check_data.check == 'bucket_access_ro' %}access-ro{% else %}access-rw{% endif %}"><span class="access-full">{% if check_data.check == 'bucket_access_ro' %}Read-only{% else %}Read-write{% endif %}</span><span class="access-short">{% if check_data.check == 'bucket_access_ro' %}RO{% else %}RW{% endif %}</span></span>
-                                    {{ uri_val }}
+                                    {{ uri_val }}{% if check_description(check_data.check, check_catalog) %}<span class="check-tooltip">{{ check_description(check_data.check, check_catalog) }}</span>{% endif %}
                                 </td>
                                 <td class="mono col-hide-mobile">{% if check_data.sub_checks %}{% set sc_passed = check_data.sub_checks|selectattr('status', 'equalto', 'pass')|list|length %}{{ sc_passed }}/{{ check_data.sub_checks|length }} checks passed{% else %}—{% endif %}</td>
                                 <td class="col-status">
@@ -1425,7 +1450,9 @@
                                         <div class="detail-header">Details</div>
                                         <div class="check-details-grid">
                                             {% for sc in check_data.sub_checks %}{% if sc.message %}
-                                            <span class="dk-key">{{ humanize_check(sc.check or sc.name or '', check_catalog.get(check_data.check, {}).get('sub_checks', {})) }}</span>
+                                            {% set sc_name = sc.check or sc.name or '' %}
+                                            {% set sc_catalog = check_catalog.get(check_data.check, {}).get('sub_checks', {}) %}
+                                            <span class="dk-key" title="{{ check_description(sc_name, sc_catalog) }}">{{ humanize_check(sc_name, sc_catalog) }}</span>
                                             {% set trimmed = sc.message|trim_sub_msg %}
                                             {% if trimmed|length > 80 %}
                                             <span class="dk-val"><details class="error-detail"><summary><span class="error-short">{{ trimmed|truncate_error }}</span><span class="error-long">{{ trimmed }}</span> <span class="error-link">full error</span></summary></details></span>

@@ -117,6 +117,13 @@ def humanize_check(name, catalog=None):
     return name.replace('_', ' ').title()
 
 
+def check_description(name, catalog=None):
+    """Look up the description for a check from the catalog."""
+    if catalog and name in catalog:
+        return catalog[name].get("description", "")
+    return ""
+
+
 def detail_label(key, severity='', requirement_key=None):
     """Label for detail keys, context-dependent on severity."""
     if requirement_key and key == requirement_key:
@@ -207,6 +214,7 @@ def _create_jinja_env():
     env.filters['trim_sub_msg'] = trim_sub_msg
     env.filters['truncate_error'] = truncate_error
     env.globals['humanize_check'] = humanize_check
+    env.globals['check_description'] = check_description
     env.globals['extract_actual'] = extract_actual
     env.globals['extract_reference'] = extract_reference
     env.globals['detail_label'] = detail_label
