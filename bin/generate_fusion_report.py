@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 
 import humanize
+from markupsafe import Markup, escape
 
 
 def load_json_report(path: str) -> Dict[str, Any]:
@@ -82,7 +83,7 @@ def merge_reports(
                 continue
             summary = report.get("check_summary", {})
             if "criticals" in summary:
-                has_critical_failure = summary.get("criticals", 0) > 0
+                has_critical_failure = has_critical_failure or summary.get("criticals", 0) > 0
             else:
                 checks = report.get("checks", [])
                 if isinstance(checks, list):
@@ -106,6 +107,10 @@ def merge_reports(
 
     return combined
 
+
+# --- Constants ---
+
+_SEVERITY_ORDER = {"critical": 0, "warning": 1}
 
 # --- Jinja2 filter/helper functions (module-level for testability) ---
 
@@ -150,7 +155,6 @@ def truncate_error(msg, limit=80):
 
 def inline_code(text):
     """Convert `backtick` text to <code> elements, escaping HTML first."""
-    from markupsafe import Markup, escape
     if not text:
         return text
     escaped = str(escape(str(text)))
@@ -165,7 +169,7 @@ def _humanize_bytes(b):
 
 
 def _format_value(val):
-    """Format integers with comma separators."""
+    """Format a value for display: comma separators for numbers, str() for others."""
     if isinstance(val, (int, float)):
         return humanize.intcomma(val)
     return str(val)
@@ -256,28 +260,21 @@ def prepare_template_context(combined_report: Dict[str, Any]) -> Dict[str, Any]:
     elif isinstance(checks, dict):
         system_checks = checks
 
+    # Build flat list of all checks once
+    all_checks = list(checks) if isinstance(checks, list) else list(checks.values()) if isinstance(checks, dict) else []
+
     # Use check_summary.warnings when available; fall back to counting
     check_summary = doctor_report.get("check_summary", {})
     if "warnings" in check_summary:
         warnings_count = check_summary["warnings"]
     else:
-        warnings_count = 0
-        all_checks = []
-        if isinstance(checks, list):
-            all_checks = checks
-        elif isinstance(checks, dict):
-            all_checks = checks.values()
-        for c in all_checks:
-            if c.get("status") == "fail" and c.get("severity", c.get("category")) == "warning":
-                warnings_count += 1
+        warnings_count = sum(
+            1 for c in all_checks
+            if c.get("status") == "fail" and c.get("severity", c.get("category")) == "warning"
+        )
 
     # Collect recommendations
     recommendations = []
-    all_checks = []
-    if isinstance(checks, list):
-        all_checks = checks
-    elif isinstance(checks, dict):
-        all_checks = checks.values()
     seen_remediations = set()
     for c in all_checks:
         if c.get("status") != "pass" and c.get("remediation"):
@@ -293,7 +290,6 @@ def prepare_template_context(combined_report: Dict[str, Any]) -> Dict[str, Any]:
                 })
 
     # Sort recommendations: critical first, then warnings
-    _SEVERITY_ORDER = {"critical": 0, "warning": 1}
     recommendations.sort(key=lambda r: _SEVERITY_ORDER.get(r["severity"], 2))
 
     # Extract check_catalog from doctor report
