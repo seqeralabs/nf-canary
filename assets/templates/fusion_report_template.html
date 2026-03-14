@@ -762,6 +762,27 @@
                 font-family: var(--font-mono);
                 font-size: 12.8px;
             }
+            .dk-error {
+                grid-column: 1 / -1;
+                color: var(--clr-fail);
+                font-family: var(--font-mono);
+                font-size: 12px;
+                padding: 3px 8px;
+                background: var(--row-fail);
+                border-radius: 3px;
+                margin-top: -2px;
+                margin-bottom: 4px;
+            }
+            .dk-error .error-short { display: inline; }
+            .dk-error .error-long { display: none; word-break: break-all; }
+            .dk-error.expanded .error-short { display: none; }
+            .dk-error.expanded .error-long { display: inline; }
+            .dk-error .error-link {
+                color: var(--primary);
+                cursor: pointer;
+                font-family: var(--font-body);
+                font-size: 11px;
+            }
 
             .remediation-callout {
                 margin-top: 16px;
@@ -1449,15 +1470,18 @@
                                     <div class="check-details">
                                         <div class="detail-header">Details</div>
                                         <div class="check-details-grid">
-                                            {% for sc in check_data.sub_checks %}{% if sc.message %}
+                                            {% for sc in check_data.sub_checks %}{% if sc.status != 'skip' %}
                                             {% set sc_name = sc.check or sc.name or '' %}
                                             {% set sc_catalog = check_catalog.get(check_data.check, {}).get('sub_checks', {}) %}
                                             <span class="dk-key" title="{{ check_description(sc_name, sc_catalog) }}">{{ humanize_check(sc_name, sc_catalog) }}</span>
+                                            <span class="dk-val">{% if sc.status == 'pass' %}Yes{% else %}No{% endif %}</span>
+                                            {% if sc.status != 'pass' and sc.message %}
                                             {% set trimmed = sc.message|trim_sub_msg %}
                                             {% if trimmed|length > 80 %}
-                                            <span class="dk-val"><details class="error-detail"><summary><span class="error-short">{{ trimmed|truncate_error }}</span><span class="error-long">{{ trimmed }}</span> <span class="error-link">full error</span></summary></details></span>
+                                            <span class="dk-error"><span class="error-short">{{ trimmed|truncate_error }} <span class="error-link error-toggle">full error</span></span><span class="error-long">{{ trimmed }} <span class="error-link error-toggle">show less</span></span></span>
                                             {% else %}
-                                            <span class="dk-val">{{ trimmed }}</span>
+                                            <span class="dk-error">{{ trimmed }}</span>
+                                            {% endif %}
                                             {% endif %}
                                             {% endif %}{% endfor %}
                                         </div>
@@ -1817,6 +1841,14 @@
                         }
                     });
                 }
+            });
+
+            // Toggle full/short error messages
+            document.querySelectorAll(".error-toggle").forEach(function (link) {
+                link.addEventListener("click", function (e) {
+                    e.stopPropagation();
+                    link.closest(".dk-error").classList.toggle("expanded");
+                });
             });
 
             // Localize timestamps
