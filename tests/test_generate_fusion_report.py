@@ -421,12 +421,12 @@ class TestFilterFunctions:
 
     def test_humanize_check_with_catalog(self):
         catalog = {
-            "fuse_device": {"label": "FUSE Device"},
-            "bucket_access_rw": {"label": "Bucket Access (read/write)"},
+            "fuse_device": {"label": "FUSE device"},
+            "bucket_access_rw": {"label": "bucket read-write access"},
             "cpu_vcpus": {"label": "vCPUs"},
         }
-        assert humanize_check("fuse_device", catalog) == "FUSE Device"
-        assert humanize_check("bucket_access_rw", catalog) == "Bucket Access (read/write)"
+        assert humanize_check("fuse_device", catalog) == "FUSE device"
+        assert humanize_check("bucket_access_rw", catalog) == "bucket read-write access"
         assert humanize_check("cpu_vcpus", catalog) == "vCPUs"
 
     def test_humanize_check_without_catalog(self):
@@ -435,7 +435,7 @@ class TestFilterFunctions:
         assert humanize_check("fuse_device") == "Fuse Device"
 
     def test_humanize_check_unknown_with_catalog(self):
-        catalog = {"fuse_device": {"label": "FUSE Device"}}
+        catalog = {"fuse_device": {"label": "FUSE device"}}
         assert humanize_check("unknown_check", catalog) == "Unknown Check"
 
     def test_humanize_check_catalog_none(self):
@@ -693,7 +693,7 @@ class TestPrepareTemplateContext:
                 "doctor": {
                     "checks": [],
                     "check_catalog": {
-                        "fuse_device": {"label": "FUSE Device"},
+                        "fuse_device": {"label": "FUSE device"},
                     },
                 },
                 "bench": {},
@@ -701,7 +701,7 @@ class TestPrepareTemplateContext:
             },
         }
         ctx = prepare_template_context(combined)
-        assert ctx["check_catalog"] == {"fuse_device": {"label": "FUSE Device"}}
+        assert ctx["check_catalog"] == {"fuse_device": {"label": "FUSE device"}}
 
 
 class TestMain:
@@ -802,8 +802,8 @@ class TestRealFusionDoctorFormat:
                         "criticals": 0,
                     },
                     "check_catalog": {
-                        "fuse_device": {"label": "FUSE Device"},
-                        "disk_space": {"label": "Disk Space"},
+                        "fuse_device": {"label": "FUSE device"},
+                        "disk_space": {"label": "disk capacity"},
                     },
                     "checks": [
                         {
@@ -830,7 +830,7 @@ class TestRealFusionDoctorFormat:
 
         html = render_html(combined_report)
         assert "2.6-develop-1f517df" in html
-        assert "FUSE Device" in html
+        assert "FUSE device" in html
         assert "Storage Checks" in html  # disk_space goes to its own section
         assert "/dev/fuse" in html
         assert "System Checks" in html
@@ -851,7 +851,7 @@ class TestRealFusionDoctorFormat:
             "fusion_version": "2.6.0",
             "timestamp": "2026-03-04T10:00:00Z",
             "check_catalog": {
-                "fuse_device": {"label": "FUSE Device"},
+                "fuse_device": {"label": "FUSE device"},
             },
             "checks": [
                 {
@@ -869,7 +869,7 @@ class TestRealFusionDoctorFormat:
         assert combined["overall_status"] == "pass"
         html = render_html(combined)
         assert "2.6.0" in html
-        assert "FUSE Device" in html
+        assert "FUSE device" in html
         assert "Dcrw-rw-rw-" in html
 
     def test_v2_catalog_labels_used_in_html(self, write_reports):
@@ -902,7 +902,7 @@ class TestRealFusionDoctorFormat:
         """Verify that value_key/requirement_key drive actual/reference extraction."""
         paths = write_reports(doctor={
             "schema_version": "2.0",
-            "check_catalog": {"open_files": {"label": "Open Files"}},
+            "check_catalog": {"open_files": {"label": "open files limit"}},
             "checks": [
                 {
                     "check": "open_files",
