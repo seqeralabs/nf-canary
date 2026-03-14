@@ -64,9 +64,8 @@ def merge_reports(
         },
     }
 
-    # Compute overall status (fail > degraded > warn > pass)
-    # "degraded" = all critical checks pass, but some warning-category checks fail
-    # Supports both legacy "summary.status" and real fusion "check_summary.overall"
+    # Compute overall status using check_summary from schema v2.0
+    # "degraded" = all critical checks pass, but some warning-severity checks fail
     statuses = []
     for report in combined["reports"].values():
         if report:
@@ -76,22 +75,26 @@ def merge_reports(
                 statuses.append(report["summary"].get("status", "unknown"))
 
     if "fail" in statuses:
-        # Check if failures are only in warning-category checks
+        # Use check_summary.criticals when available (v2.0), fall back to check inspection
         has_critical_failure = False
         for report in combined["reports"].values():
             if not report:
                 continue
-            checks = report.get("checks", [])
-            if isinstance(checks, list):
-                for c in checks:
-                    if c.get("status") == "fail" and c.get("category") == "critical":
-                        has_critical_failure = True
-                        break
-            elif isinstance(checks, dict):
-                for c in checks.values():
-                    if c.get("status") == "fail" and c.get("category") == "critical":
-                        has_critical_failure = True
-                        break
+            summary = report.get("check_summary", {})
+            if "criticals" in summary:
+                has_critical_failure = summary.get("criticals", 0) > 0
+            else:
+                checks = report.get("checks", [])
+                if isinstance(checks, list):
+                    for c in checks:
+                        if c.get("status") == "fail" and c.get("severity", c.get("category")) == "critical":
+                            has_critical_failure = True
+                            break
+                elif isinstance(checks, dict):
+                    for c in checks.values():
+                        if c.get("status") == "fail" and c.get("severity", c.get("category")) == "critical":
+                            has_critical_failure = True
+                            break
             if has_critical_failure:
                 break
 
@@ -106,39 +109,21 @@ def merge_reports(
 
 # --- Jinja2 filter/helper functions (module-level for testability) ---
 
-_CHECK_LABELS = {
-    "fuse_device": "FUSE Device",
-    "bucket_access_rw": "Bucket Access (read/write)",
-    "bucket_access_ro": "Bucket Access (read-only)",
-    "nvme": "NVMe",
-    "cpu_cores": "CPU Cores",
-    "open_files": "Open Files",
-    "kernel_version": "Kernel Version",
-}
-_ACRONYMS = {"uri", "id", "cpu", "gpu", "io", "os", "ip", "dns", "http", "https", "ssh", "ssl", "tls", "nfs", "api", "nvme"}
+
+def humanize_check(name, catalog=None):
+    """Convert snake_case check names to readable labels using catalog when available."""
+    if catalog and name in catalog:
+        return catalog[name].get("label", name.replace('_', ' ').title())
+    return name.replace('_', ' ').title()
 
 
-def smart_title(text):
-    """Title-case that respects acronyms."""
-    words = text.replace('_', ' ').split()
-    return ' '.join(w.upper() if w.lower() in _ACRONYMS else w.capitalize() for w in words)
-
-
-def humanize_check(name):
-    """Convert snake_case check names to readable labels."""
-    return _CHECK_LABELS.get(name, smart_title(name))
-
-
-_REQUIREMENT_KEYS = {'required_min', 'required_bytes', 'cores_required'}
-
-
-def detail_label(key, category=''):
+def detail_label(key, severity='', requirement_key=None):
     """Label for detail keys, context-dependent on severity."""
-    if key in _REQUIREMENT_KEYS:
-        if category == 'critical':
+    if requirement_key and key == requirement_key:
+        if severity == 'critical':
             return 'Required (≥)'
         return 'Recommended (≥)'
-    return smart_title(key)
+    return key.replace('_', ' ').title()
 
 
 def trim_sub_msg(msg):
@@ -179,32 +164,27 @@ def _format_number(val):
     return str(val)
 
 
-_ACTUAL_KEYS = ['kernel_version', 'cores_available', 'soft_limit', 'devices_found']
-_REFERENCE_KEYS = list(_REQUIREMENT_KEYS)
-
-
-def extract_actual(details):
+def extract_actual(details, value_key=None):
     """Extract the actual/measured value from check details."""
     if not details or not isinstance(details, dict):
         return ''
-    for key in _ACTUAL_KEYS:
-        if key in details:
-            return _format_number(details[key])
-    if 'total_bytes' in details:
-        return _humanize_bytes(details['total_bytes'])
+    if value_key and value_key in details:
+        val = details[value_key]
+        if 'bytes' in value_key:
+            return _humanize_bytes(val)
+        return _format_number(val)
     return ''
 
 
-def extract_reference(details):
+def extract_reference(details, requirement_key=None):
     """Extract the reference/required value from check details."""
     if not details or not isinstance(details, dict):
         return ''
-    for key in _REFERENCE_KEYS:
-        if key in details:
-            val = details[key]
-            if 'bytes' in key:
-                return _humanize_bytes(val)
-            return str(val)
+    if requirement_key and requirement_key in details:
+        val = details[requirement_key]
+        if 'bytes' in requirement_key:
+            return _humanize_bytes(val)
+        return str(val)
     return ''
 
 
@@ -224,12 +204,11 @@ def _create_jinja_env():
     env = Environment(trim_blocks=True, lstrip_blocks=True, autoescape=True)
     env.filters['intcomma'] = lambda v: humanize.intcomma(int(v)) if isinstance(v, (int, float)) else str(v)
     env.filters['inline_code'] = inline_code
-    env.filters['humanize_check'] = humanize_check
-    env.filters['smart_title'] = smart_title
     env.filters['trim_sub_msg'] = trim_sub_msg
     env.filters['truncate_error'] = truncate_error
-    env.filters['extract_actual'] = extract_actual
-    env.filters['extract_reference'] = extract_reference
+    env.globals['humanize_check'] = humanize_check
+    env.globals['extract_actual'] = extract_actual
+    env.globals['extract_reference'] = extract_reference
     env.globals['detail_label'] = detail_label
     env.globals['format_detail_value'] = format_detail_value
 
@@ -267,8 +246,22 @@ def prepare_template_context(combined_report: Dict[str, Any]) -> Dict[str, Any]:
     elif isinstance(checks, dict):
         system_checks = checks
 
-    # Count warning-category failures and collect recommendations
-    warnings_count = 0
+    # Use check_summary.warnings when available; fall back to counting
+    check_summary = doctor_report.get("check_summary", {})
+    if "warnings" in check_summary:
+        warnings_count = check_summary["warnings"]
+    else:
+        warnings_count = 0
+        all_checks = []
+        if isinstance(checks, list):
+            all_checks = checks
+        elif isinstance(checks, dict):
+            all_checks = checks.values()
+        for c in all_checks:
+            if c.get("status") == "fail" and c.get("severity", c.get("category")) == "warning":
+                warnings_count += 1
+
+    # Collect recommendations
     recommendations = []
     all_checks = []
     if isinstance(checks, list):
@@ -277,8 +270,6 @@ def prepare_template_context(combined_report: Dict[str, Any]) -> Dict[str, Any]:
         all_checks = checks.values()
     seen_remediations = set()
     for c in all_checks:
-        if c.get("status") == "fail" and c.get("category") == "warning":
-            warnings_count += 1
         if c.get("status") != "pass" and c.get("remediation"):
             rem = c["remediation"]
             if rem not in seen_remediations:
@@ -286,14 +277,17 @@ def prepare_template_context(combined_report: Dict[str, Any]) -> Dict[str, Any]:
                 check_name = c.get("check", c.get("name", "Unknown"))
                 recommendations.append({
                     "check": check_name,
-                    "category": c.get("category", ""),
+                    "severity": c.get("severity", c.get("category", "")),
                     "status": c.get("status", ""),
                     "remediation": rem,
                 })
 
     # Sort recommendations: critical first, then warnings
-    _CATEGORY_ORDER = {"critical": 0, "warning": 1}
-    recommendations.sort(key=lambda r: _CATEGORY_ORDER.get(r["category"], 2))
+    _SEVERITY_ORDER = {"critical": 0, "warning": 1}
+    recommendations.sort(key=lambda r: _SEVERITY_ORDER.get(r["severity"], 2))
+
+    # Extract check_catalog from doctor report
+    check_catalog = doctor_report.get("check_catalog", {})
 
     return {
         "timestamp": combined_report.get("timestamp", ""),
@@ -304,6 +298,7 @@ def prepare_template_context(combined_report: Dict[str, Any]) -> Dict[str, Any]:
         "bucket_checks": bucket_checks,
         "warnings_count": warnings_count,
         "recommendations": recommendations,
+        "check_catalog": check_catalog,
         "bench_report": combined_report.get("reports", {}).get("bench", {}),
         "objbench_report": combined_report.get("reports", {}).get("objbench", {}),
     }

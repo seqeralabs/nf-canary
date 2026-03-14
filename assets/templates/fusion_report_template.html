@@ -1094,13 +1094,13 @@
     </head>
     <body>
         {% macro check_row(check_name, check_data) %}
-                            {% set actual = check_data.details|extract_actual %}
-                            {% set ref = check_data.details|extract_reference %}
+                            {% set actual = extract_actual(check_data.details, check_data.value_key) %}
+                            {% set ref = extract_reference(check_data.details, check_data.requirement_key) %}
                             {% set actual_val = actual or ('Detected' if check_data.status == 'pass' else '—') %}
-                            {% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}
+                            {% set display_status = 'warn' if check_data.status == 'fail' and check_data.severity == 'warning' else check_data.status %}
                             <tr class="check-row row-{{ display_status }} {% if check_data.details or check_data.remediation %}has-details{% endif %}">
                                 <td class="col-expand">{% if check_data.details or check_data.remediation %}<span class="expand-btn" aria-hidden="true"><svg viewBox="0 0 5 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.947L3.053 4L0 7.06L0.94 8L4.94 4L0.94 0L0 0.947Z" fill="currentColor"/></svg></span>{% endif %}</td>
-                                <td class="check-cell-name">{{ check_name|humanize_check }}</td>
+                                <td class="check-cell-name">{{ humanize_check(check_name, check_catalog) }}</td>
                                 <td class="mono col-hide-mobile" title="{{ actual_val }}">{{ actual_val }}</td>
                                 <td class="col-status">
                                     <span class="check-status-badge status-{{ display_status }}">
@@ -1123,7 +1123,7 @@
                                         <div class="detail-header">Details</div>
                                         <div class="check-details-grid">
                                             {% if check_data.details is mapping %} {% for key, val in check_data.details.items() %}
-                                                <span class="dk-key">{{ detail_label(key, check_data.category|default('')) }}</span>
+                                                <span class="dk-key">{{ detail_label(key, check_data.severity|default(''), check_data.requirement_key) }}</span>
                                                 <span class="dk-val">{{ format_detail_value(val, key) }}</span>
                                             {% endfor %} {% else %}
                                             <pre style="grid-column: 1 / -1">{{ check_data.details|tojson(indent=2) }}</pre>
@@ -1258,13 +1258,13 @@
                         {% for rec in recommendations %}
                         <li class="rec-item">
                             <div class="rec-badge-wrapper">
-                                <span class="rec-badge badge-{% if rec.category == 'critical' %}fail{% else %}warn{% endif %}">
-                                    {% if rec.category == 'critical' %}
+                                <span class="rec-badge badge-{% if rec.severity == 'critical' %}fail{% else %}warn{% endif %}">
+                                    {% if rec.severity == 'critical' %}
                                     <svg class="rec-badge-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7 0a7 7 0 110 14A7 7 0 017 0zM5.03 4.97a.75.75 0 00-1.06 1.06L5.94 7 3.97 8.97a.75.75 0 101.06 1.06L7 8.06l1.97 1.97a.75.75 0 101.06-1.06L8.06 7l1.97-1.97a.75.75 0 10-1.06-1.06L7 5.94 5.03 4.97z"/></svg>
                                     {% else %}
                                     <svg class="rec-badge-icon" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7.93345 8.16667H5.8828V3.73333H7.93345M7.93345 11.6667H5.8828V9.56667H7.93345M0.397486 12.1008C0.218159 12.4313 0.457429 12.8333 0.833437 12.8333H13.1626C13.5396 12.8333 13.7788 12.4294 13.5975 12.0989L7.40068 0.797318C7.21194 0.453087 6.71706 0.454176 6.52983 0.799234L0.397486 12.1008Z"/></svg>
                                     {% endif %}
-                                    {{ rec.category|capitalize }}
+                                    {{ rec.severity|capitalize }}
                                 </span>
                             </div>
                             <span class="rec-text">{{ rec.remediation|inline_code }}</span>
@@ -1330,11 +1330,11 @@
                     </thead>
                     <tbody>
                     {% for check_data in disk_checks %}
-                            {% set actual = check_data.details|extract_actual %}
-                            {% set ref = check_data.details|extract_reference %}
+                            {% set actual = extract_actual(check_data.details, check_data.value_key) %}
+                            {% set ref = extract_reference(check_data.details, check_data.requirement_key) %}
                             {% set path_val = check_data.details.path|default(check_data.details.mount_point|default('—')) if check_data.details else '—' %}
                             {% set actual_val = actual or ('Detected' if check_data.status == 'pass' else '—') %}
-                            {% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}
+                            {% set display_status = 'warn' if check_data.status == 'fail' and check_data.severity == 'warning' else check_data.status %}
                             <tr class="check-row row-{{ display_status }}">
                                 <td class="col-expand"><span class="expand-btn mobile-only-expand" aria-hidden="true"><svg viewBox="0 0 5 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.947L3.053 4L0 7.06L0.94 8L4.94 4L0.94 0L0 0.947Z" fill="currentColor"/></svg></span></td>
                                 <td class="check-cell-name" title="{{ path_val }}">{{ path_val }}</td>
@@ -1389,7 +1389,7 @@
                     <tbody>
                     {% for check_data in bucket_checks %}
                             {% set has_expandable = (check_data.sub_checks and check_data.status != 'pass') or check_data.remediation %}
-                            {% set display_status = 'warn' if check_data.status == 'fail' and check_data.category == 'warning' else check_data.status %}
+                            {% set display_status = 'warn' if check_data.status == 'fail' and check_data.severity == 'warning' else check_data.status %}
                             {% set uri_val = check_data.details.uri if check_data.details else '—' %}
                             <tr class="check-row row-{{ display_status }}{% if has_expandable %} has-details{% endif %}">
                                 <td class="col-expand">{% if has_expandable %}<span class="expand-btn" aria-hidden="true"><svg viewBox="0 0 5 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.947L3.053 4L0 7.06L0.94 8L4.94 4L0.94 0L0 0.947Z" fill="currentColor"/></svg></span>{% else %}<span class="expand-btn mobile-only-expand" aria-hidden="true"><svg viewBox="0 0 5 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.947L3.053 4L0 7.06L0.94 8L4.94 4L0.94 0L0 0.947Z" fill="currentColor"/></svg></span>{% endif %}</td>
@@ -1425,7 +1425,7 @@
                                         <div class="detail-header">Details</div>
                                         <div class="check-details-grid">
                                             {% for sc in check_data.sub_checks %}{% if sc.message %}
-                                            <span class="dk-key">{{ (sc.check or sc.name or '')|humanize_check }}</span>
+                                            <span class="dk-key">{{ humanize_check(sc.check or sc.name or '', check_catalog.get(check_data.check, {}).get('sub_checks', {})) }}</span>
                                             {% set trimmed = sc.message|trim_sub_msg %}
                                             {% if trimmed|length > 80 %}
                                             <span class="dk-val"><details class="error-detail"><summary><span class="error-short">{{ trimmed|truncate_error }}</span><span class="error-long">{{ trimmed }}</span> <span class="error-link">full error</span></summary></details></span>

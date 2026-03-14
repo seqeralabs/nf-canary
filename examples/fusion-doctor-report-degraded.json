@@ -1,0 +1,416 @@
+{
+    "schema_version": "2.0",
+    "fusion_version": "2.6-develop-b6a157c",
+    "timestamp": "2026-03-05T16:17:08.334755668Z",
+    "system": {
+        "os": {
+            "name": "ubuntu",
+            "version": "24.04",
+            "kernel": "6.1.161-183.298.amzn2023.x86_64",
+            "architecture": "x86_64"
+        },
+        "cpu": {
+            "model": "Intel(R) Xeon(R) Platinum 8375C CPU @ 2.90GHz",
+            "vcpus": 1,
+            "threads": 2
+        },
+        "memory": {
+            "total_bytes": 8161673216,
+            "available_bytes": 7473061888,
+            "swap_total_bytes": 0,
+            "swap_free_bytes": 0
+        }
+    },
+    "cloud": {
+        "provider": "aws",
+        "instance_id": "i-022224f636401f5cc",
+        "instance_type": "m6id.large",
+        "region": "eu-west-1",
+        "zone": "eu-west-1a"
+    },
+    "storage": {
+        "filesystems": [
+            {
+                "device": "none",
+                "mount_point": "/",
+                "type": "overlay",
+                "total_bytes": 32132542464,
+                "available_bytes": 28244172800
+            },
+            {
+                "device": "/dev/nvme1n1",
+                "mount_point": "/tmp",
+                "type": "xfs",
+                "total_bytes": 117932888064,
+                "available_bytes": 117076611072
+            },
+            {
+                "device": "/dev/nvme0n1p1",
+                "mount_point": "/etc/resolv.conf",
+                "type": "xfs",
+                "total_bytes": 32132542464,
+                "available_bytes": 28244172800
+            },
+            {
+                "device": "/etc/resolv.conf",
+                "mount_point": "/etc/hostname",
+                "type": "xfs",
+                "total_bytes": 32132542464,
+                "available_bytes": 28244172800
+            },
+            {
+                "device": "/etc/hostname",
+                "mount_point": "/etc/hosts",
+                "type": "xfs",
+                "total_bytes": 32132542464,
+                "available_bytes": 28244172800
+            },
+            {
+                "device": "none",
+                "mount_point": "/fusion",
+                "type": "fuse.fusion",
+                "total_bytes": 8589934592,
+                "available_bytes": 4294967296
+            }
+        ],
+        "nvme_devices": [
+            {
+                "name": "nvme0",
+                "model": "Amazon Elastic Block Store",
+                "size_bytes": 32212254720,
+                "block_devices": ["nvme0n1"]
+            },
+            {
+                "name": "nvme1",
+                "model": "Amazon EC2 NVMe Instance Storage",
+                "size_bytes": 118000000000,
+                "block_devices": ["nvme1n1"]
+            }
+        ]
+    },
+    "resources": {
+        "cpu_time": {
+            "soft": 18446744073709551615,
+            "hard": 18446744073709551615
+        },
+        "file_size": {
+            "soft": 18446744073709551615,
+            "hard": 18446744073709551615
+        },
+        "data_seg_size": {
+            "soft": 18446744073709551615,
+            "hard": 18446744073709551615
+        },
+        "stack_size": {
+            "soft": 10485760,
+            "hard": 10485760
+        },
+        "core_file_size": {
+            "soft": 18446744073709551615,
+            "hard": 18446744073709551615
+        },
+        "resident_set": {
+            "soft": 18446744073709551615,
+            "hard": 18446744073709551615
+        },
+        "max_procs": {
+            "soft": 18446744073709551615,
+            "hard": 18446744073709551615
+        },
+        "open_files": {
+            "soft": 1024,
+            "hard": 65536
+        },
+        "mem_lock": {
+            "soft": 18446744073709551615,
+            "hard": 18446744073709551615
+        },
+        "address_space": {
+            "soft": 18446744073709551615,
+            "hard": 18446744073709551615
+        },
+        "file_locks": {
+            "soft": 18446744073709551615,
+            "hard": 18446744073709551615
+        },
+        "pending_signals": {
+            "soft": 30446,
+            "hard": 30446
+        },
+        "msg_queue_size": {
+            "soft": 819200,
+            "hard": 819200
+        },
+        "max_nice": {
+            "soft": 0,
+            "hard": 0
+        },
+        "max_rt_priority": {
+            "soft": 0,
+            "hard": 0
+        },
+        "rt_time": {
+            "soft": 18446744073709551615,
+            "hard": 18446744073709551615
+        }
+    },
+    "check_catalog": {
+        "fuse_device": {
+            "label": "FUSE Device",
+            "description": "Checks that /dev/fuse is available and accessible"
+        },
+        "kernel_version": {
+            "label": "Kernel Version",
+            "description": "Checks kernel version meets minimum requirements"
+        },
+        "memory": {
+            "label": "Memory",
+            "description": "Checks available system memory"
+        },
+        "disk_space": {
+            "label": "Disk Space",
+            "description": "Checks available disk space on scratch volume"
+        },
+        "cpu_vcpus": {
+            "label": "vCPUs",
+            "description": "Checks available CPU virtual cores"
+        },
+        "open_files": {
+            "label": "Open Files",
+            "description": "Checks open files ulimit"
+        },
+        "bucket_access_rw": {
+            "label": "Bucket Access (read/write)",
+            "description": "Checks read/write access to S3 bucket",
+            "sub_checks": {
+                "exists": { "label": "Exists" },
+                "list": { "label": "List" },
+                "upload": { "label": "Upload" },
+                "download": { "label": "Download" },
+                "delete": { "label": "Delete" }
+            }
+        },
+        "bucket_access_ro": {
+            "label": "Bucket Access (read-only)",
+            "description": "Checks read-only access to S3 bucket",
+            "sub_checks": {
+                "exists": { "label": "Exists" },
+                "list": { "label": "List" }
+            }
+        }
+    },
+    "checks": [
+        {
+            "check": "fuse_device",
+            "severity": "critical",
+            "status": "pass",
+            "message": "/dev/fuse is available and accessible",
+            "details": {
+                "path": "/dev/fuse",
+                "permissions": "Dcrw-rw-rw-"
+            },
+            "duration_ms": 0
+        },
+        {
+            "check": "kernel_version",
+            "severity": "critical",
+            "status": "pass",
+            "message": "6.1.161-183.298.amzn2023.x86_64 >= 5.10",
+            "details": {
+                "kernel_version": "6.1.161-183.298.amzn2023.x86_64",
+                "required_min": "5.10"
+            },
+            "value_key": "kernel_version",
+            "requirement_key": "required_min",
+            "duration_ms": 0
+        },
+        {
+            "check": "memory",
+            "severity": "warning",
+            "status": "pass",
+            "message": "7.6 GiB total >= 4.0 GiB required",
+            "details": {
+                "total_bytes": 8161673216,
+                "available_bytes": 7473061888,
+                "required_bytes": 4294967296
+            },
+            "value_key": "total_bytes",
+            "requirement_key": "required_bytes",
+            "duration_ms": 0
+        },
+        {
+            "check": "disk_space",
+            "severity": "warning",
+            "status": "pass",
+            "message": "109.0 GiB available >= 100.0 GiB required",
+            "details": {
+                "path": "/tmp",
+                "mount_point": "/tmp",
+                "total_bytes": 117932888064,
+                "available_bytes": 117076611072,
+                "required_bytes": 107374182400
+            },
+            "value_key": "total_bytes",
+            "requirement_key": "required_bytes",
+            "duration_ms": 0
+        },
+        {
+            "check": "cpu_vcpus",
+            "severity": "warning",
+            "status": "fail",
+            "message": "1 vCPUs available < 2 required",
+            "details": {
+                "vcpus": 1,
+                "physical_cores": 1,
+                "vcpus_required": 2
+            },
+            "value_key": "vcpus",
+            "requirement_key": "vcpus_required",
+            "remediation": "Choose an instance type with more vCPUs.",
+            "duration_ms": 0
+        },
+        {
+            "check": "open_files",
+            "severity": "warning",
+            "status": "fail",
+            "message": "open files soft limit 1024 < 65535 required",
+            "details": {
+                "soft_limit": 1024,
+                "hard_limit": 65536,
+                "required_min": 65535
+            },
+            "value_key": "soft_limit",
+            "requirement_key": "required_min",
+            "remediation": "Increase the open files limit with `ulimit -n` or update /etc/security/limits.conf.",
+            "duration_ms": 0
+        },
+        {
+            "check": "bucket_access_rw",
+            "severity": "critical",
+            "status": "pass",
+            "message": "bucket s3://fusion-ci is accessible",
+            "details": {
+                "uri": "s3://fusion-ci"
+            },
+            "duration_ms": 186,
+            "sub_checks": [
+                {
+                    "check": "exists",
+                    "severity": "critical",
+                    "status": "pass",
+                    "message": "check bucket exists: ok",
+                    "duration_ms": 47
+                },
+                {
+                    "check": "list",
+                    "severity": "critical",
+                    "status": "pass",
+                    "message": "list objects: ok",
+                    "duration_ms": 39
+                },
+                {
+                    "check": "upload",
+                    "severity": "critical",
+                    "status": "pass",
+                    "message": "upload file: ok",
+                    "duration_ms": 26
+                },
+                {
+                    "check": "download",
+                    "severity": "critical",
+                    "status": "pass",
+                    "message": "download file: ok",
+                    "duration_ms": 51
+                },
+                {
+                    "check": "delete",
+                    "severity": "critical",
+                    "status": "pass",
+                    "message": "delete file: ok",
+                    "duration_ms": 20
+                }
+            ]
+        },
+        {
+            "check": "bucket_access_rw",
+            "severity": "critical",
+            "status": "pass",
+            "message": "bucket s3://fusion-ci/scratch/60y3Jy9oQRkhjw is accessible",
+            "details": {
+                "uri": "s3://fusion-ci/scratch/60y3Jy9oQRkhjw"
+            },
+            "duration_ms": 149,
+            "sub_checks": [
+                {
+                    "check": "exists",
+                    "severity": "critical",
+                    "status": "pass",
+                    "message": "check bucket exists: ok",
+                    "duration_ms": 6
+                },
+                {
+                    "check": "list",
+                    "severity": "critical",
+                    "status": "pass",
+                    "message": "list objects: ok",
+                    "duration_ms": 18
+                },
+                {
+                    "check": "upload",
+                    "severity": "critical",
+                    "status": "pass",
+                    "message": "upload file: ok",
+                    "duration_ms": 18
+                },
+                {
+                    "check": "download",
+                    "severity": "critical",
+                    "status": "pass",
+                    "message": "download file: ok",
+                    "duration_ms": 88
+                },
+                {
+                    "check": "delete",
+                    "severity": "critical",
+                    "status": "pass",
+                    "message": "delete file: ok",
+                    "duration_ms": 17
+                }
+            ]
+        },
+        {
+            "check": "bucket_access_ro",
+            "severity": "critical",
+            "status": "pass",
+            "message": "bucket s3://ngi-igenomes is accessible",
+            "details": {
+                "uri": "s3://ngi-igenomes"
+            },
+            "duration_ms": 82,
+            "sub_checks": [
+                {
+                    "check": "exists",
+                    "severity": "critical",
+                    "status": "pass",
+                    "message": "check bucket exists: ok",
+                    "duration_ms": 62
+                },
+                {
+                    "check": "list",
+                    "severity": "critical",
+                    "status": "pass",
+                    "message": "list objects: ok",
+                    "duration_ms": 19
+                }
+            ]
+        }
+    ],
+    "check_summary": {
+        "overall": "fail",
+        "passed": 7,
+        "failed": 2,
+        "skipped": 0,
+        "warnings": 2,
+        "criticals": 0
+    }
+}
