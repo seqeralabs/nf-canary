@@ -1171,7 +1171,7 @@
             <!-- Overview + Recommendations (side-by-side) -->
             {% if doctor_report.check_summary or doctor_report.summary %} {% set summary = doctor_report.check_summary
             or doctor_report.summary %}
-            {% set total_checks = (summary.passed|default(0)) + (summary.failed|default(0)) + (summary.skipped|default(0)) %}
+            {% set total_checks = (summary.passed|default(0)) + (summary.failed|default(0)) %}
             {% set passed_count = summary.passed|default(0) %}
             {% set warn_count = warnings_count|default(0) %}
             {% set critical_count = [summary.failed|default(0) - warn_count, 0]|max %}

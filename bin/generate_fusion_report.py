@@ -236,6 +236,8 @@ def prepare_template_context(combined_report: Dict[str, Any]) -> Dict[str, Any]:
     checks = doctor_report.get("checks", [])
     if isinstance(checks, list):
         for c in checks:
+            if c.get("status") == "skip":
+                continue
             check_name = c.get("check", c.get("name", ""))
             if check_name in _BUCKET_CHECKS:
                 bucket_checks.append(c)
