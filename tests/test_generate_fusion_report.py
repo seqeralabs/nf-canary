@@ -23,7 +23,7 @@ from generate_fusion_report import (
     extract_reference,
     format_detail_value,
     _humanize_bytes,
-    _format_number,
+    _format_value,
     prepare_template_context,
 )
 
@@ -568,10 +568,10 @@ class TestFilterFunctions:
         assert _humanize_bytes(1024) == "1 KiB"
         assert _humanize_bytes(500) == "500 Bytes"
 
-    def test_format_number(self):
-        assert _format_number(1000) == "1,000"
-        assert _format_number(999) == "999"
-        assert _format_number(65535) == "65,535"
+    def test_format_value(self):
+        assert _format_value(1000) == "1,000"
+        assert _format_value(999) == "999"
+        assert _format_value(65535) == "65,535"
 
 
 class TestPrepareTemplateContext:

@@ -157,7 +157,7 @@ def _humanize_bytes(b):
     return humanize.naturalsize(b, binary=True, format=fmt)
 
 
-def _format_number(val):
+def _format_value(val):
     """Format integers with comma separators."""
     if isinstance(val, (int, float)):
         return humanize.intcomma(val)
@@ -172,7 +172,7 @@ def extract_actual(details, value_key=None):
         val = details[value_key]
         if 'bytes' in value_key:
             return _humanize_bytes(val)
-        return _format_number(val)
+        return _format_value(val)
     return ''
 
 
