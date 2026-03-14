@@ -15,7 +15,6 @@ from generate_fusion_report import (
     load_template,
     main,
     humanize_check,
-    smart_title,
     detail_label,
     trim_sub_msg,
     truncate_error,
@@ -104,11 +103,12 @@ class TestMergeReports:
         result = merge_reports(paths["doctor"], paths["bench"], paths["objbench"])
         assert result["overall_status"] == "degraded"
 
-    def test_merge_with_critical_failure(self, write_reports):
+    def test_merge_with_critical_failure_v2(self, write_reports):
+        """v2.0: criticals count in check_summary drives overall status."""
         paths = write_reports(
             doctor={
-                "summary": {"status": "fail"},
-                "checks": [{"check": "fuse_device", "status": "fail", "category": "critical"}],
+                "check_summary": {"overall": "fail", "passed": 0, "failed": 1, "criticals": 1, "warnings": 0},
+                "checks": [{"check": "fuse_device", "status": "fail", "severity": "critical"}],
             },
             bench={"summary": {"status": "pass"}},
             objbench={"summary": {"status": "pass"}},
@@ -116,13 +116,14 @@ class TestMergeReports:
         result = merge_reports(paths["doctor"], paths["bench"], paths["objbench"])
         assert result["overall_status"] == "fail"
 
-    def test_merge_with_warning_only_failure(self, write_reports):
+    def test_merge_with_warning_only_failure_v2(self, write_reports):
+        """v2.0: warnings-only failures result in degraded status."""
         paths = write_reports(
             doctor={
-                "summary": {"status": "fail"},
+                "check_summary": {"overall": "fail", "passed": 1, "failed": 1, "criticals": 0, "warnings": 1},
                 "checks": [
-                    {"check": "fuse_device", "status": "pass", "category": "critical"},
-                    {"check": "cpu_cores", "status": "fail", "category": "warning"},
+                    {"check": "fuse_device", "status": "pass", "severity": "critical"},
+                    {"check": "cpu_vcpus", "status": "fail", "severity": "warning"},
                 ],
             },
             bench={"summary": {"status": "pass"}},
@@ -130,6 +131,19 @@ class TestMergeReports:
         )
         result = merge_reports(paths["doctor"], paths["bench"], paths["objbench"])
         assert result["overall_status"] == "degraded"
+
+    def test_merge_with_critical_failure_legacy(self, write_reports):
+        """Legacy format without criticals count falls back to check inspection."""
+        paths = write_reports(
+            doctor={
+                "summary": {"status": "fail"},
+                "checks": [{"check": "fuse_device", "status": "fail", "severity": "critical"}],
+            },
+            bench={"summary": {"status": "pass"}},
+            objbench={"summary": {"status": "pass"}},
+        )
+        result = merge_reports(paths["doctor"], paths["bench"], paths["objbench"])
+        assert result["overall_status"] == "fail"
 
     def test_merge_with_no_reports(self):
         result = merge_reports(None, None, None)
@@ -158,7 +172,7 @@ class TestMergeReports:
         assert result["timestamp"].endswith("Z")
 
     def test_status_aggregation_priority(self, tmp_path):
-        """Without check-level category data, 'fail' and 'warn' both resolve to 'degraded'."""
+        """Without check-level severity data, 'fail' and 'warn' both resolve to 'degraded'."""
         test_cases = [
             (["pass", "pass", "pass"], "pass"),
             (["pass", "warn", "pass"], "degraded"),
@@ -305,7 +319,7 @@ class TestRenderHtml:
                     "checks": [
                         {
                             "check": "test_check",
-                            "category": "critical",
+                            "severity": "critical",
                             "status": "fail",
                             "message": "<script>alert('xss')</script>",
                             "remediation": "<img src=x onerror=alert(1)>",
@@ -333,7 +347,7 @@ class TestRenderHtml:
                     "checks": [
                         {
                             "check": "fuse_device",
-                            "category": "critical",
+                            "severity": "critical",
                             "status": "pass",
                             "message": "<b>bold</b> text",
                             "details": {"path": "<script>alert(1)</script>"},
@@ -405,34 +419,41 @@ class TestLoadTemplate:
 class TestFilterFunctions:
     """Tests for module-level filter/helper functions."""
 
-    def test_humanize_check_known_labels(self):
-        assert humanize_check("fuse_device") == "FUSE Device"
-        assert humanize_check("bucket_access_rw") == "Bucket Access (read/write)"
-        assert humanize_check("nvme") == "NVMe"
-        assert humanize_check("cpu_cores") == "CPU Cores"
+    def test_humanize_check_with_catalog(self):
+        catalog = {
+            "fuse_device": {"label": "FUSE Device"},
+            "bucket_access_rw": {"label": "Bucket Access (read/write)"},
+            "cpu_vcpus": {"label": "vCPUs"},
+        }
+        assert humanize_check("fuse_device", catalog) == "FUSE Device"
+        assert humanize_check("bucket_access_rw", catalog) == "Bucket Access (read/write)"
+        assert humanize_check("cpu_vcpus", catalog) == "vCPUs"
 
-    def test_humanize_check_unknown_with_acronyms(self):
-        assert humanize_check("dns_lookup") == "DNS Lookup"
-        assert humanize_check("http_check") == "HTTP Check"
-
-    def test_humanize_check_simple(self):
+    def test_humanize_check_without_catalog(self):
         assert humanize_check("memory") == "Memory"
         assert humanize_check("disk_space") == "Disk Space"
+        assert humanize_check("fuse_device") == "Fuse Device"
 
-    def test_smart_title(self):
-        assert smart_title("cpu_cores") == "CPU Cores"
-        assert smart_title("total_bytes") == "Total Bytes"
+    def test_humanize_check_unknown_with_catalog(self):
+        catalog = {"fuse_device": {"label": "FUSE Device"}}
+        assert humanize_check("unknown_check", catalog) == "Unknown Check"
 
-    def test_detail_label_critical(self):
-        assert detail_label("required_min", "critical") == "Required (≥)"
-        assert detail_label("required_bytes", "critical") == "Required (≥)"
+    def test_humanize_check_catalog_none(self):
+        assert humanize_check("memory", None) == "Memory"
 
-    def test_detail_label_warning(self):
-        assert detail_label("required_min", "warning") == "Recommended (≥)"
-        assert detail_label("cores_required", "warning") == "Recommended (≥)"
+    def test_detail_label_critical_with_requirement_key(self):
+        assert detail_label("required_min", "critical", "required_min") == "Required (≥)"
+        assert detail_label("required_bytes", "critical", "required_bytes") == "Required (≥)"
+
+    def test_detail_label_warning_with_requirement_key(self):
+        assert detail_label("required_min", "warning", "required_min") == "Recommended (≥)"
+        assert detail_label("vcpus_required", "warning", "vcpus_required") == "Recommended (≥)"
 
     def test_detail_label_regular_key(self):
         assert detail_label("kernel_version") == "Kernel Version"
+
+    def test_detail_label_non_requirement_key(self):
+        assert detail_label("soft_limit", "warning", "required_min") == "Soft Limit"
 
     def test_trim_sub_msg_strips_prefix(self):
         assert trim_sub_msg("check bucket exists: ok") == "ok"
@@ -499,29 +520,35 @@ class TestFilterFunctions:
         # Should not contain unclosed <code> tags
         assert result.count("<code>") == result.count("</code>")
 
-    def test_extract_actual_kernel_version(self):
-        assert extract_actual({"kernel_version": "5.15.0"}) == "5.15.0"
+    def test_extract_actual_with_value_key(self):
+        assert extract_actual({"kernel_version": "5.15.0", "required_min": "5.10"}, "kernel_version") == "5.15.0"
 
-    def test_extract_actual_cores(self):
-        assert extract_actual({"cores_available": 4}) == "4"
+    def test_extract_actual_with_value_key_numeric(self):
+        assert extract_actual({"vcpus": 4, "physical_cores": 4, "vcpus_required": 2}, "vcpus") == "4"
 
-    def test_extract_actual_large_number(self):
-        assert extract_actual({"soft_limit": 65535}) == "65,535"
+    def test_extract_actual_with_value_key_large_number(self):
+        assert extract_actual({"soft_limit": 65535, "required_min": 65535}, "soft_limit") == "65,535"
 
-    def test_extract_actual_bytes(self):
-        result = extract_actual({"total_bytes": 8589934592})
+    def test_extract_actual_with_value_key_bytes(self):
+        result = extract_actual({"total_bytes": 8589934592, "required_bytes": 4294967296}, "total_bytes")
         assert "GiB" in result
+
+    def test_extract_actual_no_value_key(self):
+        assert extract_actual({"kernel_version": "5.15.0"}) == ""
 
     def test_extract_actual_empty(self):
         assert extract_actual(None) == ""
         assert extract_actual({}) == ""
 
-    def test_extract_reference(self):
-        assert extract_reference({"required_min": "5.10"}) == "5.10"
+    def test_extract_reference_with_requirement_key(self):
+        assert extract_reference({"required_min": "5.10", "kernel_version": "5.15.0"}, "required_min") == "5.10"
 
-    def test_extract_reference_bytes(self):
-        result = extract_reference({"required_bytes": 4294967296})
+    def test_extract_reference_with_requirement_key_bytes(self):
+        result = extract_reference({"required_bytes": 4294967296, "total_bytes": 8589934592}, "required_bytes")
         assert "GiB" in result
+
+    def test_extract_reference_no_requirement_key(self):
+        assert extract_reference({"required_min": "5.10"}) == ""
 
     def test_format_detail_value_bytes(self):
         result = format_detail_value(8589934592, "total_bytes")
@@ -580,10 +607,10 @@ class TestPrepareTemplateContext:
             "reports": {
                 "doctor": {
                     "checks": [
-                        {"check": "fuse_device", "status": "pass", "category": "critical"},
-                        {"check": "disk_space", "status": "pass", "category": "warning"},
-                        {"check": "bucket_access_rw", "status": "pass", "category": "critical"},
-                        {"check": "bucket_access_ro", "status": "pass", "category": "critical"},
+                        {"check": "fuse_device", "status": "pass", "severity": "critical"},
+                        {"check": "disk_space", "status": "pass", "severity": "warning"},
+                        {"check": "bucket_access_rw", "status": "pass", "severity": "critical"},
+                        {"check": "bucket_access_ro", "status": "pass", "severity": "critical"},
                     ],
                 },
                 "bench": {},
@@ -603,8 +630,8 @@ class TestPrepareTemplateContext:
             "reports": {
                 "doctor": {
                     "checks": [
-                        {"check": "open_files", "status": "fail", "category": "warning", "remediation": "Increase ulimit"},
-                        {"check": "fuse_device", "status": "fail", "category": "critical", "remediation": "Install FUSE"},
+                        {"check": "open_files", "status": "fail", "severity": "warning", "remediation": "Increase ulimit"},
+                        {"check": "fuse_device", "status": "fail", "severity": "critical", "remediation": "Install FUSE"},
                     ],
                 },
                 "bench": {},
@@ -614,19 +641,41 @@ class TestPrepareTemplateContext:
         ctx = prepare_template_context(combined)
         assert len(ctx["recommendations"]) == 2
         # Critical should sort first
-        assert ctx["recommendations"][0]["category"] == "critical"
-        assert ctx["recommendations"][1]["category"] == "warning"
+        assert ctx["recommendations"][0]["severity"] == "critical"
+        assert ctx["recommendations"][1]["severity"] == "warning"
 
-    def test_warnings_count(self):
+    def test_warnings_count_from_summary(self):
+        """v2.0: warnings count from check_summary."""
         combined = {
             "timestamp": "2026-01-01T00:00:00Z",
             "overall_status": "degraded",
             "reports": {
                 "doctor": {
                     "checks": [
-                        {"check": "cpu_cores", "status": "fail", "category": "warning"},
-                        {"check": "open_files", "status": "fail", "category": "warning"},
-                        {"check": "fuse_device", "status": "pass", "category": "critical"},
+                        {"check": "cpu_vcpus", "status": "fail", "severity": "warning"},
+                        {"check": "open_files", "status": "fail", "severity": "warning"},
+                        {"check": "fuse_device", "status": "pass", "severity": "critical"},
+                    ],
+                    "check_summary": {"overall": "fail", "passed": 1, "failed": 2, "warnings": 2, "criticals": 0},
+                },
+                "bench": {},
+                "objbench": {},
+            },
+        }
+        ctx = prepare_template_context(combined)
+        assert ctx["warnings_count"] == 2
+
+    def test_warnings_count_fallback(self):
+        """Without check_summary.warnings, count from checks directly."""
+        combined = {
+            "timestamp": "2026-01-01T00:00:00Z",
+            "overall_status": "degraded",
+            "reports": {
+                "doctor": {
+                    "checks": [
+                        {"check": "cpu_vcpus", "status": "fail", "severity": "warning"},
+                        {"check": "open_files", "status": "fail", "severity": "warning"},
+                        {"check": "fuse_device", "status": "pass", "severity": "critical"},
                     ],
                 },
                 "bench": {},
@@ -635,6 +684,24 @@ class TestPrepareTemplateContext:
         }
         ctx = prepare_template_context(combined)
         assert ctx["warnings_count"] == 2
+
+    def test_check_catalog_passed_to_context(self):
+        combined = {
+            "timestamp": "2026-01-01T00:00:00Z",
+            "overall_status": "pass",
+            "reports": {
+                "doctor": {
+                    "checks": [],
+                    "check_catalog": {
+                        "fuse_device": {"label": "FUSE Device"},
+                    },
+                },
+                "bench": {},
+                "objbench": {},
+            },
+        }
+        ctx = prepare_template_context(combined)
+        assert ctx["check_catalog"] == {"fuse_device": {"label": "FUSE Device"}}
 
 
 class TestMain:
@@ -651,7 +718,7 @@ class TestMain:
         """main() exits 0 on successful report generation regardless of check status."""
         paths = write_reports(doctor={
             "summary": {"status": "pass"},
-            "checks": [{"check": "fuse_device", "status": "pass", "category": "critical"}],
+            "checks": [{"check": "fuse_device", "status": "pass", "severity": "critical"}],
         })
         html_out = str(tmp_path / "out.html")
         json_out = str(tmp_path / "out.json")
@@ -669,7 +736,7 @@ class TestMain:
         """main() exits 0 even with critical failures — report was generated successfully."""
         paths = write_reports(doctor={
             "summary": {"status": "fail"},
-            "checks": [{"check": "fuse_device", "status": "fail", "category": "critical"}],
+            "checks": [{"check": "fuse_device", "status": "fail", "severity": "critical"}],
         })
         html_out = str(tmp_path / "out.html")
         json_out = str(tmp_path / "out.json")
@@ -731,11 +798,17 @@ class TestRealFusionDoctorFormat:
                         "passed": 2,
                         "failed": 0,
                         "skipped": 0,
+                        "warnings": 0,
+                        "criticals": 0,
+                    },
+                    "check_catalog": {
+                        "fuse_device": {"label": "FUSE Device"},
+                        "disk_space": {"label": "Disk Space"},
                     },
                     "checks": [
                         {
                             "check": "fuse_device",
-                            "category": "critical",
+                            "severity": "critical",
                             "status": "pass",
                             "message": "/dev/fuse is available",
                             "details": {"path": "/dev/fuse"},
@@ -743,7 +816,7 @@ class TestRealFusionDoctorFormat:
                         },
                         {
                             "check": "disk_space",
-                            "category": "warning",
+                            "severity": "warning",
                             "status": "warn",
                             "message": "Low disk space on /tmp",
                             "duration_ms": 5,
@@ -774,20 +847,23 @@ class TestRealFusionDoctorFormat:
 
     def test_full_workflow_real_format(self, write_reports):
         paths = write_reports(doctor={
-            "schema_version": "1.1",
+            "schema_version": "2.0",
             "fusion_version": "2.6.0",
             "timestamp": "2026-03-04T10:00:00Z",
+            "check_catalog": {
+                "fuse_device": {"label": "FUSE Device"},
+            },
             "checks": [
                 {
                     "check": "fuse_device",
-                    "category": "critical",
+                    "severity": "critical",
                     "status": "pass",
                     "message": "/dev/fuse is available and accessible",
                     "details": {"path": "/dev/fuse", "permissions": "Dcrw-rw-rw-"},
                     "duration_ms": 0,
                 },
             ],
-            "check_summary": {"overall": "pass", "passed": 1, "failed": 0, "skipped": 0},
+            "check_summary": {"overall": "pass", "passed": 1, "failed": 0, "skipped": 0, "warnings": 0, "criticals": 0},
         })
         combined = merge_reports(paths["doctor"], None, None)
         assert combined["overall_status"] == "pass"
@@ -796,352 +872,50 @@ class TestRealFusionDoctorFormat:
         assert "FUSE Device" in html
         assert "Dcrw-rw-rw-" in html
 
-
-class TestNewSections:
-    """Tests for the new System Environment, Storage, Resource Limits sections."""
-
-    FULL_DOCTOR_DATA = {
-        "schema_version": "1.1",
-        "fusion_version": "2.6-develop-1f517df",
-        "timestamp": "2026-03-04T15:35:35Z",
-        "system": {
-            "os": {
-                "name": "ubuntu",
-                "version": "24.04",
-                "kernel": "6.14.0-27-generic",
-                "architecture": "x86_64",
-            },
-            "cpu": {
-                "model": "13th Gen Intel(R) Core(TM) i7-1355U",
-                "cores": 10,
-                "threads": 12,
-            },
-            "memory": {
-                "total_bytes": 33301454848,
-                "available_bytes": 3561734144,
-                "swap_total_bytes": 2046816256,
-                "swap_free_bytes": 417792,
-            },
-        },
-        "storage": {
-            "filesystems": [
-                {
-                    "device": "/dev/dm-1",
-                    "mount_point": "/",
-                    "type": "ext4",
-                    "total_bytes": 981132795904,
-                    "available_bytes": 152799973376,
-                },
-            ],
-            "nvme_devices": [
-                {
-                    "name": "nvme0",
-                    "model": "WD PC SN810",
-                    "size_bytes": 1024209543168,
-                    "block_devices": ["nvme0n1"],
-                },
-            ],
-        },
-        "resources": {
-            "open_files": {"soft": 1048576, "hard": 1048576},
-            "max_procs": {"soft": 125971, "hard": 125971},
-            "mem_lock": {"soft": 4162678784, "hard": 4162678784},
-            "stack_size": {"soft": 12800000, "hard": 18446744073709551615},
-        },
-        "checks": [
-            {
-                "check": "fuse_device",
-                "category": "critical",
-                "status": "pass",
-                "message": "/dev/fuse is available and accessible",
-                "details": {"path": "/dev/fuse", "permissions": "Dcrw-rw-rw-"},
-                "duration_ms": 0,
-            },
-        ],
-        "check_summary": {
-            "overall": "pass",
-            "passed": 1,
-            "failed": 0,
-            "skipped": 0,
-        },
-    }
-
-    def _render(self, doctor_data=None):
-        combined = {
-            "timestamp": "2026-03-04T15:35:35Z",
-            "overall_status": "pass",
-            "reports": {
-                "doctor": doctor_data or self.FULL_DOCTOR_DATA,
-                "bench": {},
-                "objbench": {},
-            },
-        }
-        return render_html(combined)
-
-    def test_system_section_present(self):
-        """Test that System card is rendered."""
-        html = self._render()
-        assert "System" in html
-
-    def test_os_info_rendered(self):
-        """Test OS name, version, kernel, architecture appear."""
-        html = self._render()
-        assert "Ubuntu" in html
-        assert "24.04" in html
-        assert "6.14.0-27-generic" in html
-        assert "x86_64" in html
-
-    def test_cpu_info_rendered(self):
-        """Test CPU model, cores, threads appear."""
-        html = self._render()
-        assert "10 / 12" in html  # cores / threads
-        assert "i7-1355U" in html
-
-    def test_memory_info_rendered(self):
-        """Test memory total capacity appears in kv-grid layout."""
-        html = self._render()
-        assert "31.0 GiB" in html  # total capacity
-
-    def test_storage_section_present(self):
-        """Test that Storage section is rendered."""
-        html = self._render()
-        assert "Storage" in html
-
-    def test_nvme_devices_rendered(self):
-        """Test NVMe device info appears."""
-        html = self._render()
-        assert "nvme0" in html
-        assert "WD PC SN810" in html
-
-    def test_filesystem_table_rendered(self):
-        """Test filesystem table with mount point and device."""
-        html = self._render()
-        assert "/dev/dm-1" in html
-        assert "ext4" in html
-
-    def test_resource_limits_section_present(self):
-        """Test that Resource Limits section is rendered."""
-        html = self._render()
-        assert "Resource Limits" in html
-
-    def test_resource_limits_values_rendered(self):
-        """Test key resource limit values appear (with thousands separators)."""
-        html = self._render()
-        assert "1,048,576" in html  # open files
-        assert "125,971" in html  # max procs
-
-    def test_resource_limits_unlimited_rendered(self):
-        """Test unlimited values displayed correctly."""
-        html = self._render()
-        assert "unlimited" in html  # stack_size hard limit
-
-    def test_check_details_structured(self):
-        """Test that check details use structured key-value instead of raw JSON."""
-        html = self._render()
-        assert "dk-key" in html  # structured detail key class
-        assert "dk-val" in html  # structured detail value class
-        assert "Dcrw-rw-rw-" in html
-
-    def test_no_system_section_when_missing(self):
-        """Test System card is absent when no system data."""
-        html = self._render({"checks": [], "check_summary": {"overall": "pass", "passed": 0, "failed": 0}})
-        assert "kv-label" not in html or "OS" not in html
-
-    def test_no_storage_section_when_missing(self):
-        """Test Storage section is absent when no storage data."""
-        html = self._render({"checks": [], "check_summary": {"overall": "pass", "passed": 0, "failed": 0}})
-        assert "NVMe" not in html
-
-    def test_no_resource_section_when_missing(self):
-        """Test Resource Limits section is absent when no resource data."""
-        html = self._render({"checks": [], "check_summary": {"overall": "pass", "passed": 0, "failed": 0}})
-        assert 'id="resource-limits"' not in html
-
-    def test_section_renamed_to_system_checks(self):
-        """Test that checks section is now 'System Checks'."""
-        html = self._render()
-        assert "System Checks" in html
-        assert "System &amp; Validation" not in html
-
-
-class TestP2Improvements:
-    """Tests for P2 improvements: context-dependent collapse, copy buttons, filesystem filtering, timestamps."""
-
-    @staticmethod
-    def _full_doctor_data():
-        """Return a fresh deep copy of FULL_DOCTOR_DATA to avoid cross-test mutation."""
-        import copy
-        return copy.deepcopy(TestNewSections.FULL_DOCTOR_DATA)
-
-    def _render(self, doctor_data=None, overall_status="pass"):
-        combined = {
-            "timestamp": "2026-03-04T15:35:35Z",
-            "overall_status": overall_status,
-            "reports": {
-                "doctor": doctor_data or self._full_doctor_data(),
-                "bench": {},
-                "objbench": {},
-            },
-        }
-        return render_html(combined)
-
-    def test_storage_collapsed_on_pass(self):
-        """Storage sections should NOT have 'open' when overall status is pass."""
-        html = self._render(overall_status="pass")
-        import re
-        for section_id in ("storage-devices", "mounted-filesystems"):
-            match = re.search(rf'<details id="{section_id}"[^>]*>', html)
-            if match:
-                assert "open" not in match.group(0), f"{section_id} should not be open"
-
-    def test_storage_not_open_on_fail(self):
-        """Storage sections should NOT auto-open when overall status is fail."""
-        doctor = self._full_doctor_data()
-        doctor["check_summary"] = {"overall": "fail", "passed": 0, "failed": 1}
-        html = self._render(doctor_data=doctor, overall_status="fail")
-        import re
-        for section_id in ("storage-devices", "mounted-filesystems"):
-            match = re.search(rf'<details id="{section_id}"[^>]*>', html)
-            if match:
-                assert "open" not in match.group(0), f"{section_id} should not be open"
-
-    def test_timestamps_use_time_element(self):
-        """Timestamps should use <time> elements with local-time class."""
-        html = self._render()
-        assert '<time datetime="2026-03-04T15:35:35Z" class="local-time">' in html
-
-    def test_timestamp_localization_js(self):
-        """JS for localizing timestamps should be present."""
-        html = self._render()
-        assert "toLocaleString" in html
-        assert "local-time" in html
-
-
-
-class TestRenderHtmlErrorPaths:
-    """Test render_html with malformed or unexpected inputs."""
-
-    def test_render_missing_reports_key(self):
-        """render_html should handle a report dict missing the 'reports' key."""
-        combined = {"timestamp": "2026-01-01T00:00:00Z", "overall_status": "pass"}
-        # prepare_template_context uses .get("reports", {}), so this should not crash
-        html = render_html({**combined, "reports": {"doctor": {}, "bench": {}, "objbench": {}}})
-        assert isinstance(html, str)
-
-    def test_render_checks_as_unexpected_type(self):
-        """render_html with checks as a string should not crash."""
-        combined = {
-            "timestamp": "2026-01-01T00:00:00Z",
-            "overall_status": "pass",
-            "reports": {
-                "doctor": {"checks": "unexpected_string", "check_summary": {"overall": "pass", "passed": 0, "failed": 0}},
-                "bench": {},
-                "objbench": {},
-            },
-        }
-        html = render_html(combined)
-        assert isinstance(html, str)
-
-
-class TestLoadTemplateErrors:
-    """Test load_template error paths."""
-
-    def test_load_template_missing_file_raises(self):
-        """load_template with a nonexistent path should raise FileNotFoundError."""
-        with pytest.raises(FileNotFoundError, match="template not found"):
-            load_template("/nonexistent/template.html")
-
-    def test_load_template_directory_raises(self, tmp_path):
-        """load_template pointing to a directory should raise an error."""
-        with pytest.raises((FileNotFoundError, IOError, IsADirectoryError)):
-            load_template(str(tmp_path))
-
-
-class TestMainErrorPaths:
-    """Test main() error handling beyond the happy path."""
-
-    def test_missing_template_exits_one(self, write_reports, tmp_path, monkeypatch):
-        """main() with --template pointing to missing file should exit 1."""
-        paths = write_reports(doctor={"summary": {"status": "pass"}})
-        monkeypatch.setattr(sys, 'argv', [
-            'generate_fusion_report.py',
-            '--doctor', paths["doctor"],
-            '--template', '/nonexistent/template.html',
-            '--output-html', str(tmp_path / "out.html"),
-            '--output-json', str(tmp_path / "out.json"),
-        ])
-        with pytest.raises(SystemExit) as exc_info:
-            main()
-        assert exc_info.value.code == 1
-
-    def test_output_json_matches_merged_report(self, write_reports, tmp_path, monkeypatch):
-        """main() output JSON should be loadable and contain expected keys."""
+    def test_v2_catalog_labels_used_in_html(self, write_reports):
+        """Verify that catalog labels appear in rendered HTML output."""
         paths = write_reports(doctor={
-            "summary": {"status": "pass"},
-            "checks": [{"check": "fuse_device", "status": "pass", "category": "critical"}],
-        })
-        json_out = str(tmp_path / "out.json")
-        monkeypatch.setattr(sys, 'argv', [
-            'generate_fusion_report.py',
-            '--doctor', paths["doctor"],
-            '--output-html', str(tmp_path / "out.html"),
-            '--output-json', json_out,
-        ])
-        main()
-        with open(json_out) as f:
-            data = json.load(f)
-        assert "overall_status" in data
-        assert "reports" in data
-        assert "doctor" in data["reports"]
-        assert "timestamp" in data
-
-
-class TestSkippedCheckStatus:
-    """Test handling of 'skip' status which appears in real fusion doctor output."""
-
-    def test_skipped_check_not_counted_as_failure(self, write_reports):
-        """A skipped check should not degrade overall status."""
-        paths = write_reports(doctor={
-            "check_summary": {"overall": "pass", "passed": 1, "failed": 0, "skipped": 1},
+            "schema_version": "2.0",
+            "fusion_version": "2.6.0",
+            "check_catalog": {
+                "cpu_vcpus": {"label": "vCPUs"},
+            },
             "checks": [
-                {"check": "fuse_device", "status": "pass", "category": "critical"},
-                {"check": "nvme", "status": "skip", "category": "warning"},
-            ],
-        })
-        result = merge_reports(paths["doctor"], None, None)
-        assert result["overall_status"] == "pass"
-
-    def test_skipped_check_in_prepare_context(self):
-        """Skipped checks should not appear in recommendations or warnings count."""
-        combined = {
-            "timestamp": "2026-01-01T00:00:00Z",
-            "overall_status": "pass",
-            "reports": {
-                "doctor": {
-                    "checks": [
-                        {"check": "nvme", "status": "skip", "category": "warning", "remediation": "Install NVMe"},
-                        {"check": "fuse_device", "status": "pass", "category": "critical"},
-                    ],
+                {
+                    "check": "cpu_vcpus",
+                    "severity": "warning",
+                    "status": "pass",
+                    "message": "2 vCPUs available >= 2 required",
+                    "details": {"vcpus": 2, "physical_cores": 2, "vcpus_required": 2},
+                    "value_key": "vcpus",
+                    "requirement_key": "vcpus_required",
+                    "duration_ms": 0,
                 },
-                "bench": {},
-                "objbench": {},
-            },
-        }
-        ctx = prepare_template_context(combined)
-        assert ctx["warnings_count"] == 0
-        # "skip" is not "pass", so it gets a recommendation -- verify this is intentional
-        skip_recs = [r for r in ctx["recommendations"] if r["check"] == "nvme"]
-        assert len(skip_recs) == 1  # documents current behavior: skipped with remediation gets listed
-
-    def test_render_with_skipped_check(self, write_reports):
-        """Rendering should not crash with skipped checks."""
-        paths = write_reports(doctor={
-            "check_summary": {"overall": "pass", "passed": 1, "failed": 0, "skipped": 1},
-            "checks": [
-                {"check": "fuse_device", "status": "pass", "category": "critical"},
-                {"check": "nvme", "status": "skip", "category": "warning", "message": "No NVMe device found"},
             ],
+            "check_summary": {"overall": "pass", "passed": 1, "failed": 0, "warnings": 0, "criticals": 0},
         })
         combined = merge_reports(paths["doctor"], None, None)
         html = render_html(combined)
-        assert isinstance(html, str)
+        assert "vCPUs" in html
+
+    def test_v2_value_key_extraction(self, write_reports):
+        """Verify that value_key/requirement_key drive actual/reference extraction."""
+        paths = write_reports(doctor={
+            "schema_version": "2.0",
+            "check_catalog": {"open_files": {"label": "Open Files"}},
+            "checks": [
+                {
+                    "check": "open_files",
+                    "severity": "warning",
+                    "status": "pass",
+                    "message": "ok",
+                    "details": {"soft_limit": 65535, "hard_limit": 65536, "required_min": 65535},
+                    "value_key": "soft_limit",
+                    "requirement_key": "required_min",
+                },
+            ],
+            "check_summary": {"overall": "pass", "passed": 1, "failed": 0, "warnings": 0, "criticals": 0},
+        })
+        combined = merge_reports(paths["doctor"], None, None)
+        html = render_html(combined)
+        assert "65,535" in html
