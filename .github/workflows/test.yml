@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
 
       - name: Run generate_report tests
         run: uv run --no-project --with "pytest==9.0.2" --with "jinja2==3.1.6" --with "humanize==4.15.0" --with "markupsafe" python -m pytest tests/ -v
@@ -53,7 +53,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
 
       - uses: actions/setup-java@v3
         with:
