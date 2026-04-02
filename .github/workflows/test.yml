@@ -99,7 +99,7 @@ jobs:
           java -version
           nf-test test --tap=test.tap
 
-      - uses: pcolby/tap-summary@v1
+      - uses: pcolby/tap-summary@3f74dc3bad1d527b8c1d5fa88e2f72a3adb2d9e6 # v1.2.0
         with:
           path: >-
             test.tap
