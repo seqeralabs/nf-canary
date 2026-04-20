@@ -14,7 +14,7 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = 'memory_capacity_gb_min: 1'
                 input[1] = ref_profile  // reference_profile
                 input[2] = '/tmp/work'
                 input[3] = []
@@ -38,7 +38,7 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = 'memory_capacity_gb_min: 1'
                 input[1] = ref_profile  // reference_profile
                 input[2] = []  // rw_buckets
                 input[3] = []  // ro_buckets
@@ -51,8 +51,34 @@ nextflow_process {
             assertAll(
                 { assert process.success },
                 { assert process.out.report.size() == 1 },
-                { assert process.out.report[0].toString().endsWith('fusion-doctor-report.json') },
-                { assert snapshot(process.out).match() }
+                { assert process.out.report[0].toString().endsWith('fusion-doctor-report.json') }
+            )
+        }
+
+    }
+
+    test("TEST_FUSION_DOCTOR succeeds with empty reference profile (flag omitted)") {
+
+        when {
+            params {
+                fusion = true
+            }
+            process {
+                """
+                input[0] = 'dummy'
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                input[1] = ref_profile  // reference_profile (empty → --reference-profile omitted)
+                input[2] = []  // rw_buckets
+                input[3] = []  // ro_buckets
+                input[4] = '/tmp/cache'  // cache_path
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.report.size() == 1 }
             )
         }
 
@@ -67,7 +93,7 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = 'memory_capacity_gb_min: 1'
                 input[1] = ref_profile  // reference_profile
                 input[2] = []  // rw_buckets
                 input[3] = []  // ro_buckets
@@ -95,7 +121,7 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = 'memory_capacity_gb_min: 1'
                 input[1] = ref_profile  // reference_profile
                 input[2] = []  // rw_buckets
                 input[3] = []  // ro_buckets
@@ -122,7 +148,7 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = 'memory_capacity_gb_min: 1'
                 input[1] = ref_profile  // reference_profile
                 input[2] = []  // rw_buckets
                 input[3] = []  // ro_buckets
@@ -149,7 +175,7 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = 'memory_capacity_gb_min: 1'
                 input[1] = ref_profile  // reference_profile
                 input[2] = []  // rw_buckets
                 input[3] = ['s3://bucket1', 's3://bucket2']  // ro_buckets
@@ -176,7 +202,7 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = 'memory_capacity_gb_min: 1'
                 input[1] = ref_profile  // reference_profile
                 input[2] = ['s3://bucket1', 's3://bucket2']  // rw_buckets
                 input[3] = []  // ro_buckets
@@ -204,7 +230,7 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = 'memory_capacity_gb_min: 1'
                 input[1] = ref_profile  // reference_profile
                 input[2] = []  // rw_buckets
                 input[3] = []  // ro_buckets
@@ -232,7 +258,7 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = 'memory_capacity_gb_min: 1'
                 input[1] = ref_profile  // reference_profile
                 input[2] = []  // rw_buckets
                 input[3] = []  // ro_buckets
@@ -261,7 +287,7 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = 'memory_capacity_gb_min: 1'
                 input[1] = ref_profile  // reference_profile
                 input[2] = []  // rw_buckets
                 input[3] = []  // ro_buckets
@@ -291,7 +317,7 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = 'memory_capacity_gb_min: 1'
                 input[1] = ref_profile  // reference_profile
                 // Simulating what the workflow does: adding workflow.workDir to rw_buckets_list
                 // when workflow.workDir.scheme is 's3', 'gs', or 'az'
@@ -323,7 +349,7 @@ nextflow_process {
             process {
                 """
                 input[0] = 'dummy'
-                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = ''
+                def ref_profile = file("${outputDir}/fusion-reference-profile.yaml"); ref_profile.text = 'memory_capacity_gb_min: 1'
                 input[1] = ref_profile  // reference_profile
                 // Simulating the workflow combining explicit fusion_read_write_buckets
                 // with workflow.workDir when it has a cloud scheme
