@@ -3,6 +3,7 @@ nextflow_process {
     name "Test Process TEST_FUSION_DOCTOR"
     script "main.nf"
     process "TEST_FUSION_DOCTOR"
+    config "./docker.config"
 
 /* TODO(amiranda): disabled until we have our own container
     test("TEST_FUSION_DOCTOR fails when fusion binary is not available") {

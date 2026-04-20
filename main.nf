@@ -343,7 +343,7 @@ process TEST_FUSION_DOCTOR {
     script:
     def disk_flag = "--check-disk-usage ${cache_path ?: '/tmp'}"
     def redact_flag = params.fusion_redact ? "--redact" : ""
-    def ref_profile_flag = reference_profile.size() > 0 ? "--reference-profile ${reference_profile}" : ""
+    def ref_profile_flag = !reference_profile.empty() ? "--reference-profile ${reference_profile}" : ""
 
     // Build bucket args from lists
     def rw_bucket_args = rw_buckets ? rw_buckets.collect { bucket -> "--check-bucket-read-write ${bucket}" }.join(' ') : ""
@@ -488,7 +488,7 @@ workflow NF_CANARY {
         yaml_lines.add("open_files_min: ${params.fusion_open_files_min}")
     }
     reference_profile_ch = channel.of(yaml_lines.join('\n'))
-        .collectFile(name: 'fusion-reference-profile.yaml', newLine: true)
+        .collectFile(name: 'fusion-reference-profile.yaml')
 
     // Run tests
     TEST_SUCCESS(run_ch.TEST_SUCCESS)
