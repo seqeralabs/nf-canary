@@ -569,10 +569,10 @@ workflow {
     workflow.onError {
         log.error(
             """
-  ∩ Ʌ  ╕╒
- |‾|x‾‾‾)̣___
-  ‾ ‾‾‾‾
-"""
+              ∩ Ʌ  ╕╒
+             |‾|x‾‾‾)̣___
+              ‾ ‾‾‾‾
+            """.stripIndent()
         )
     }
 }
