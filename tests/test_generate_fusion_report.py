@@ -783,10 +783,10 @@ class TestIntegration:
 
 
 class TestRealFusionDoctorFormat:
-    """Tests for the real fusion doctor output format (list-based checks, check_summary)."""
+    """Tests for the real fusion-doctor output format (list-based checks, check_summary)."""
 
     def test_render_with_list_checks(self):
-        """Test rendering when checks is a list (real fusion doctor format)."""
+        """Test rendering when checks is a list (real fusion-doctor format)."""
         combined_report = {
             "timestamp": "2026-03-04T10:00:00Z",
             "overall_status": "pass",

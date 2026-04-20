@@ -321,7 +321,7 @@ process TEST_GPU {
     """
 }
 
-// Runs fusion doctor to validate the Fusion filesystem configuration.
+// Runs fusion-doctor to validate the Fusion filesystem configuration.
 // Prints a text diagnostic report to stdout and saves a JSON report
 // to file. Fails if the fusion binary is not available in the task
 // environment.
