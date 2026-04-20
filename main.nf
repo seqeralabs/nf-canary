@@ -442,13 +442,13 @@ workflow NF_CANARY {
     def skip = skip_tools.tokenize(",")*.toUpperCase()
 
     log.info(
-        """
-  _____
- /_____|D
- |    ◒ >
- /      \\
-${run - skip}
-"""
+    """
+      _____
+     /_____|D
+     |    ◒ >
+     /      \\
+    ${run - skip}
+    """.stripIndent()
     )
 
     channel.fromList(run.findAll { toolname -> toolname !in skip })
