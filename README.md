@@ -150,7 +150,7 @@ This process tests the ability to use a GPU. It uses the `pytorch` conda environ
 
 _Note: Enabled only if the parameter `--fusion` is specified (or set to `true` by a profile)._
 
-This process runs the `fusion doctor` diagnostics tool to validate the Fusion filesystem configuration. It checks system requirements (e.g. kernel version, memory, disk space, etc.), FUSE device availability, and cloud bucket accessibility among others. The process produces a JSON diagnostic report published to `${outdir}/fusion/`.
+This process runs the `fusion-doctor` diagnostics tool to validate the Fusion filesystem configuration. It checks system requirements (e.g. kernel version, memory, disk space, etc.), FUSE device availability, and cloud bucket accessibility among others. The process produces a JSON diagnostic report published to `${outdir}/fusion/`.
 
 #### Fusion Profiles
 
@@ -208,7 +208,7 @@ nextflow run seqeralabs/nf-canary -profile fusion_aws_recommended
 
 In AWS Batch, the Seqera Platform UI allows selecting instance families (e.g. `m6id`) but not specific sizes. Small instances in an otherwise valid family may not meet the `recommended` disk threshold. For example, on AWS the `m6id` family NVMe ranges from 118 GB (`.large`) to 1,900 GB (`.8xlarge`), with only `.xlarge` and above meeting the 200 GB threshold.
 
-If `fusion doctor` reports a disk requirement failure, request more CPUs/memory to get a larger instance, or use the `low` profile for small tasks.
+If `fusion-doctor` reports a disk requirement failure, request more CPUs/memory to get a larger instance, or use the `low` profile for small tasks.
 
 #### Custom Requirements
 

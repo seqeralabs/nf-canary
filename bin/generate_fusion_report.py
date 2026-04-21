@@ -49,7 +49,7 @@ def merge_reports(
     Merge individual diagnostic reports into a single combined report.
 
     Args:
-        doctor_report: Path to fusion doctor JSON output
+        doctor_report: Path to fusion-doctor JSON output
         bench_report: Path to fusion bench JSON output
         objbench_report: Path to fusion objbench JSON output
 
@@ -372,7 +372,7 @@ def main():
     )
     parser.add_argument(
         "--doctor", type=str, required=False,
-        help="Path to fusion doctor JSON report"
+        help="Path to fusion-doctor JSON report"
     )
     parser.add_argument(
         "--bench", type=str, required=False,
