@@ -447,7 +447,6 @@ workflow NF_CANARY {
          /_____|D
          |    ◒ >
          /      \\
-        ${run - skip}
         """.stripIndent()
     )
 
