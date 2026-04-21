@@ -574,4 +574,15 @@ workflow {
             """.stripIndent()
         )
     }
+
+    workflow.onComplete {
+        log.info(
+            """
+              __|/
+             /    \\
+          \\ |    ◒ > /
+           \\/      \\/
+            """.stripIndent()
+        )
+    }
 }
