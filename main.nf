@@ -321,12 +321,13 @@ process TEST_GPU {
     """
 }
 
-// Runs fusion doctor to validate the Fusion filesystem configuration.
+// Runs fusion-doctor to validate the Fusion filesystem configuration.
 // Prints a text diagnostic report to stdout and saves a JSON report
 // to file. Fails if the fusion binary is not available in the task
 // environment.
 process TEST_FUSION_DOCTOR {
 
+    container 'cr.seqera.io/public/fusion/doctor:1.0.0-dev-260420150843'
     publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs/fusion").toUriString() }, mode: 'copy'
 
     input:
@@ -342,6 +343,7 @@ process TEST_FUSION_DOCTOR {
     script:
     def disk_flag = "--check-disk-usage ${cache_path ?: '/tmp'}"
     def redact_flag = params.fusion_redact ? "--redact" : ""
+    def ref_profile_flag = !reference_profile.empty() ? "--reference-profile ${reference_profile}" : ""
 
     // Build bucket args from lists
     def rw_bucket_args = rw_buckets ? rw_buckets.collect { bucket -> "--check-bucket-read-write ${bucket}" }.join(' ') : ""
@@ -351,21 +353,12 @@ process TEST_FUSION_DOCTOR {
     #!/bin/bash
     set -euo pipefail
 
-    # TODO(amiranda): Workaround to circumvent the lack of dedicated container
-    # Check if fusion is executable, not just if it exists in PATH
-    if ! fusion --version >/dev/null 2>&1; then
-      if command -v fusion.mock >/dev/null 2>&1; then
-        fusion() { fusion.mock "\$@"; }
-        export -f fusion
-      fi
-    fi
-
-    # Run fusion doctor and capture exit code
+    # Run fusion-doctor and capture exit code
     # Allow validation failures (exit codes 1 and 3) but abort on other errors
     set +e
-    fusion doctor \\
+    fusion-doctor \\
         --output fusion-doctor-report.json \\
-        --reference-profile ${reference_profile} \\
+        ${ref_profile_flag} \\
         ${disk_flag} \\
         ${redact_flag} \\
         ${rw_bucket_args} \\
@@ -376,7 +369,7 @@ process TEST_FUSION_DOCTOR {
     # Only allow exit codes 0, 1, and 3 (success and validation failures)
     # Abort on any other exit code (non-validation errors)
     if [[ \$EXIT_CODE -ne 0 && \$EXIT_CODE -ne 1 && \$EXIT_CODE -ne 3 ]]; then
-        echo "ERROR: fusion doctor failed with exit code \$EXIT_CODE (non-validation error)" >&2
+        echo "ERROR: fusion-doctor failed with exit code \$EXIT_CODE (non-validation error)" >&2
         exit \$EXIT_CODE
     fi
 
@@ -495,7 +488,7 @@ workflow NF_CANARY {
         yaml_lines.add("open_files_min: ${params.fusion_open_files_min}")
     }
     reference_profile_ch = channel.of(yaml_lines.join('\n'))
-        .collectFile(name: 'fusion-reference-profile.yaml', newLine: true)
+        .collectFile(name: 'fusion-reference-profile.yaml')
 
     // Run tests
     TEST_SUCCESS(run_ch.TEST_SUCCESS)

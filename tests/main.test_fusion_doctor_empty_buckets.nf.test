@@ -2,6 +2,7 @@ nextflow_pipeline {
 
     name "Test FUSION_DOCTOR with empty bucket parameters"
     script "../main.nf"
+    config "./docker.config"
 
     test("Should handle empty fusion_read_only_buckets parameter") {
 
