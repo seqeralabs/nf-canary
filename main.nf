@@ -271,7 +271,7 @@ process TEST_GPU {
             print(f"GPU: {gpu_name}")
             print(f"CUDA Version: {cuda_version}")
         else:
-            print("CUDA is not available on this system.")
+            raise RuntimeError("CUDA is not available on this system.")
 
     # Define a simple function to perform some calculations on the CPU
     def cpu_computation(size):
