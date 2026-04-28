@@ -571,10 +571,10 @@ workflow {
     workflow.onComplete {
         log.info(
             """
-              __|/
-             /    \\
-          \\ |    ◒ > /
-           \\/      \\/
+            _____
+           /_____|D
+         \\ |    ◒ > /
+          \\/      \\/
             """.stripIndent()
         )
     }
