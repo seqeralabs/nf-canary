@@ -558,24 +558,26 @@ workflow NF_CANARY {
 workflow {
     NF_CANARY(params.run, params.skip, params.gpu, params.fusion)
 
-    workflow.onError {
-        log.error(
-            """
-              ∩ Ʌ  ╕╒
-             |‾|x‾‾‾)̣___
-              ‾ ‾‾‾‾
-            """.stripIndent()
-        )
-    }
+    workflow.onComplete = {
+        if (workflow.success) {
+            log.info(
+                """
 
-    workflow.onComplete {
-        log.info(
-            """
-            _____
-           /_____|D
-         \\ |    ◒ > /
-          \\/      \\/
-            """.stripIndent()
-        )
+                _____
+               /_____|D
+            \\ |    ◒ > /
+            \\/      \\/
+                """.stripIndent()
+            )
+        } else {
+            log.error(
+                """
+
+                ∩ Ʌ  ╕╒
+                |‾|x‾‾‾)̣___
+                ‾ ‾‾‾‾
+                """.stripIndent()
+            )
+        }
     }
 }
