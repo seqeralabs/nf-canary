@@ -15,10 +15,10 @@ nextflow_pipeline{
         then {
             assertAll(
                 { assert workflow.success },
-                { assert workflow.trace.tasks().size()     == 502 },
-                { assert workflow.trace.succeeded().size() == 501 },
+                { assert workflow.trace.tasks().size()     == 15 },
+                { assert workflow.trace.succeeded().size() == 14 },
                 { assert workflow.trace.failed().size()    == 1 },
-                { assert snapshot(workflow.out).match() }
+                { assert snapshot(workflow, path(params.outdir).list()).match() }
             )
         }
 
@@ -37,10 +37,10 @@ nextflow_pipeline{
         then {
             assertAll(
                 { assert workflow.success },
-                { assert workflow.trace.tasks().size()     == 501 },
-                { assert workflow.trace.succeeded().size() == 500 },
+                { assert workflow.trace.tasks().size()     == 14 },
+                { assert workflow.trace.succeeded().size() == 13 },
                 { assert workflow.trace.failed().size()    == 1 },
-                { assert snapshot(workflow.out).match() }
+                { assert snapshot(workflow, path(params.outdir).list()).match() }
             )
         }
 
@@ -80,10 +80,10 @@ nextflow_pipeline{
         then {
             assertAll(
                 { assert workflow.success },
-                { assert workflow.trace.tasks().size()     == 502 },
-                { assert workflow.trace.succeeded().size() == 501 },
+                { assert workflow.trace.tasks().size()     == 15 },
+                { assert workflow.trace.succeeded().size() == 14 },
                 { assert workflow.trace.failed().size()    == 1 },
-                { assert snapshot(workflow.out).match() }
+                { assert snapshot(workflow, path("${launchDir}/output").list()).match() }
             )
         }
 

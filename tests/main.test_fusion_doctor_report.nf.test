@@ -3,6 +3,7 @@ nextflow_process {
     name "Test Process FUSION_DOCTOR_GENERATE_REPORT"
     script "main.nf"
     process "FUSION_DOCTOR_GENERATE_REPORT"
+    config "./docker.config"
 
     test("generates and publishes HTML and JSON reports when fusion is enabled") {
 
