@@ -321,7 +321,7 @@ process TEST_GPU {
     """
 }
 
-process TEST_GPU_2 {
+process TEST_GPU_NVCC {
     accelerator 1
 
     input:
