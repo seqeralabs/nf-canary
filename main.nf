@@ -321,6 +321,103 @@ process TEST_GPU {
     """
 }
 
+process TEST_GPU_2 {
+    accelerator 1
+
+    input:
+    val dummy_val
+    val input
+
+    output:
+    stdout
+
+    script:
+    """
+    cat > cuda_device_check.cu << 'CUDA_EOF'
+#include <stdio.h>
+#include <stdlib.h>
+#include <cuda_runtime.h>
+
+#define CHECK_CUDA(call) do { \\
+    cudaError_t _err = (call); \\
+    if (_err != cudaSuccess) { \\
+        fprintf(stderr, "CUDA error at %s:%d: %s\\n", __FILE__, __LINE__, cudaGetErrorString(_err)); \\
+        exit(1); \\
+    } \\
+} while(0)
+
+__global__ void vector_add(float *a, float *b, float *c, int n) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n) c[i] = a[i] + b[i];
+}
+
+int main() {
+    int count;
+    CHECK_CUDA(cudaGetDeviceCount(&count));
+    if (count == 0) {
+        fprintf(stderr, "No CUDA-capable GPU found.\\n");
+        return 1;
+    }
+
+    cudaDeviceProp prop;
+    CHECK_CUDA(cudaGetDeviceProperties(&prop, 0));
+    printf("GPU: %s\\n", prop.name);
+    printf("Compute capability: %d.%d\\n", prop.major, prop.minor);
+    printf("Total memory: %zu MB\\n", prop.totalGlobalMem / (1024 * 1024));
+
+    const int N = 1 << 24;
+    size_t bytes = (size_t)N * sizeof(float);
+
+    float *h_a = (float*)malloc(bytes);
+    float *h_b = (float*)malloc(bytes);
+    float *h_c = (float*)malloc(bytes);
+    for (int i = 0; i < N; i++) { h_a[i] = 1.0f; h_b[i] = 2.0f; }
+
+    float *d_a, *d_b, *d_c;
+    CHECK_CUDA(cudaMalloc(&d_a, bytes));
+    CHECK_CUDA(cudaMalloc(&d_b, bytes));
+    CHECK_CUDA(cudaMalloc(&d_c, bytes));
+    CHECK_CUDA(cudaMemcpy(d_a, h_a, bytes, cudaMemcpyHostToDevice));
+    CHECK_CUDA(cudaMemcpy(d_b, h_b, bytes, cudaMemcpyHostToDevice));
+
+    cudaEvent_t start, stop;
+    CHECK_CUDA(cudaEventCreate(&start));
+    CHECK_CUDA(cudaEventCreate(&stop));
+    CHECK_CUDA(cudaEventRecord(start));
+    vector_add<<<(N + 255) / 256, 256>>>(d_a, d_b, d_c, N);
+    CHECK_CUDA(cudaEventRecord(stop));
+    CHECK_CUDA(cudaEventSynchronize(stop));
+    CHECK_CUDA(cudaGetLastError());
+
+    float gpu_ms = 0.0f;
+    CHECK_CUDA(cudaEventElapsedTime(&gpu_ms, start, stop));
+    printf("GPU vector add (%d elements): %.2f ms\\n", N, gpu_ms);
+
+    CHECK_CUDA(cudaMemcpy(h_c, d_c, bytes, cudaMemcpyDeviceToHost));
+    for (int i = 0; i < N; i++) {
+        if (h_c[i] != 3.0f) {
+            fprintf(stderr, "Result verification failed at index %d: got %f\\n", i, h_c[i]);
+            return 1;
+        }
+    }
+    printf("GPU computation verified: PASSED\\n");
+
+    cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
+    free(h_a); free(h_b); free(h_c);
+    return 0;
+}
+CUDA_EOF
+
+    echo "=== Compiling CUDA test ==="
+    nvcc -O2 -o cuda_device_check cuda_device_check.cu
+
+    echo "=== Running CUDA device check ==="
+    ./cuda_device_check
+
+    echo "GPU check completed successfully."
+    """
+}
+
 // Runs fusion-doctor to validate the Fusion filesystem configuration.
 // Prints a text diagnostic report to stdout and saves a JSON report
 // to file. Fails if the fusion binary is not available in the task
