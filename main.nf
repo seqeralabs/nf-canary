@@ -441,7 +441,7 @@ workflow NF_CANARY {
             TEST_CREATE_EMPTY_FILE: toolname == "TEST_CREATE_EMPTY_FILE"
             TEST_CREATE_FILE: toolname == "TEST_CREATE_FILE"
             TEST_CREATE_FOLDER: toolname == "TEST_CREATE_FOLDER"
-            TEST_FUSION_DOCTOR: toolname == "TEST_FUSION_DOCTOR" || fusion
+            TEST_FUSION_DOCTOR: toolname == "TEST_FUSION_DOCTOR" && fusion
             TEST_GPU: toolname == "TEST_GPU" && gpu
             TEST_IGNORED_FAIL: toolname == "TEST_IGNORED_FAIL"
             TEST_INPUT: toolname == "TEST_INPUT"
