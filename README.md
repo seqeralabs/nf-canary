@@ -201,7 +201,6 @@ nextflow run seqeralabs/nf-canary -profile fusion_aws_recommended
 
 In AWS Batch, the Seqera Platform UI allows selecting instance families (e.g. `m6id`) but not specific sizes. Small instances in an otherwise valid family may not meet the `recommended` disk threshold. For example, on AWS the `m6id` family NVMe ranges from 118 GB (`.large`) to 1,900 GB (`.8xlarge`), with only `.xlarge` and above meeting the 200 GB threshold.
 
-If `fusion doctor` reports a disk requirement failure, request more CPUs/memory to get a larger instance, or use the `low` profile for small tasks.
 
 #### Custom Requirements
 
