@@ -429,6 +429,7 @@ workflow NF_CANARY {
         "TEST_GPU",
         "TEST_MV_FOLDER_CONTENTS",
         "TEST_VAL_INPUT",
+        "TEST_FUSION_DOCTOR"
     ]
 
     def run = run_tools ? run_tools.tokenize(",")*.toUpperCase() : default_run_tools
