@@ -571,7 +571,7 @@ workflow {
                 """.stripIndent()
             )
         } else {
-            log.error(
+            log.info(
                 """
 
                 ∩ Ʌ  ╕╒
