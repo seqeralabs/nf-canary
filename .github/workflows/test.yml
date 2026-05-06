@@ -49,6 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NXF_ANSI_LOG: false
+      NXF_DISABLE_CHECK_LATEST: true
     steps:
       - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
 
