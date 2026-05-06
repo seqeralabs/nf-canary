@@ -327,7 +327,7 @@ process TEST_GPU {
 // environment.
 process TEST_FUSION_DOCTOR {
 
-    container 'cr.seqera.io/public/fusion/doctor:1.0.0-dev-260420150843'
+    container 'cr.seqera.io/public/fusion/doctor:1.0.0'
     publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs/fusion").toUriString() }, mode: 'copy'
 
     input:
