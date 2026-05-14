@@ -1,0 +1,8 @@
+reports:
+  "fusion/fusion-report.json":
+    display: "Fusion Filesystem Diagnostics Report (JSON)"
+    mimeType: "application/json"
+
+  "fusion/fusion-report.html":
+    display: "Fusion Filesystem Diagnostics Report (HTML)"
+    mimeType: "text/html"

@@ -13,4 +13,5 @@ results/
 *.test
 *.test.snap
 *.txt
+assets/templates/
 
