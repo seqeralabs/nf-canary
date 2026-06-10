@@ -47,6 +47,12 @@ The container is specified by the `container` parameter, which defaults to `quay
 params.container = 'docker.io/ubuntu:24.04'
 ```
 
+The GPU test process uses `gpu_container`, which defaults to `pytorch/pytorch:latest`. Set this separately when you want `TEST_GPU` to validate GPU access from the container used by your own pipeline process.
+
+```bash
+nextflow run seqeralabs/nf-canary --gpu --gpu_container 'alphafold:latest'
+```
+
 ### Skipping Tests
 
 Skip individual tests by name using the `--skip` parameter, e.g., `--skip TEST_INPUT`. Multiple tests can be specified with comma-delimited values, e.g., `--skip TEST_CREATE_FILE,TEST_PASS_FILE`. The parameter is case-insensitive.
@@ -144,7 +150,7 @@ Test a process can accept a value as input.
 
 _Note: Enabled only if the parameter `--gpu` is specified._
 
-This process tests the ability to use a GPU. It uses the `pytorch` conda environment to test CUDA is available and working. This is disabled by default as it requires a GPU to be available which may not be true.
+This process tests the ability to use a GPU. It uses the container specified by `--gpu_container`, which defaults to `pytorch/pytorch:latest`, to run a Python 3 standard-library CUDA Driver API probe. This is disabled by default as it requires a GPU to be available which may not be true.
 
 ### `TEST_FUSION_DOCTOR`
 
