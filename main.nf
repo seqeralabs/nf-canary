@@ -245,80 +245,157 @@ process TEST_VAL_INPUT {
 
 process TEST_GPU {
 
-    container 'pytorch/pytorch:latest'
-    conda 'pytorch::pytorch=2.5.1 pytorch::torchvision=0.20.1 nvidia::cuda=12.1'
+    container { gpu_container }
     accelerator 1
-    memory '10G'
+    memory '512 MB'
 
     input:
     val dummy_val
     val input
+    val gpu_container
 
     output:
     stdout
 
     script:
-    """
-    #!/usr/bin/env python
-    import torch
-    import time
+    '''
+    set -euo pipefail
 
-    # Function to print GPU and CUDA details
-    def print_gpu_info():
-        if torch.cuda.is_available():
-            gpu_name = torch.cuda.get_device_name(0)
-            cuda_version = torch.version.cuda
-            print(f"GPU: {gpu_name}")
-            print(f"CUDA Version: {cuda_version}")
-        else:
-            raise RuntimeError("CUDA is not available on this system.")
+    PYTHON_BIN="$(command -v python3 || command -v python || true)"
+    if [ -z "${PYTHON_BIN}" ]; then
+        echo "No python3/python executable found in the selected GPU container" >&2
+        exit 1
+    fi
 
-    # Define a simple function to perform some calculations on the CPU
-    def cpu_computation(size):
-        x = torch.rand(size, size)
-        y = torch.rand(size, size)
-        result = torch.mm(x, y)
-        return result
+    "${PYTHON_BIN}" <<'PY'
+    import ctypes
+    import ctypes.util
+    import os
+    import sys
 
-    # Define a simple function to perform some calculations on the GPU
-    def gpu_computation(size):
-        x = torch.rand(size, size, device='cuda')
-        y = torch.rand(size, size, device='cuda')
-        result = torch.mm(x, y)
-        torch.cuda.synchronize()  # Ensure the computation is done
-        return result
+    if sys.version_info[0] < 3:
+        raise RuntimeError("TEST_GPU requires Python 3 in the selected GPU container")
 
-    # Print GPU and CUDA details
-    print_gpu_info()
+    def load_libcuda():
+        candidates = []
+        found = ctypes.util.find_library("cuda")
+        if found:
+            candidates.append(found)
+        candidates.extend(["libcuda.so.1", "libcuda.so"])
+        for directory in os.environ.get("LD_LIBRARY_PATH", "").split(":"):
+            if directory:
+                candidates.append(os.path.join(directory, "libcuda.so.1"))
+        candidates.extend([
+            "/usr/lib/x86_64-linux-gnu/libcuda.so.1",
+            "/usr/lib64/libcuda.so.1",
+            "/usr/local/nvidia/lib64/libcuda.so.1",
+            "/usr/local/nvidia/lib/libcuda.so.1",
+            "/usr/local/cuda/compat/libcuda.so.1",
+        ])
 
-    # Define the size of the matrices
-    size = 10000
+        errors = []
+        for candidate in dict.fromkeys(candidates):
+            try:
+                return ctypes.CDLL(candidate), candidate
+            except OSError as exc:
+                errors.append(f"{candidate}: {exc}")
 
-    # Measure time for CPU computation
-    start_time = time.time()
-    cpu_result = cpu_computation(size)
-    cpu_time = time.time() - start_time
-    print(f"CPU computation time: {cpu_time:.4f} seconds")
+        raise RuntimeError(
+            "Could not load libcuda.so.1. NVIDIA compute driver capability "
+            "is not visible inside the selected GPU container. Tried: "
+            + "; ".join(errors)
+        )
 
-    # Measure time for GPU computation
-    start_time = time.time()
-    gpu_result = gpu_computation(size)
-    gpu_time = time.time() - start_time
-    print(f"GPU computation time: {gpu_time:.4f} seconds")
+    cuda, libcuda_path = load_libcuda()
 
-    # Optionally, verify that the results are close (they should be if the calculations are the same)
-    if torch.allclose(cpu_result, gpu_result.cpu()):
-        print("Results are close enough!")
-    else:
-        print("Results differ!")
+    CUresult = ctypes.c_int
+    CUdevice = ctypes.c_int
+    CUcontext = ctypes.c_void_p
+    CUdeviceptr = ctypes.c_uint64
 
-    # Print the time difference
-    time_difference = cpu_time - gpu_time
-    print(f"Time difference (CPU - GPU): {time_difference:.4f} seconds")
+    def sym(*names):
+        for name in names:
+            try:
+                return getattr(cuda, name)
+            except AttributeError:
+                pass
+        raise AttributeError("Missing CUDA Driver API symbol: " + "/".join(names))
 
-    if time_difference < 0:
-        raise Exception("GPU is slower than CPU indicating no GPU utilization")
-    """
+    def bind(names, restype, *argtypes):
+        fn = sym(*names)
+        fn.restype = restype
+        fn.argtypes = argtypes
+        return fn
+
+    cuInit = bind(("cuInit",), CUresult, ctypes.c_uint)
+    cuGetErrorString = bind(("cuGetErrorString",), CUresult, CUresult, ctypes.POINTER(ctypes.c_char_p))
+    cuDriverGetVersion = bind(("cuDriverGetVersion",), CUresult, ctypes.POINTER(ctypes.c_int))
+    cuDeviceGetCount = bind(("cuDeviceGetCount",), CUresult, ctypes.POINTER(ctypes.c_int))
+    cuDeviceGet = bind(("cuDeviceGet",), CUresult, ctypes.POINTER(CUdevice), ctypes.c_int)
+    cuDeviceGetName = bind(("cuDeviceGetName",), CUresult, ctypes.c_char_p, ctypes.c_int, CUdevice)
+    cuCtxCreate = bind(("cuCtxCreate_v2", "cuCtxCreate"), CUresult, ctypes.POINTER(CUcontext), ctypes.c_uint, CUdevice)
+    cuCtxDestroy = bind(("cuCtxDestroy_v2", "cuCtxDestroy"), CUresult, CUcontext)
+    cuCtxSynchronize = bind(("cuCtxSynchronize",), CUresult)
+    cuMemAlloc = bind(("cuMemAlloc_v2", "cuMemAlloc"), CUresult, ctypes.POINTER(CUdeviceptr), ctypes.c_size_t)
+    cuMemFree = bind(("cuMemFree_v2", "cuMemFree"), CUresult, CUdeviceptr)
+    cuMemsetD8 = bind(("cuMemsetD8_v2", "cuMemsetD8"), CUresult, CUdeviceptr, ctypes.c_ubyte, ctypes.c_size_t)
+    cuMemcpyDtoH = bind(("cuMemcpyDtoH_v2", "cuMemcpyDtoH"), CUresult, ctypes.c_void_p, CUdeviceptr, ctypes.c_size_t)
+
+    def cuda_error(code):
+        message = ctypes.c_char_p()
+        if cuGetErrorString(code, ctypes.byref(message)) == 0 and message.value:
+            return message.value.decode("utf-8", "replace")
+        return f"CUDA error code {code}"
+
+    def check(code, action):
+        if code != 0:
+            raise RuntimeError(f"{action} failed: {cuda_error(code)}")
+
+    ctx = CUcontext()
+    dptr = CUdeviceptr()
+
+    try:
+        check(cuInit(0), "cuInit")
+
+        driver_version = ctypes.c_int()
+        check(cuDriverGetVersion(ctypes.byref(driver_version)), "cuDriverGetVersion")
+
+        device_count = ctypes.c_int()
+        check(cuDeviceGetCount(ctypes.byref(device_count)), "cuDeviceGetCount")
+        if device_count.value < 1:
+            raise RuntimeError("No CUDA-capable GPU is visible inside the selected GPU container")
+
+        device = CUdevice()
+        check(cuDeviceGet(ctypes.byref(device), 0), "cuDeviceGet")
+
+        name = ctypes.create_string_buffer(128)
+        check(cuDeviceGetName(name, len(name), device), "cuDeviceGetName")
+
+        check(cuCtxCreate(ctypes.byref(ctx), 0, device), "cuCtxCreate")
+
+        nbytes = 1024 * 1024
+        check(cuMemAlloc(ctypes.byref(dptr), nbytes), "cuMemAlloc")
+        check(cuMemsetD8(dptr, 0xA5, nbytes), "cuMemsetD8")
+        check(cuCtxSynchronize(), "cuCtxSynchronize")
+
+        sample = (ctypes.c_ubyte * 32)()
+        check(cuMemcpyDtoH(sample, dptr, len(sample)), "cuMemcpyDtoH")
+        if any(byte != 0xA5 for byte in sample):
+            raise RuntimeError("GPU memory round-trip verification failed")
+
+        print("CUDA driver probe passed")
+        print(f"GPU count: {device_count.value}")
+        print(f"First GPU: {name.value.decode('utf-8', 'replace')}")
+        print(f"CUDA driver API version: {driver_version.value}")
+        print(f"libcuda: {libcuda_path}")
+
+    finally:
+        if dptr.value:
+            cuMemFree(dptr)
+        if ctx.value:
+            cuCtxDestroy(ctx)
+    PY
+    '''
 }
 
 // Runs fusion-doctor to validate the Fusion filesystem configuration.
@@ -410,6 +487,7 @@ workflow NF_CANARY {
     skip_tools
     gpu
     fusion
+    gpu_container
 
     main:
     def default_run_tools = [
@@ -507,7 +585,7 @@ workflow NF_CANARY {
     TEST_MV_FILE(run_ch.TEST_MV_FILE)
     TEST_MV_FOLDER_CONTENTS(run_ch.TEST_MV_FOLDER_CONTENTS)
     TEST_VAL_INPUT(run_ch.TEST_VAL_INPUT, "Hello World")
-    TEST_GPU(run_ch.TEST_GPU, "dummy")
+    TEST_GPU(run_ch.TEST_GPU, "dummy", gpu_container)
 
     TEST_FUSION_DOCTOR(run_ch.TEST_FUSION_DOCTOR, reference_profile_ch, rw_buckets_list, ro_buckets_list, params.fusion_cache_path)
 
@@ -548,5 +626,5 @@ workflow NF_CANARY {
 }
 
 workflow {
-    NF_CANARY(params.run, params.skip, params.gpu, params.fusion)
+    NF_CANARY(params.run, params.skip, params.gpu, params.fusion, params.gpu_container)
 }
