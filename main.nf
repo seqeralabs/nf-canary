@@ -513,6 +513,15 @@ workflow NF_CANARY {
     def run = run_tools ? run_tools.tokenize(",")*.toUpperCase() : default_run_tools
     def skip = skip_tools.tokenize(",")*.toUpperCase()
 
+    log.info(
+        """
+          _____
+         /_____|D
+         |    ◒ >
+         /      \\
+        """.stripIndent()
+    )
+
     channel.fromList(run.findAll { toolname -> toolname !in skip })
         .flatten()
         .branch { toolname ->
@@ -627,4 +636,27 @@ workflow NF_CANARY {
 
 workflow {
     NF_CANARY(params.run, params.skip, params.gpu, params.fusion, params.gpu_container)
+
+    workflow.onComplete = {
+        if (workflow.success) {
+            log.info(
+                """
+
+               _____
+              /_____|D
+            \\ |    ◒ > /
+            \\/      \\/
+                """.stripIndent()
+            )
+        } else {
+            log.info(
+                """
+
+                ∩ Ʌ  ╕╒
+                |‾|x‾‾‾)̣___
+                ‾ ‾‾‾‾
+                """.stripIndent()
+            )
+        }
+    }
 }

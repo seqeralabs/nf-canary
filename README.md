@@ -1,6 +1,13 @@
 [![nf-test](https://github.com/seqeralabs/nf-canary/actions/workflows/test.yml/badge.svg)](https://github.com/seqeralabs/nf-canary/actions/workflows/test.yml)
 
-# :bird: nf-canary
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/images/nf-canary-dead.svg"  width="80" height="80">
+    <img alt="nf-canary" src="assets/images/nf-canary-head.svg" width="80" height="80"/>
+  </picture>
+</h1>
+
+# nf-canary
 
 A lightweight Nextflow workflow designed for testing infrastructure.
 
