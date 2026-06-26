@@ -6,7 +6,7 @@ process CPU_SMOKE {
 
     script:
     """
-    echo "cpu-ok $(uname -m)" > cpu.txt
+    echo cpu-ok > cpu.txt
     """
 }
 
