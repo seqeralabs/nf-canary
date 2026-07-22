@@ -1,4 +1,4 @@
-#!/usr/bin/env -S uv run --no-project --script
+#!/usr/bin/env -S uv run --no-project --no-config --script
 
 # /// script
 # requires-python = ">=3.12"

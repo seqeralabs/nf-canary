@@ -1,6 +1,13 @@
 [![nf-test](https://github.com/seqeralabs/nf-canary/actions/workflows/test.yml/badge.svg)](https://github.com/seqeralabs/nf-canary/actions/workflows/test.yml)
 
-# :bird: nf-canary
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/images/nf-canary-dead.svg"  width="80" height="80">
+    <img alt="nf-canary" src="assets/images/nf-canary-head.svg" width="80" height="80"/>
+  </picture>
+</h1>
+
+# nf-canary
 
 A lightweight Nextflow workflow designed for testing infrastructure.
 
@@ -38,6 +45,12 @@ The container is specified by the `container` parameter, which defaults to `quay
 
 ```nextflow
 params.container = 'docker.io/ubuntu:24.04'
+```
+
+The GPU test process uses `gpu_container`, which defaults to `pytorch/pytorch:latest`. Set this separately when you want `TEST_GPU` to validate GPU access from the container used by your own pipeline process.
+
+```bash
+nextflow run seqeralabs/nf-canary --gpu --gpu_container 'alphafold:latest'
 ```
 
 ### Skipping Tests
@@ -137,7 +150,7 @@ Test a process can accept a value as input.
 
 _Note: Enabled only if the parameter `--gpu` is specified._
 
-This process tests the ability to use a GPU. It uses the `pytorch` conda environment to test CUDA is available and working. This is disabled by default as it requires a GPU to be available which may not be true.
+This process tests the ability to use a GPU. It uses the container specified by `--gpu_container`, which defaults to `pytorch/pytorch:latest`, to run a Python 3 standard-library CUDA Driver API probe. This is disabled by default as it requires a GPU to be available which may not be true.
 
 ### `TEST_FUSION_DOCTOR`
 
