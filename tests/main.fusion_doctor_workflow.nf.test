@@ -11,10 +11,10 @@ nextflow_workflow {
                 """
                 input[0]  = channel.of('trigger')   // trigger_ch
                 input[1]  = "5.10"                  // kernel_version_min
-                input[2]  = "8"                     // memory_gb_min
-                input[3]  = "200"                   // disk_gb_min
+                input[2]  = "8"                     // memory_capacity_gb_min
+                input[3]  = "200"                   // disk_capacity_gb_min
                 input[4]  = "true"                  // nvme_required
-                input[5]  = "4"                     // cpu_cores_min
+                input[5]  = "4"                     // vcpus_min
                 input[6]  = "131072"                // open_files_min
                 input[7]  = "/tmp"                  // cache_path
                 input[8]  = ""                      // read_write_buckets

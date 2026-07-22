@@ -77,16 +77,16 @@
                     "default": "5.10,5.15",
                     "fa_icon": "fas fa-microchip"
                 },
-                "fusion_memory_gb_min": {
+                "fusion_memory_capacity_gb_min": {
                     "type": "string",
-                    "description": "Minimum memory (GB) required for Fusion, as a comma-separated sweep.",
+                    "description": "Minimum memory capacity (GB) required for Fusion, as a comma-separated sweep.",
                     "help_text": "Comma-separated list of memory thresholds (in GB) to sweep. FUSION_DOCTOR runs once per value. E.g. '8' for a single check, or '4,8,16' to sweep multiple thresholds.",
                     "default": "4,8,16",
                     "fa_icon": "fas fa-memory"
                 },
-                "fusion_disk_gb_min": {
+                "fusion_disk_capacity_gb_min": {
                     "type": "string",
-                    "description": "Minimum local disk size (GB) required for Fusion, as a comma-separated sweep.",
+                    "description": "Minimum local disk capacity (GB) required for Fusion, as a comma-separated sweep.",
                     "help_text": "Comma-separated list of disk size thresholds (in GB) to sweep. FUSION_DOCTOR runs once per value. E.g. '200' for a single check, or '100,200,950' to sweep multiple thresholds. Seqera docs require at least 200 GB local temp storage; 400 GB+ for files >100 GB. Cloud-specific profiles override this with values appropriate to that cloud's disk increments.",
                     "default": "50,75,100,200,300,375,600,750,950",
                     "fa_icon": "fas fa-hdd"
@@ -98,10 +98,10 @@
                     "default": "false,true",
                     "fa_icon": "fas fa-bolt"
                 },
-                "fusion_cpu_cores_min": {
+                "fusion_vcpus_min": {
                     "type": "string",
-                    "description": "Minimum CPU cores required for Fusion, as a comma-separated sweep.",
-                    "help_text": "Comma-separated list of CPU core thresholds to sweep. FUSION_DOCTOR runs once per value. E.g. '4' for a single check, or '2,4,16' to sweep multiple thresholds. Seqera recommends 16 vCPUs for large production pipelines.",
+                    "description": "Minimum vCPUs required for Fusion, as a comma-separated sweep.",
+                    "help_text": "Comma-separated list of vCPU thresholds to sweep. FUSION_DOCTOR runs once per value. E.g. '4' for a single check, or '2,4,16' to sweep multiple thresholds. Seqera recommends 16 vCPUs for large production pipelines.",
                     "default": "2,4,16",
                     "fa_icon": "fas fa-server"
                 },

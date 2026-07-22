@@ -409,14 +409,9 @@ process TEST_FUSION_DOCTOR {
     in the workflow), avoiding any shell quoting or indentation issues.
     */
 
-<<<<<<< HEAD
-    container 'cr.seqera.io/public/fusion/doctor:1.0.0-dev-260420150843'
+    container 'cr.seqera.io/public/fusion/doctor:1.0.0'
     tag { meta.run_id }
     publishDir { (params.outdir ? file(params.outdir) : file(workflow.workDir).resolve("outputs/fusion")).toUriString() }, mode: 'copy'
-=======
-    container 'cr.seqera.io/public/fusion/doctor:1.0.0'
-    publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs/fusion").toUriString() }, mode: 'copy'
->>>>>>> origin/main
 
     input:
         tuple val(dummy_val), val(meta), path(reference_profile), val(rw_buckets), val(ro_buckets)
@@ -507,10 +502,10 @@ workflow FUSION_DOCTOR {
     take:
         trigger_ch              // val channel — one item fires the whole sweep
         kernel_version_min      // e.g. "5.10,5.15"
-        memory_gb_min           // e.g. "4,8,16"
-        disk_gb_min             // e.g. "100,200,950"
+        memory_capacity_gb_min  // e.g. "4,8,16"
+        disk_capacity_gb_min    // e.g. "100,200,950"
         nvme_required           // e.g. "false,true"
-        cpu_cores_min           // e.g. "2,4,16"
+        vcpus_min               // e.g. "2,4,16"
         open_files_min          // e.g. "65535,131072,1048576"
         cache_path              // e.g. "/tmp"
         read_write_buckets      // comma-separated bucket URIs
@@ -521,10 +516,10 @@ workflow FUSION_DOCTOR {
         def ro_buckets_list = sweepList(read_only_buckets)
 
         def kernel_sweep = sweepList(kernel_version_min)
-        def memory_sweep = sweepList(memory_gb_min)
-        def disk_sweep   = sweepList(disk_gb_min)
+        def memory_sweep = sweepList(memory_capacity_gb_min)
+        def disk_sweep   = sweepList(disk_capacity_gb_min)
         def nvme_sweep   = sweepList(nvme_required)
-        def cpu_sweep    = sweepList(cpu_cores_min)
+        def cpu_sweep    = sweepList(vcpus_min)
         def openf_sweep  = sweepList(open_files_min)
         def cache_sweep  = sweepList(cache_path ?: '/tmp')
 
@@ -548,10 +543,10 @@ workflow FUSION_DOCTOR {
 
                 def yaml_lines = []
                 if (kernel) yaml_lines << "kernel_version_min: \"${kernel}\""
-                if (memory) yaml_lines << "memory_gb_min: ${memory}"
-                if (disk)   yaml_lines << "disk_gb_min: ${disk}"
+                if (memory) yaml_lines << "memory_capacity_gb_min: ${memory}"
+                if (disk)   yaml_lines << "disk_capacity_gb_min: ${disk}"
                 if (nvme)   yaml_lines << "nvme_required: ${nvme}"
-                if (cpu)    yaml_lines << "cpu_cores_min: ${cpu}"
+                if (cpu)    yaml_lines << "vcpus_min: ${cpu}"
                 if (openf)  yaml_lines << "open_files_min: ${openf}"
 
                 def run_id = parts ? parts.join('_') : 'default'
@@ -577,27 +572,20 @@ workflow FUSION_DOCTOR {
 
 workflow NF_CANARY {
     take:
-<<<<<<< HEAD
         run_tools
         skip_tools
         gpu
         fusion
+        gpu_container
         fusion_kernel_version_min
-        fusion_memory_gb_min
-        fusion_disk_gb_min
+        fusion_memory_capacity_gb_min
+        fusion_disk_capacity_gb_min
         fusion_nvme_required
-        fusion_cpu_cores_min
+        fusion_vcpus_min
         fusion_open_files_min
         fusion_cache_path
         fusion_read_write_buckets
         fusion_read_only_buckets
-=======
-    run_tools
-    skip_tools
-    gpu
-    fusion
-    gpu_container
->>>>>>> origin/main
 
     main:
     def default_run_tools = [
@@ -683,10 +671,10 @@ workflow NF_CANARY {
         FUSION_DOCTOR(
             run_ch.TEST_FUSION_DOCTOR,
             fusion_kernel_version_min,
-            fusion_memory_gb_min,
-            fusion_disk_gb_min,
+            fusion_memory_capacity_gb_min,
+            fusion_disk_capacity_gb_min,
             fusion_nvme_required,
-            fusion_cpu_cores_min,
+            fusion_vcpus_min,
             fusion_open_files_min,
             fusion_cache_path,
             fusion_read_write_buckets,
@@ -729,24 +717,22 @@ workflow NF_CANARY {
 }
 
 workflow {
-<<<<<<< HEAD
     NF_CANARY(
         params.run,
         params.skip,
         params.gpu,
         params.fusion,
+        params.gpu_container,
         params.fusion_kernel_version_min,
-        params.fusion_memory_gb_min,
-        params.fusion_disk_gb_min,
+        params.fusion_memory_capacity_gb_min,
+        params.fusion_disk_capacity_gb_min,
         params.fusion_nvme_required,
-        params.fusion_cpu_cores_min,
+        params.fusion_vcpus_min,
         params.fusion_open_files_min,
         params.fusion_cache_path,
         params.fusion_read_write_buckets,
         params.fusion_read_only_buckets
     )
-=======
-    NF_CANARY(params.run, params.skip, params.gpu, params.fusion, params.gpu_container)
 
     workflow.onComplete = {
         if (workflow.success) {
@@ -770,5 +756,4 @@ workflow {
             )
         }
     }
->>>>>>> origin/main
 }
