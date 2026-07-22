@@ -46,7 +46,6 @@ nextflow_pipeline{
 
     }
 
-
     test("Should only run one process") {
 
         when {
@@ -63,7 +62,7 @@ nextflow_pipeline{
                 { assert workflow.trace.tasks().size()     == 1 },
                 { assert workflow.trace.succeeded().size() == 1 },
                 { assert workflow.trace.failed().size()    == 0 },
-                { assert snapshot(workflow, path(params.outdir).list()).match() }
+                { assert snapshot(workflow.out).match() }
             )
         }
 
