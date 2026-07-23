@@ -1,10 +1,33 @@
+nextflow.enable.types = true
+
+params {
+    skip: String = ''
+    gpu: Boolean = false
+    run: String = ''
+    outdir: String?
+    output_index: String = 'outputs.json'
+    remoteFile: String?
+    container: String = 'quay.io/biocontainers/ubuntu:24.04'
+    fusion: Boolean = false
+    fusion_kernel_version_min: String?
+    fusion_memory_capacity_gb_min: Integer?
+    fusion_disk_capacity_gb_min: Integer?
+    fusion_nvme_required: Boolean?
+    fusion_vcpus_min: Integer?
+    fusion_open_files_min: Integer?
+    fusion_cache_path: String = '/tmp'
+    fusion_read_write_buckets: String = ''
+    fusion_read_only_buckets: String = ''
+    fusion_redact: Boolean = false
+}
+
 // This process should automatically succeed
 process TEST_SUCCESS {
     input:
-    val dummy_val
+    dummy_val: String
 
     output:
-    stdout
+    stdout()
 
     script:
     """
@@ -15,10 +38,10 @@ process TEST_SUCCESS {
 // Creates a file on the worker node which is uploaded to the working directory.
 process TEST_CREATE_FILE {
     input:
-    val dummy_val
+    dummy_val: String
 
     output:
-    path ("*.txt"), emit: outfile
+    outfile: Path = file('*.txt')
 
     script:
     """
@@ -29,10 +52,10 @@ process TEST_CREATE_FILE {
 // Creates an empty file on the worker node which is uploaded to the working directory.
 process TEST_CREATE_EMPTY_FILE {
     input:
-    val dummy_val
+    dummy_val: String
 
     output:
-    path ("*.txt"), emit: outfile
+    outfile: Path = file('*.txt')
 
     script:
     """
@@ -43,10 +66,10 @@ process TEST_CREATE_EMPTY_FILE {
 // Creates a file on the worker node which is uploaded to the working directory.
 process TEST_CREATE_FOLDER {
     input:
-    val dummy_val
+    dummy_val: String
 
     output:
-    path ("test"), type: 'dir', emit: outfolder
+    outfolder: Path = file('test', type: 'dir')
 
     script:
     """
@@ -59,11 +82,11 @@ process TEST_CREATE_FOLDER {
 // Stages a file from the working directory to the worker node.
 process TEST_INPUT {
     input:
-    val dummy_val
-    path input
+    dummy_val: String
+    input: Path
 
     output:
-    stdout
+    stdout()
 
     script:
     """
@@ -74,10 +97,10 @@ process TEST_INPUT {
 // Runs a script from the bin/ directory
 process TEST_BIN_SCRIPT {
     input:
-    val dummy_val
+    dummy_val: String
 
     output:
-    path "*.txt"
+    files('*.txt')
 
     script:
     """
@@ -88,11 +111,11 @@ process TEST_BIN_SCRIPT {
 // Stages a file from a remote file to the worker node.
 process TEST_STAGE_REMOTE {
     input:
-    val dummy_val
-    path input
+    dummy_val: String
+    input: Path
 
     output:
-    stdout
+    stdout()
 
     script:
     """
@@ -103,11 +126,11 @@ process TEST_STAGE_REMOTE {
 // Stages a file from the working directory to the worker node, copies it and stages it back to the working directory.
 process TEST_PASS_FILE {
     input:
-    val dummy_val
-    path input
+    dummy_val: String
+    input: Path
 
     output:
-    path "out.txt", emit: outfile
+    outfile: Path = file('out.txt')
 
     script:
     """
@@ -118,11 +141,11 @@ process TEST_PASS_FILE {
 // Stages a folder from the working directory to the worker node, copies it and stages it back to the working directory.
 process TEST_PASS_FOLDER {
     input:
-    val dummy_val
-    path input
+    dummy_val: String
+    input: Path
 
     output:
-    path "out", type: 'dir', emit: outfolder
+    outfolder: Path = file('out', type: 'dir')
 
     script:
     """
@@ -134,10 +157,10 @@ process TEST_PASS_FOLDER {
 process TEST_PUBLISH_FILE {
 
     input:
-    val dummy_val
+    dummy_val: String
 
     output:
-    path "*.txt"
+    files('*.txt')
 
     script:
     """
@@ -149,10 +172,10 @@ process TEST_PUBLISH_FILE {
 process TEST_PUBLISH_FOLDER {
 
     input:
-    val dummy_val
+    dummy_val: String
 
     output:
-    path "test", type: 'dir'
+    file('test', type: 'dir')
 
     script:
     """
@@ -162,16 +185,15 @@ process TEST_PUBLISH_FOLDER {
     """
 }
 
-
 // This process should automatically fail but be ignored.
 process TEST_IGNORED_FAIL {
     errorStrategy 'ignore'
 
     input:
-    val dummy_val
+    dummy_val: String
 
     output:
-    stdout
+    stdout()
 
     script:
     """
@@ -182,10 +204,10 @@ process TEST_IGNORED_FAIL {
 // This process moves a file within a working directory.
 process TEST_MV_FILE {
     input:
-    val dummy_val
+    dummy_val: String
 
     output:
-    path "output.txt"
+    file('output.txt')
 
     script:
     """
@@ -197,10 +219,10 @@ process TEST_MV_FILE {
 // Moves the contents of a folder from within a folder
 process TEST_MV_FOLDER_CONTENTS {
     input:
-    val dummy_val
+    dummy_val: String
 
     output:
-    path "out", type: 'dir', emit: outfolder
+    outfolder: Path = file('out', type: 'dir')
 
     script:
     """
@@ -214,10 +236,10 @@ process TEST_MV_FOLDER_CONTENTS {
 // This process should create and capture STDOUT
 process TEST_STDOUT {
     input:
-    val dummy_val
+    dummy_val: String
 
     output:
-    stdout
+    stdout()
 
     script:
     """
@@ -227,11 +249,11 @@ process TEST_STDOUT {
 // This process should read in val and echo to STDOUT
 process TEST_VAL_INPUT {
     input:
-    val dummy_val
-    val input
+    dummy_val: String
+    input: String
 
     output:
-    stdout
+    stdout()
 
     script:
     """
@@ -247,11 +269,11 @@ process TEST_GPU {
     memory '10G'
 
     input:
-    val dummy_val
-    val input
+    dummy_val: String
+    input: String
 
     output:
-    stdout
+    stdout()
 
     script:
     """
@@ -326,14 +348,14 @@ process TEST_FUSION_DOCTOR {
     container 'cr.seqera.io/public/fusion/doctor:1.0.0'
 
     input:
-    val dummy_val
-    path reference_profile
-    val rw_buckets
-    val ro_buckets
-    val cache_path
+    dummy_val: String
+    reference_profile: Path
+    rw_buckets: List<String>
+    ro_buckets: List<String>
+    cache_path: String
 
     output:
-    path ("fusion-doctor-report.json"), emit: report
+    report: Path = file('fusion-doctor-report.json')
 
     script:
     def disk_flag = "--check-disk-usage ${cache_path ?: '/tmp'}"
@@ -381,12 +403,14 @@ process FUSION_DOCTOR_GENERATE_REPORT {
     container 'community.wave.seqera.io/library/jinja2_python_uv:7113b0a0e59d95a6'
 
     input:
-    path doctor_report
-    path template_file
+    doctor_report: Path
+    template_file: Path
 
     output:
-    path ("fusion-report.html"), emit: html_report
-    path ("fusion-report.json"), emit: json_report
+    record(
+        html_report: file('fusion-report.html'),
+        json_report: file('fusion-report.json')
+    )
 
     script:
     """
@@ -400,10 +424,10 @@ process FUSION_DOCTOR_GENERATE_REPORT {
 
 workflow NF_CANARY {
     take:
-    run_tools
-    skip_tools
-    gpu
-    fusion
+    run_tools: Value<String>
+    skip_tools: Value<String>
+    gpu: Value<Boolean>
+    fusion: Value<Boolean>
 
     main:
     def default_run_tools = [
@@ -429,7 +453,7 @@ workflow NF_CANARY {
     def run = run_tools ? run_tools.tokenize(",")*.toUpperCase() : default_run_tools
     def skip = skip_tools.tokenize(",")*.toUpperCase()
 
-    channel.fromList(run.findAll { toolname -> toolname !in skip })
+    def run_ch = channel.fromList(run.findAll { toolname -> toolname !in skip })
         .flatten()
         .branch { toolname ->
             TEST_BIN_SCRIPT: toolname == "TEST_BIN_SCRIPT"
@@ -450,13 +474,11 @@ workflow NF_CANARY {
             TEST_SUCCESS: toolname == "TEST_SUCCESS"
             TEST_VAL_INPUT: toolname == "TEST_VAL_INPUT"
         }
-        .set { run_ch }
 
-    channel.of("alpha", "beta", "gamma")
+    def test_file = channel.of("alpha", "beta", "gamma")
         .collectFile(name: 'sample.txt', newLine: true)
-        .set { test_file }
 
-    remote_file = params.remoteFile ? channel.fromPath(params.remoteFile, glob: false) : channel.empty()
+    def remote_file = params.remoteFile ? channel.fromPath(params.remoteFile, glob: false) : channel.empty()
 
     // Parse bucket parameters into lists
     def rw_buckets_list = (params.fusion_read_write_buckets ? params.fusion_read_write_buckets.tokenize(',').collect { bucket -> bucket.trim() } : []) + [workflow.workDir.toUriString()]
@@ -482,82 +504,79 @@ workflow NF_CANARY {
     if (params.fusion_open_files_min) {
         yaml_lines.add("open_files_min: ${params.fusion_open_files_min}")
     }
-    reference_profile_ch = channel.of(yaml_lines.join('\n'))
+    def reference_profile_ch = channel.of(yaml_lines.join('\n'))
         .collectFile(name: 'fusion-reference-profile.yaml')
 
     // Run tests
-    TEST_SUCCESS(run_ch.TEST_SUCCESS)
-    TEST_CREATE_FILE(run_ch.TEST_CREATE_FILE)
-    TEST_CREATE_EMPTY_FILE(run_ch.TEST_CREATE_EMPTY_FILE)
-    TEST_CREATE_FOLDER(run_ch.TEST_CREATE_FOLDER)
-    TEST_INPUT(run_ch.TEST_INPUT, test_file)
-    TEST_BIN_SCRIPT(run_ch.TEST_BIN_SCRIPT)
-    TEST_STAGE_REMOTE(run_ch.TEST_STAGE_REMOTE, remote_file)
-    TEST_PASS_FILE(run_ch.TEST_PASS_FILE, TEST_CREATE_FILE.out.outfile)
-    TEST_PASS_FOLDER(run_ch.TEST_PASS_FOLDER, TEST_CREATE_FOLDER.out.outfolder)
-    TEST_PUBLISH_FILE(run_ch.TEST_PUBLISH_FILE)
-    TEST_PUBLISH_FOLDER(run_ch.TEST_PUBLISH_FOLDER)
-    TEST_IGNORED_FAIL(run_ch.TEST_IGNORED_FAIL)
-    TEST_MV_FILE(run_ch.TEST_MV_FILE)
-    TEST_MV_FOLDER_CONTENTS(run_ch.TEST_MV_FOLDER_CONTENTS)
-    TEST_VAL_INPUT(run_ch.TEST_VAL_INPUT, "Hello World")
-    TEST_GPU(run_ch.TEST_GPU, "dummy")
+    def test_success = TEST_SUCCESS(run_ch.TEST_SUCCESS)
+    def test_create_file = TEST_CREATE_FILE(run_ch.TEST_CREATE_FILE)
+    def test_create_empty_file = TEST_CREATE_EMPTY_FILE(run_ch.TEST_CREATE_EMPTY_FILE)
+    def test_create_folder = TEST_CREATE_FOLDER(run_ch.TEST_CREATE_FOLDER)
+    def test_input = TEST_INPUT(run_ch.TEST_INPUT, test_file)
+    def test_bin_script = TEST_BIN_SCRIPT(run_ch.TEST_BIN_SCRIPT)
+    def test_stage_remote = TEST_STAGE_REMOTE(run_ch.TEST_STAGE_REMOTE, remote_file)
+    def test_pass_file = TEST_PASS_FILE(run_ch.TEST_PASS_FILE, test_create_file)
+    def test_pass_folder = TEST_PASS_FOLDER(run_ch.TEST_PASS_FOLDER, test_create_folder)
+    def test_publish_file = TEST_PUBLISH_FILE(run_ch.TEST_PUBLISH_FILE)
+    def test_publish_folder = TEST_PUBLISH_FOLDER(run_ch.TEST_PUBLISH_FOLDER)
+    def test_ignored_fail = TEST_IGNORED_FAIL(run_ch.TEST_IGNORED_FAIL)
+    def test_mv_file = TEST_MV_FILE(run_ch.TEST_MV_FILE)
+    def test_mv_folder_contents = TEST_MV_FOLDER_CONTENTS(run_ch.TEST_MV_FOLDER_CONTENTS)
+    def test_val_input = TEST_VAL_INPUT(run_ch.TEST_VAL_INPUT, "Hello World")
+    def test_gpu = TEST_GPU(run_ch.TEST_GPU, "dummy")
 
-    TEST_FUSION_DOCTOR(run_ch.TEST_FUSION_DOCTOR, reference_profile_ch, rw_buckets_list, ro_buckets_list, params.fusion_cache_path)
+    def test_fusion_doctor = TEST_FUSION_DOCTOR(run_ch.TEST_FUSION_DOCTOR, reference_profile_ch, rw_buckets_list, ro_buckets_list, params.fusion_cache_path)
 
     // Generate consolidated fusion report from doctor output
-    // Only run FUSION_DOCTOR_GENERATE_REPORT if TEST_FUSION_DOCTOR produced output
-    FUSION_DOCTOR_GENERATE_REPORT(
-        TEST_FUSION_DOCTOR.out.report,
+    def fusion_report = FUSION_DOCTOR_GENERATE_REPORT(
+        test_fusion_doctor,
         file("${projectDir}/assets/templates/fusion_report_template.html"),
     )
 
+    // Extract individual report channels from the record output
+    def fusion_html = fusion_report.map { r -> r.html_report }.ifEmpty([])
+    def fusion_json = fusion_report.map { r -> r.json_report }.ifEmpty([])
+
     // Collect all outputs for general emit
-    channel.empty()
-        .mix(
-            TEST_SUCCESS.out,
-            TEST_CREATE_FILE.out,
-            TEST_CREATE_EMPTY_FILE.out,
-            TEST_CREATE_FOLDER.out,
-            TEST_INPUT.out,
-            TEST_BIN_SCRIPT.out,
-            TEST_STAGE_REMOTE.out,
-            TEST_PASS_FILE.out,
-            TEST_PASS_FOLDER.out,
-            TEST_PUBLISH_FILE.out,
-            TEST_PUBLISH_FOLDER.out,
-            TEST_IGNORED_FAIL.out,
-            TEST_MV_FILE.out,
-            TEST_MV_FOLDER_CONTENTS.out,
-            TEST_VAL_INPUT.out,
-            TEST_GPU.out,
-            TEST_FUSION_DOCTOR.out,
-            FUSION_DOCTOR_GENERATE_REPORT.out.html_report.ifEmpty([]),
-            FUSION_DOCTOR_GENERATE_REPORT.out.json_report.ifEmpty([]),
-        )
-        .set { ch_out }
+    def ch_out = channel.empty()
+        .mix(test_success)
+        .mix(test_create_file)
+        .mix(test_create_empty_file)
+        .mix(test_create_folder)
+        .mix(test_input)
+        .mix(test_bin_script)
+        .mix(test_stage_remote)
+        .mix(test_pass_file)
+        .mix(test_pass_folder)
+        .mix(test_publish_file)
+        .mix(test_publish_folder)
+        .mix(test_ignored_fail)
+        .mix(test_mv_file)
+        .mix(test_mv_folder_contents)
+        .mix(test_val_input)
+        .mix(test_gpu)
+        .mix(test_fusion_doctor)
+        .mix(fusion_html)
+        .mix(fusion_json)
 
     // Collect file outputs intended for publishing
-    channel.empty()
-        .mix(
-            TEST_PUBLISH_FILE.out,
-            TEST_PUBLISH_FOLDER.out,
-            FUSION_DOCTOR_GENERATE_REPORT.out.html_report.ifEmpty([]),
-            FUSION_DOCTOR_GENERATE_REPORT.out.json_report.ifEmpty([]),
-        )
-        .set { ch_published }
+    def ch_published = channel.empty()
+        .mix(test_publish_file)
+        .mix(test_publish_folder)
+        .mix(fusion_html)
+        .mix(fusion_json)
 
     emit:
-    out = ch_out
-    published = ch_published
+    out: Channel<Path> = ch_out
+    published: Channel<Path> = ch_published
 }
 
 workflow {
     main:
-    NF_CANARY(params.run, params.skip, params.gpu, params.fusion)
+    def canary = NF_CANARY(params.run, params.skip, params.gpu, params.fusion)
 
     publish:
-    outputs = NF_CANARY.out.published
+    outputs = canary.published
 }
 
 output {
