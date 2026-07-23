@@ -18,7 +18,7 @@ nextflow_pipeline{
                 { assert workflow.trace.tasks().size()     == 15 },
                 { assert workflow.trace.succeeded().size() == 14 },
                 { assert workflow.trace.failed().size()    == 1 },
-                { assert snapshot(workflow, path(params.outdir).list()).match() }
+                { assert snapshot(path(params.outdir).list()).match() }
             )
         }
 
@@ -40,7 +40,7 @@ nextflow_pipeline{
                 { assert workflow.trace.tasks().size()     == 14 },
                 { assert workflow.trace.succeeded().size() == 13 },
                 { assert workflow.trace.failed().size()    == 1 },
-                { assert snapshot(workflow, path(params.outdir).list()).match() }
+                { assert snapshot(path(params.outdir).list()).match() }
             )
         }
 
@@ -63,7 +63,7 @@ nextflow_pipeline{
                 { assert workflow.trace.tasks().size()     == 1 },
                 { assert workflow.trace.succeeded().size() == 1 },
                 { assert workflow.trace.failed().size()    == 0 },
-                { assert snapshot(workflow, path(params.outdir).list()).match() }
+                { assert snapshot(path(params.outdir).list()).match() }
             )
         }
 
@@ -84,7 +84,7 @@ nextflow_pipeline{
                 { assert workflow.trace.tasks().size()     == 15 },
                 { assert workflow.trace.succeeded().size() == 14 },
                 { assert workflow.trace.failed().size()    == 1 },
-                { assert snapshot(workflow, path("${launchDir}/output").list()).match() }
+                { assert snapshot(path("${launchDir}/output").list()).match() }
             )
         }
 
