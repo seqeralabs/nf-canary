@@ -133,8 +133,6 @@ process TEST_PASS_FOLDER {
 // Creates a file on the worker node and uploads to the publish directory.
 process TEST_PUBLISH_FILE {
 
-    publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs").toUriString() }, mode: 'copy'
-
     input:
     val dummy_val
 
@@ -149,8 +147,6 @@ process TEST_PUBLISH_FILE {
 
 // Creates a file on the worker node and uploads to the publish directory.
 process TEST_PUBLISH_FOLDER {
-
-    publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs").toUriString() }, mode: 'copy'
 
     input:
     val dummy_val
@@ -405,7 +401,6 @@ process TEST_GPU {
 process TEST_FUSION_DOCTOR {
 
     container 'cr.seqera.io/public/fusion/doctor:1.0.0'
-    publishDir { params.outdir ?: file(workflow.workDir).resolve("outputs/fusion").toUriString() }, mode: 'copy'
 
     input:
     val dummy_val
@@ -461,7 +456,6 @@ process TEST_FUSION_DOCTOR {
 process FUSION_DOCTOR_GENERATE_REPORT {
 
     container 'community.wave.seqera.io/library/jinja2_python_uv:7113b0a0e59d95a6'
-    publishDir { (params.outdir ? file(params.outdir) : file(workflow.workDir).resolve("outputs")).resolve("fusion").toUriString() }, mode: 'copy'
 
     input:
     path doctor_report
@@ -605,7 +599,7 @@ workflow NF_CANARY {
         file("${projectDir}/assets/templates/fusion_report_template.html"),
     )
 
-    // POC of emitting the channel
+    // Collect all outputs for general emit
     channel.empty()
         .mix(
             TEST_SUCCESS.out,
@@ -630,11 +624,23 @@ workflow NF_CANARY {
         )
         .set { ch_out }
 
+    // Collect file outputs intended for publishing
+    channel.empty()
+        .mix(
+            TEST_PUBLISH_FILE.out,
+            TEST_PUBLISH_FOLDER.out,
+            FUSION_DOCTOR_GENERATE_REPORT.out.html_report.ifEmpty([]),
+            FUSION_DOCTOR_GENERATE_REPORT.out.json_report.ifEmpty([]),
+        )
+        .set { ch_published }
+
     emit:
     out = ch_out
+    published = ch_published
 }
 
 workflow {
+    main:
     NF_CANARY(params.run, params.skip, params.gpu, params.fusion, params.gpu_container)
 
     workflow.onComplete = {
@@ -658,5 +664,14 @@ workflow {
                 """.stripIndent()
             )
         }
+    }
+
+    publish:
+    outputs = NF_CANARY.out.published
+}
+
+output {
+    outputs {
+        path "."
     }
 }

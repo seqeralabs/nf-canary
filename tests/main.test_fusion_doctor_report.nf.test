@@ -42,10 +42,8 @@ nextflow_process {
         then {
             assertAll(
                 { assert process.success },
-                // Check that report files exist in outputs
-                { assert path("${outputDir}/output/fusion/fusion-report.html").exists() },
-                { assert path("${outputDir}/output/fusion/fusion-report.json").exists() },
-                { assert path("${outputDir}/output/fusion-doctor-report.json").exists() }
+                { assert process.out.html_report },
+                { assert process.out.json_report }
             )
         }
 

@@ -12,3 +12,4 @@ test-datasets/
 test.tap
 .nf-test.log
 examples/
+.nf-test-*.nf
