@@ -59,7 +59,7 @@ jobs:
       - uses: actions/setup-java@17f84c3641ba7b8f6deff6309fc4c864478f5d62 # v3
         with:
           distribution: "temurin"
-          java-version: "17"
+          java-version: "27"
 
       - name: Cache software installation
         id: cache-software
