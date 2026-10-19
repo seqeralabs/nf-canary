@@ -636,7 +636,7 @@ workflow NF_CANARY {
 
     emit:
     out = ch_out
-    published = ch_published
+    publish_files = ch_published
 }
 
 workflow {
@@ -667,7 +667,7 @@ workflow {
     }
 
     publish:
-    outputs = NF_CANARY.out.published
+    outputs = NF_CANARY.out.publish_files
 }
 
 output {
