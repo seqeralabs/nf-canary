@@ -400,7 +400,7 @@ process TEST_GPU {
 // environment.
 process TEST_FUSION_DOCTOR {
 
-    container 'cr.seqera.io/public/fusion/doctor:1.0.0'
+    container 'public.cr.seqera.io/fusion/doctor:1.0.0'
 
     input:
     val dummy_val
